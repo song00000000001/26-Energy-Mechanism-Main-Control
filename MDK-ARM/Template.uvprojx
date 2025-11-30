@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F405xx,ARM_MATH_CM4,__ASM__=__asm</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../USP;../SRML;../USP/Middlewares/Systemview;../Drivers/CMSIS/DSP/Include;../Middlewares/FreeRTOS_port;../USB_DEVICE/App;../USB_DEVICE/Target;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../USP/Drivers;../USP/Application/Robot_Module</IncludePath>
+              <IncludePath>../Core/Inc;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../USP;../SRML;../USP/Middlewares/Systemview;../Drivers/CMSIS/DSP/Include;../Middlewares/FreeRTOS_port;../USB_DEVICE/App;../USB_DEVICE/Target;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../USP/Drivers;../USP/Application/Robot_Module;..\USP\Services</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -428,56 +428,6 @@
               <FileName>config.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\USP\Application\Robot_Module\config.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>USP/Application/Robot_Module</GroupName>
-          <Files>
-            <File>
-              <FileName>launchest.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\USP\Application\Robot_Module\launchest.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>Yaw_control.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\USP\Application\Robot_Module\Yaw_control.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>launchest.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\USP\Application\Robot_Module\launchest.h</FilePath>
-            </File>
-            <File>
-              <FileName>openlog.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\USP\Application\Robot_Module\openlog.h</FilePath>
-            </File>
-            <File>
-              <FileName>Yaw_control.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\USP\Application\Robot_Module\Yaw_control.h</FilePath>
-            </File>
-            <File>
-              <FileName>global_data.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\USP\Application\Robot_Module\global_data.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>global_data.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\USP\Application\Robot_Module\global_data.h</FilePath>
-            </File>
-            <File>
-              <FileName>robot_config.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\USP\Application\Robot_Module\robot_config.h</FilePath>
-            </File>
-            <File>
-              <FileName>servo_switch_middleware.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\USP\Application\Robot_Module\servo_switch_middleware.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -2895,21 +2845,6 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>USP/Application/protocol</GroupName>
-          <Files>
-            <File>
-              <FileName>protocol.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\USP\Application\Robot_Module\protocol.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>protocol.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\USP\Application\Robot_Module\protocol.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>USP/Application/task</GroupName>
           <Files>
             <File>
@@ -2926,6 +2861,81 @@
               <FileName>main_controller.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\USP\Application\Robot_Module\main_controller.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>USP/Application/class</GroupName>
+          <Files>
+            <File>
+              <FileName>launchest.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\USP\Application\Robot_Module\launchest.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>launchest.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Application\Robot_Module\launchest.h</FilePath>
+            </File>
+            <File>
+              <FileName>Yaw_control.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\USP\Application\Robot_Module\Yaw_control.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>Yaw_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Application\Robot_Module\Yaw_control.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>USP/Application/config</GroupName>
+          <Files>
+            <File>
+              <FileName>global_data.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\USP\Application\Robot_Module\global_data.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>global_data.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Application\Robot_Module\global_data.h</FilePath>
+            </File>
+            <File>
+              <FileName>robot_config.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Application\Robot_Module\robot_config.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>USP/Middleware</GroupName>
+          <Files>
+            <File>
+              <FileName>servo_switch_middleware.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USP\Middlewares\servo_switch_middleware.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>USP/Service</GroupName>
+          <Files>
+            <File>
+              <FileName>openlog.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Services\openlog.h</FilePath>
+            </File>
+            <File>
+              <FileName>protocol.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\USP\Services\protocol.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>protocol.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Services\protocol.h</FilePath>
             </File>
           </Files>
         </Group>
