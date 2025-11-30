@@ -2,6 +2,7 @@
 #include "SRML.h"
 #include "stm32f4xx_hal.h"
 #include "tim.h"    
+#include "stm32f4xx_hal_tim.h"
 
 /* ================= 电机 ID 定义 ================= */
 #define ID_DELIVER_L                  4     // 左同步轮
@@ -39,15 +40,46 @@
 #define INIT_SPEED_IGNITER            -4500
 #define INIT_SPEED_YAW                -500
 
+//以下用到了c语言函数,需要加extern "C"修饰
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* ==舵机宏== */
-#define servo_igniter_on()        __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_1, 200) // 扳机舵机扣下
-#define servo_igniter_off()       __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_1, 100) // 扳机舵机松开
-#define servo_loader_clamp1()     __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 53)   // 一号夹爪夹紧
-#define servo_loader_release1()   __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 100)  // 一号夹爪松开
-#define servo_loader_clamp2()     __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, 126)  // 二号夹爪夹紧
-#define servo_loader_release2()   __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, 170)  // 二号夹爪松开
-#define servo_loader_clamp3()     __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, 288)  // 三号夹爪夹紧
-#define servo_loader_release3()   __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, 360)  // 三号夹爪松开 
+#define servo_igniter_on        __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_1, 200) // 扳机舵机扣下
+#define servo_igniter_off       __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_1, 100) // 扳机舵机松开
+#define servo_loader_clamp1     __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 53)   // 一号夹爪夹紧
+#define servo_loader_release1   __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 100)  // 一号夹爪松开
+#define servo_loader_clamp2     __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, 126)  // 二号夹爪夹紧
+#define servo_loader_release2   __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, 170)  // 二号夹爪松开
+#define servo_loader_clamp3     __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, 288)  // 三号夹爪夹紧
+#define servo_loader_release3   __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, 360)  // 三号夹爪松开 
+
+void Loader_Clamps_ClampAll(void);
+void Loader_Clamps_ReleaseAll(void);
+void Loader_Clamps_Release1(void);
+void Loader_Clamps_Release2(void);
+void Loader_Clamps_Release3(void);
+
+// ================= 开关引脚定义 =================
+#define SW_DELIVER_L_Pin              GPIO_PIN_4
+#define SW_DELIVER_L_GPIO_Port        GPIOC
+#define SW_DELIVER_R_Pin              GPIO_PIN_5
+#define SW_DELIVER_R_GPIO_Port        GPIOA
+#define SW_IGNITER_Pin                GPIO_PIN_14
+#define SW_IGNITER_GPIO_Port          GPIOC
+
+#define SW_YAW_R_Pin                  GPIO_PIN_6
+#define SW_YAW_R_GPIO_Port            GPIOA
+#define SW_YAW_L_Pin                  GPIO_PIN_7
+#define SW_YAW_L_GPIO_Port            GPIOA
+
+#define SW_YAW_R_OFF (HAL_GPIO_ReadPin(SW_YAW_R_GPIO_Port, SW_YAW_R_Pin))==GPIO_PIN_RESET
+#define SW_YAW_L_OFF (HAL_GPIO_ReadPin(SW_YAW_L_GPIO_Port, SW_YAW_L_Pin))==GPIO_PIN_RESET
+
+#ifdef __cplusplus
+}
+#endif
 
 /* PIDinit */
 #define PID_DELIVER_DIFF_PARAM 0.5f, 0.0f, 0.0f, 8000, 16000
@@ -64,19 +96,5 @@
 #define PID_LOADER_SPD_PARAM    8.0f, 1.0f, 0.0f, 100.0f, 16000.0f
 #define PID_LOADER_POS_PARAM    4.0f, 0.0f, 0.1f, 100.0f, 1200.0f
 
-// ================= 开关引脚定义 =================
-#define SW_DELIVER_L_Pin              GPIO_PIN_4
-#define SW_DELIVER_L_GPIO_Port        GPIOC
-#define SW_DELIVER_R_Pin              GPIO_PIN_5
-#define SW_DELIVER_R_GPIO_Port        GPIOA
-#define SW_IGNITER_Pin                GPIO_PIN_14
-#define SW_IGNITER_GPIO_Port          GPIOC
 
-#define SW_YAW_R_Pin                  GPIO_PIN_6
-#define SW_YAW_R_GPIO_Port            GPIOA
-#define SW_YAW_L_Pin                  GPIO_PIN_7
-#define SW_YAW_L_GPIO_Port            GPIOA
-
-#define SW_YAW_R_OFF (HAL_GPIO_ReadPin(SW_YAW_R_GPIO_Port, SW_YAW_R_Pin)==GPIO_PIN_RESET)
-#define SW_YAW_L_OFF (HAL_GPIO_ReadPin(SW_YAW_L_GPIO_Port, SW_YAW_L_Pin)==GPIO_PIN_RESET)
 

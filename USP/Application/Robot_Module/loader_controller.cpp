@@ -1,6 +1,7 @@
 #include "internal.h"
 #include "global_data.h"
-
+#include "robot_config.h"
+#include "tim.h"
 /**
  * @brief 装填状态控制任务
  * @parma None
@@ -19,19 +20,15 @@ void Loader_Ctrl(void *arg)
 			{
 				goal = 2750;
 			}
-			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 53);	// 一号夹爪夹紧
-			__HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, 288); // 二号夹爪夹紧
-			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, 126); // 三号夹爪夹紧
-		}
+			Loader_Clamps_ClampAll();
+        }
 		if (status > 0 && status % 4 == 2) // 第二发
 		{
 			if (open == 0)
 			{
 				goal = 1340;
 			}
-			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 100); // 一号夹爪松开
-			__HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, 288); // 二号夹爪夹紧
-			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, 126); // 三号夹爪夹紧
+            Loader_Clamps_Release1();
 		}
 		if (status > 0 && status % 4 == 3) // 第三发
 		{
@@ -39,9 +36,7 @@ void Loader_Ctrl(void *arg)
 			{
 				goal = 4090;
 			}
-			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 53);	// 一号夹爪夹紧
-			__HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, 360); // 二号夹爪松开
-			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, 126); // 三号夹爪夹紧
+			Loader_Clamps_Release2();
 		}
 		if (status > 0 && status % 4 == 0) // 第四发
 		{
@@ -49,9 +44,7 @@ void Loader_Ctrl(void *arg)
 			{
 				goal = 6820;
 			}
-			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 53);	// 一号夹爪夹紧
-			__HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, 288); // 二号夹爪夹紧
-			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, 170); // 三号夹爪松开
+			Loader_Clamps_Release3();
 		}
 	}
 }

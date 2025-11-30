@@ -474,6 +474,11 @@
               <FileType>5</FileType>
               <FilePath>..\USP\Application\Robot_Module\robot_config.h</FilePath>
             </File>
+            <File>
+              <FileName>servo_switch_middleware.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USP\Application\Robot_Module\servo_switch_middleware.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

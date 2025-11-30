@@ -41,11 +41,12 @@ extern "C" {
 #define PriorityHigh          6
 #define PrioritySuperHigh     7
 #define PriorityRealtime      8
+
 #pragma pack(1)
     struct VisionRecvData_t
     {
         uint8_t target_mode;
-			  uint8_t ros=3;
+		uint8_t ros=3;
         float target_yaw;
         float pilot_translation;
         uint8_t end;
@@ -64,6 +65,7 @@ extern "C" {
         uint8_t end = 0x55;
     };
 #pragma pack()
+
 /* HAL Handlers --------------------------------------------------------------*/
 /* RTOS Resources ------------------------------------------------------------*/
 /* Task */
