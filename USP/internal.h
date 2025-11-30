@@ -11,16 +11,19 @@
 #include "can.h"
 #include "usart.h"
 #include "tim.h"
+//#include "spi.h"
+
 #include "SRML.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
+
+//自定义头文件
 #include "launchest.h"
 #include "Yaw_control.h"
-#include "ParamsPool.h"
-#include "DartData.h"
-#include "app.h"
+
+
 #if USE_SRML_BMI088  
 /** TODO:  待BMI088库测试完善，加入srml.h目录里*/
 /** TODO:  25赛季完全删除注释部分，停止对老版BMI解算的支持*/
@@ -99,12 +102,7 @@ extern SemaphoreHandle_t DR16_mutex;
 /* Mutexes */
 /* Notifications */
 /* Other Resources -----------------------------------------------------------*/
-    extern DartDataStructdef DartsData[MAX_DART_DATAPOOL_SIZE]; // 飞镖数据
-    extern uint8_t DartDataSlot[5];                             // 发射数据选择
-    extern DartAimEnumdef HitTarget;                            // 打击目标
-    extern uint8_t ParamSendPack[9];
-    extern uint8_t CurrentCnt; // 当前发数
-    extern float Yaw_Angle[2]; // 默认前哨站和基地角度
+
 		
 #if USE_SRML_VIRTUAL_COM
 extern uint8_t VirtualCom_Rx_Buff[VIRTUALCOM_RX_BUFFER_SIZE]; // 虚拟串口缓存区

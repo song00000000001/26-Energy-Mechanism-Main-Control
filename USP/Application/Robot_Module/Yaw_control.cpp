@@ -1,8 +1,8 @@
 
 #include "Yaw_control.h"
-#include "ParamsPool.h"
-#define READ_SW_YAWITCH_R HAL_GPIO_ReadPin(SW_YAW_R_GPIO_Port, SW_YAW_R_Pin)
-#define READ_SW_YAWITCH_L HAL_GPIO_ReadPin(SW_YAW_L_GPIO_Port, SW_YAW_L_Pin)
+#include "global_data.h"
+#include "robot_config.h"
+
 
 Missle_YawController_Classdef::Missle_YawController_Classdef(uint8_t _ID_YAW)
 : YawMotor(_ID_YAW)
@@ -20,7 +20,8 @@ void Missle_YawController_Classdef::init()
     {
     case 0:
         PID_Yaw_Speed.Target = -INIT_SPEED_YAW;
-        if(READ_SW_YAWITCH_L == GPIO_PIN_RESET)
+        
+        if(SW_YAW_L_OFF)
         {
             YawMotor.baseAngle -= YawMotor.getMotorTotalAngle();
             Yaw_Init_flag = 1;
@@ -29,7 +30,7 @@ void Missle_YawController_Classdef::init()
     
     case 1:
         PID_Yaw_Speed.Target = INIT_SPEED_YAW;
-        if(READ_SW_YAWITCH_R == GPIO_PIN_RESET)
+        if(SW_YAW_R_OFF)
         {
             MAX_YAW_ANGLE = YawMotor.getMotorTotalAngle();
             Yaw_Init_flag = 2;

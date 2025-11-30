@@ -46,7 +46,7 @@ public:
     void disable();
 };
 /* Exported macros -----------------------------------------------------------*/
-
+bool Is_Launching();
 /* Exported types ------------------------------------------------------------*/
 
 /* Exported function declarations --------------------------------------------*/

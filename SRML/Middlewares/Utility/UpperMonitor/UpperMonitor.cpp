@@ -45,7 +45,7 @@
 #include "Drivers/Components/drv_uart.h"
 /* Private define ------------------------------------------------------------*/
 using namespace UpperMonitor;
-#warning("Please pay attention to the baud rate of the serial port (UART/USART) to avoid data loss. ")
+//#warning("Please pay attention to the baud rate of the serial port (UART/USART) to avoid data loss. ")
 /* Private type --------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 namespace UpperMonitor

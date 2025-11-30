@@ -10,14 +10,14 @@
       <TargetName>Template</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pArmCC>6220000::V6.22::ARMCLANG</pArmCC>
-      <pCCUsed>6220000::V6.22::ARMCLANG</pCCUsed>
+      <pArmCC>6160000::V6.16::ARMCLANG</pArmCC>
+      <pCCUsed>6160000::V6.16::ARMCLANG</pCCUsed>
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32F405RGTx</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32F4xx_DFP.3.0.0</PackID>
+          <PackID>Keil.STM32F4xx_DFP.3.1.1</PackID>
           <PackURL>https://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000-0x2001FFFF) IRAM2(0x10000000-0x1000FFFF) IROM(0x8000000-0x80FFFFF)  CLOCK(25000000) FPU2 CPUTYPE("Cortex-M4")</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -187,7 +187,6 @@
             <RvdsVP>2</RvdsVP>
             <RvdsMve>0</RvdsMve>
             <RvdsCdeCp>0</RvdsCdeCp>
-            <nBranchProt>0</nBranchProt>
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -315,7 +314,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>2</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>1</SplitLS>
             <OneElfS>1</OneElfS>
@@ -430,19 +429,16 @@
               <FileType>8</FileType>
               <FilePath>..\USP\Application\protocol.cpp</FilePath>
             </File>
+            <File>
+              <FileName>protocol.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Application\protocol.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>USP/Application/Robot</GroupName>
-        </Group>
-        <Group>
-          <GroupName>USP/Middlewares/Robot_Module</GroupName>
+          <GroupName>USP/Application/Robot_Module</GroupName>
           <Files>
-            <File>
-              <FileName>ParamsPool.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\USP\Application\Robot_Module\ParamsPool.h</FilePath>
-            </File>
             <File>
               <FileName>launchest.cpp</FileName>
               <FileType>8</FileType>
@@ -452,6 +448,36 @@
               <FileName>Yaw_control.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\USP\Application\Robot_Module\Yaw_control.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>launchest.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Application\Robot_Module\launchest.h</FilePath>
+            </File>
+            <File>
+              <FileName>openlog.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Application\Robot_Module\openlog.h</FilePath>
+            </File>
+            <File>
+              <FileName>Yaw_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Application\Robot_Module\Yaw_control.h</FilePath>
+            </File>
+            <File>
+              <FileName>global_data.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\USP\Application\Robot_Module\global_data.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>global_data.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Application\Robot_Module\global_data.h</FilePath>
+            </File>
+            <File>
+              <FileName>robot_config.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Application\Robot_Module\robot_config.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -548,9 +574,6 @@
               <FilePath>..\USP\Middlewares\Systemview\SEGGER_SYSVIEW_FreeRTOS.c</FilePath>
             </File>
           </Files>
-        </Group>
-        <Group>
-          <GroupName>USP/Drivers</GroupName>
         </Group>
         <Group>
           <GroupName>SRML</GroupName>

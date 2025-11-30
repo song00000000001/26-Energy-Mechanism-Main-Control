@@ -37,7 +37,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "launchest.h"
 #include "internal.h"
-#include "ParamsPool.h"
+#include "global_data.h"
+
 /* Private define ------------------------------------------------------------*/
 #define READ_IGNITERSWITCH HAL_GPIO_ReadPin(SW_IGNITER_GPIO_Port, SW_IGNITER_Pin)
 /* Private variables ---------------------------------------------------------*/

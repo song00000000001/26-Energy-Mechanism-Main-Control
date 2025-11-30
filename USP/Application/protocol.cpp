@@ -20,7 +20,9 @@
  * 
  */
 #include "internal.h"
-#include "app.h"
+#include "global_data.h"
+#include "protocol.h"
+
 #pragma pack(1)
 struct UniversalHeaderStructdef
 {
@@ -66,6 +68,10 @@ struct DownLinkStructdef
 }DownLinkPack;
 #pragma pack()
 void SendHeartBeat();
+void Launch_Callback()
+{
+    Launch.Igniter_On();
+}
 void packDecoder(uint8_t * _addr,uint8_t len)
 {
   if(_addr[0] != 0xa5) return;
@@ -141,8 +147,4 @@ void SendHeartBeat()
   tmp.address = (uint8_t *)&DownLinkPack;
   tmp.len = sizeof(DownLinkPack);
   SRML_UART_Transmit_DMA(&tmp);
-}
-void Launch_Callback()
-{
-Launch.Igniter_On();
 }
