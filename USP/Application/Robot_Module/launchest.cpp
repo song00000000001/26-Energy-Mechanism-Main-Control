@@ -220,18 +220,90 @@ void Launch_Classdef::Igniter_Off()
 void Launch_Classdef::disable()
 {
     Igniter_On();
-
-    PID_Deliver_Angle[L].clean_intergral();
-    PID_Deliver_Angle[R].clean_intergral();
+    // 失能时为了安全释放扳机，通常是锁住更安全，这里选择释放。
+    
+    for(int i=0; i<2; i++) {
+        PID_Deliver_Angle[i].clean_intergral();
+        PID_Deliver_Speed[i].clean_intergral();
+        DeliverMotor[i].setMotorCurrentOut(0);
+        Deliver_Init_flag[i] = false;
+        DeliverMode[i] = MODE_SPEED_INIT; // 重置回寻找开关模式
+    }
     PID_Igniter_Angle.clean_intergral();
-
-    PID_Deliver_Speed[L].clean_intergral();
-    PID_Deliver_Speed[R].clean_intergral();
     PID_Igniter_Speed.clean_intergral();
-
-    DeliverMotor[L].setMotorCurrentOut(0);
-    DeliverMotor[R].setMotorCurrentOut(0);
     IgniterMotor.setMotorCurrentOut(0);
+    Igniter_Init_flag = false;
+}
+
+
+/**
+ * @brief 滑块初始化逻辑 (需在任务中循环调用)
+ */
+void Launch_Classdef::Deliver_Init_Loop()
+{
+    for (int i = 0; i < 2; i++)
+    {
+        // 如果还没有初始化完成
+        if (Deliver_Init_flag[i] == false)
+        {
+            // 1. 读取限位开关
+            if(READ_DELIVERSWITCH[i]() == GPIO_PIN_RESET) // 假设低电平是触发
+            {
+                // 【关键修改】只在从未触发变为触发的那一瞬间记录 Offset
+                DeliverMotor[i].baseAngle -= DeliverMotor[i].getMotorTotalAngle(); 
+                
+                Deliver_Init_flag[i] = true;
+                DeliverMode[i] = MODE_POS_CALIB; // 切换到位置环控制
+                
+                // 设定初始位置（比如触发点向下一点点，或者就在触发点）
+                PID_Deliver_Angle[i].Target = -10.0f; 
+                PID_Deliver_Speed[i].clean_intergral();
+            }
+            else
+            {
+                // 2. 没碰到开关，继续以速度环向上跑
+                DeliverMode[i] = MODE_SPEED_INIT;
+                PID_Deliver_Speed[i].Target = INIT_SPEED_DELIVER; // 正数向上? 需确认方向
+            }
+        }
+    }
+}
+
+
+/**
+ * @brief 丝杆初始化 (需在任务中循环调用)
+ */
+void Launch_Classdef::Igniter_Init_Loop()
+{
+    if(Igniter_Init_flag == false)
+    {
+        if (READ_IGNITERSWITCH == GPIO_PIN_RESET)
+        {
+            IgniterMotor.baseAngle -= IgniterMotor.getMotorTotalAngle();
+            Igniter_Init_flag = true;
+            PID_Igniter_Angle.Target = 3.0f;
+            PID_Igniter_Angle.clean_intergral();
+        }
+        else
+        {
+            PID_Igniter_Speed.Target = INIT_SPEED_IGNITER;
+        }
+    }
+}
+
+/**
+ * @brief 设置滑块目标位置 (封装双电机)
+ */
+void Launch_Classdef::Set_Deliver_Target(float target_angle)
+{
+    // 只有初始化完成后才允许设定位置
+    if(is_Deliver_Init())
+    {
+        TargetAngle_Deliver = target_angle;
+        for(int i=0; i<2; i++) {
+             PID_Deliver_Angle[i].Target = TargetAngle_Deliver;
+        }
+    }
 }
 
 /* function prototypes -------------------------------------------------------*/

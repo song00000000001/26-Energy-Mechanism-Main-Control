@@ -51,6 +51,18 @@ struct DR16_Snapshot_t {
     float RX_Norm;
 };
 
+/* 状态机枚举定义建议 (在 internal.h) */
+enum LaunchState_e {
+    STATE_OFFLINE,      // 离线/失能
+    STATE_DEINIT,       // 正在初始化/归位
+    STATE_WAIT_CMD,     // 等待发射指令 (滑块在缓冲区，随时可发)
+    STATE_PULLING,      // 正在下拉蓄力
+    STATE_LATCHING,     // 到底部，等待挂机稳定 (User code: PULL delay)
+    STATE_RETURNING,    // 正在回升到缓冲区
+    STATE_FIRING,       // 正在执行发射动作
+    STATE_RELOADING,    // (预留) 正在执行自动装填动作
+    STATE_COOLDOWN      // 发射后冷却
+};
 
 extern DartDataStructdef DartsData[MAX_DART_DATAPOOL_SIZE]; // 飞镖数据
 extern uint8_t DartDataSlot[5];                             // 发射数据选择
