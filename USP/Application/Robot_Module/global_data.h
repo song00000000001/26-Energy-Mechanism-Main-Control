@@ -39,6 +39,11 @@ extern uint8_t CurrentCnt; // 当前发数
 extern float Yaw_Angle[2]; // 默认前哨站和基地角度
 
 
+enum
+{
+  R = 0,
+  L = 1
+};
 
 /************************ COPYRIGHT(C) SCUT-ROBOTLAB **************************/
 

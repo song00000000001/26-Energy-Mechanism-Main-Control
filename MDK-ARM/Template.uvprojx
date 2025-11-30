@@ -425,14 +425,9 @@
               <FilePath>..\USP\Application\System_DataPool.cpp</FilePath>
             </File>
             <File>
-              <FileName>protocol.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\USP\Application\protocol.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>protocol.h</FileName>
+              <FileName>config.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\USP\Application\protocol.h</FilePath>
+              <FilePath>..\USP\Application\Robot_Module\config.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -2891,6 +2886,21 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>USP/Application/protocol</GroupName>
+          <Files>
+            <File>
+              <FileName>protocol.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\USP\Application\Robot_Module\protocol.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>protocol.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Application\Robot_Module\protocol.h</FilePath>
             </File>
           </Files>
         </Group>

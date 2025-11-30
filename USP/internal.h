@@ -19,23 +19,13 @@
 #include "queue.h"
 #include "semphr.h"
 
-
-
-
 #if USE_SRML_BMI088  
-/** TODO:  待BMI088库测试完善，加入srml.h目录里*/
-/** TODO:  25赛季完全删除注释部分，停止对老版BMI解算的支持*/
-//#include "../USP/BMIDriver/Mahony.hpp"
-//#include "../USP/BMIDriver/Drv_BMI088.hpp"
+
 #endif
 #ifdef __cplusplus
 extern "C" {
 #endif
-enum
-{
-  R = 0,
-  L = 1
-};
+
 /* Macro Definitions ---------------------------------------------------------*/
 #define Tiny_Stack_Size       64
 #define Small_Stack_Size      128
