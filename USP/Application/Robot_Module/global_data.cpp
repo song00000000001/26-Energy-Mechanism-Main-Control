@@ -1,4 +1,5 @@
 #include "global_data.h"
+#include "robot_config.h"
 #include "internal.h"
 
 DartDataStructdef DartsData[MAX_DART_DATAPOOL_SIZE]; //发射数据

@@ -38,6 +38,7 @@
 #include "launchest.h"
 #include "internal.h"
 #include "global_data.h"
+#include "robot_config.h"
 
 /* Private define ------------------------------------------------------------*/
 #define READ_IGNITERSWITCH HAL_GPIO_ReadPin(SW_IGNITER_GPIO_Port, SW_IGNITER_Pin)

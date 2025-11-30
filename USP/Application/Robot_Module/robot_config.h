@@ -35,6 +35,10 @@
 #define POS_LOADER_DART3        4090.0f
 #define POS_LOADER_DART4        6820.0f
 
+#define INIT_SPEED_DELIVER            6000
+#define INIT_SPEED_IGNITER            -4500
+#define INIT_SPEED_YAW                -500
+
 /* ==舵机宏== */
 #define servo_igniter_on()        __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_1, 200) // 扳机舵机扣下
 #define servo_igniter_off()       __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_1, 100) // 扳机舵机松开
@@ -72,9 +76,6 @@
 #define SW_YAW_R_GPIO_Port            GPIOA
 #define SW_YAW_L_Pin                  GPIO_PIN_7
 #define SW_YAW_L_GPIO_Port            GPIOA
-
-#define READ_SW_YAWITCH_R() HAL_GPIO_ReadPin(SW_YAW_R_GPIO_Port, SW_YAW_R_Pin)
-#define READ_SW_YAWITCH_L() HAL_GPIO_ReadPin(SW_YAW_L_GPIO_Port, SW_YAW_L_Pin)
 
 #define SW_YAW_R_OFF (HAL_GPIO_ReadPin(SW_YAW_R_GPIO_Port, SW_YAW_R_Pin)==GPIO_PIN_RESET)
 #define SW_YAW_L_OFF (HAL_GPIO_ReadPin(SW_YAW_L_GPIO_Port, SW_YAW_L_Pin)==GPIO_PIN_RESET)

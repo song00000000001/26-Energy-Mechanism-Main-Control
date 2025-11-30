@@ -14,33 +14,6 @@ extern "C"{
 
 // 调试/通信用变量
 
-#define INIT_SPEED_DELIVER            6000
-#define INIT_SPEED_IGNITER            -4500
-#define INIT_SPEED_YAW                -500
-
-
-#define SW_DELIVER_L_Pin              GPIO_PIN_4
-#define SW_DELIVER_L_GPIO_Port        GPIOC
-#define SW_DELIVER_R_Pin              GPIO_PIN_5
-#define SW_DELIVER_R_GPIO_Port        GPIOA
-#define SW_IGNITER_Pin                GPIO_PIN_14
-#define SW_IGNITER_GPIO_Port          GPIOC
-
-#define SW_YAW_R_Pin                  GPIO_PIN_6
-#define SW_YAW_R_GPIO_Port            GPIOA
-#define SW_YAW_L_Pin                  GPIO_PIN_7
-#define SW_YAW_L_GPIO_Port            GPIOA
-
-
-#define POLARITY_DELIVER_L            -1
-#define POLARITY_DELIVER_R            1
-#define POLARITY_IGNITER              1
-#define POLARITY_YAW                  1
-
-#define ID_DELIVER_L                  4
-#define ID_DELIVER_R                  3
-#define ID_IGNITER                    1
-#define ID_YAW                        2
 
 // 飞镖数据存储相关定义
 //最大飞镖数据池大小?待确认
@@ -57,7 +30,6 @@ typedef struct __DartDataStructdef
   double Ignitergoal[2]; //扳机目标位置
   double YawCorrectionAngle[2];//偏航修正角
 }DartDataStructdef;
-
 
 
 extern DartDataStructdef DartsData[MAX_DART_DATAPOOL_SIZE]; // 飞镖数据
