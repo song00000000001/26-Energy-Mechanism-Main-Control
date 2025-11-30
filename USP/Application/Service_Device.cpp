@@ -47,7 +47,6 @@ TaskHandle_t LoaderMotor_Handle;
 TaskHandle_t DR16_Handle;
 TaskHandle_t Rx_Referee_Handle;
 TaskHandle_t LaunchCtrl_Handle;
-TaskHandle_t HX711_Handle;
 TaskHandle_t motor_HAndle;
 TaskHandle_t Loader_Ctrl_Handle;
 TaskHandle_t Vision_Task_Handle;
@@ -61,7 +60,7 @@ void Rx_Referee(void *arg);
 void Vision_Task(void *arg);
 void Yaw_Task(void *arg);
 void turn1(float angle);
-void HX711_Read(void *arg);
+
 /* Function prototypes -------------------------------------------------------*/
 /**
  * @brief  Initialization of device management service
@@ -75,7 +74,6 @@ void Service_Devices_Init(void)
 	xTaskCreate(Loader_Ctrl, "App.Loader_Ctrl", Small_Stack_Size, NULL, PriorityAboveNormal, &Loader_Ctrl_Handle);
 	xTaskCreate(Vision_Task, "App.Vision_Task", Small_Stack_Size, NULL, PriorityAboveNormal, &Vision_Task_Handle);
 	xTaskCreate(Yaw_Task, "App.Yaw_Task", Normal_Stack_Size, NULL, PriorityAboveNormal, &Yaw_Task_Handle);
-	xTaskCreate(HX711_Read, "App.Hx711", Small_Stack_Size, NULL, PriorityAboveNormal, &HX711_Handle);
 #if USE_SRML_DR16
 	xTaskCreate(tskDR16, "App.DR16", Small_Stack_Size, NULL, PrioritySuperHigh, &DR16_Handle);
 #endif
@@ -507,61 +505,3 @@ void Rx_Referee(void *arg)
 	}
 }
 #endif
-/**
- * @brief  力传感器读取
- * @param  None.
- * @return None.
- */
-#define CLK_Pin GPIO_PIN_0
-#define CLK_GPIO_Port GPIOB
-#define DOUT_Pin GPIO_PIN_1
-#define DOUT_GPIO_Port GPIOB
-#define SET_CLK(x) HAL_GPIO_WritePin(CLK_GPIO_Port, CLK_Pin, (GPIO_PinState)x)
-#define READ_DOUT HAL_GPIO_ReadPin(DOUT_GPIO_Port, DOUT_Pin)
-int32_t debug_data;
-int32_t raw_data;
-float force_t;
-float force;
-float Force_k = (9.8 / 10.6) * 0.2286974737747255f;
-float Force_b = (-143.6) + 1910.212986861924f;
-float lastforce;
-void HX711_Read(void *arg)
-{
-	uint32_t count;
-	SET_CLK(0); // 拉低时钟引脚
-	delay_us_nos(2);
-	for (;;)
-	{
-		count = 0;
-		while (READ_DOUT != 0)
-		{
-			vTaskDelay(1);
-		}
-
-		taskDISABLE_INTERRUPTS(); // 关闭中断，若使用中断关闭，请确保SRML定时器的中断不受FreeRTOS管辖
-		for (int i = 0; i < 24; i++)
-		{
-			SET_CLK(1);
-			count = count << 1;
-			delay_us_nos(3);
-
-			if (READ_DOUT == GPIO_PIN_SET)
-				count++;
-
-			SET_CLK(0);
-			delay_us_nos(3);
-		}
-		taskENABLE_INTERRUPTS();
-
-		SET_CLK(1);
-		debug_data = count;
-		count = count ^ 0x800000; // 第25个脉冲信号到来，进行数据转换
-															// 获得24位的数据，对0x800000异或相当于把最高位取反。
-															// 把符号位当做有效位，防止突然出现负值波动
-		delay_us_nos(2);
-		SET_CLK(0);
-		raw_data = count;
-		force = (Force_k * 0.001f * count) - (Force_b);
-		vTaskDelay(1);
-	}
-}
