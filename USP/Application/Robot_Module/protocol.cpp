@@ -126,6 +126,18 @@ void packDecoder(uint8_t * _addr,uint8_t len)
     SendHeartBeat();
   }
 }
+
+/**
+ * @brief 飞镖调参版数据查询接口
+ *
+ * @return uint8_t
+ */
+
+bool Is_Launching()
+{
+	return (state == WAIT_SHOOT || state == PULL);
+}
+
 void SendHeartBeat()
 {
   DownLinkPack.SOF = 0xA5;

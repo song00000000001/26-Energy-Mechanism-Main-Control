@@ -79,3 +79,4 @@
 
 #define SW_YAW_R_OFF (HAL_GPIO_ReadPin(SW_YAW_R_GPIO_Port, SW_YAW_R_Pin)==GPIO_PIN_RESET)
 #define SW_YAW_L_OFF (HAL_GPIO_ReadPin(SW_YAW_L_GPIO_Port, SW_YAW_L_Pin)==GPIO_PIN_RESET)
+

@@ -38,6 +38,17 @@ void System_Device_Init(void)
   //Timer_Init(&htim5, USE_HAL_DELAY);//此设置语句使得delay_ms_nos()函数调用的是HAL_Delay(),容易造成FreeRTOS进程紊乱
 #endif
 
+//song_modify_start
+  // pwm init
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+//song_modify_end
+
+
 #if USE_SRML_CAN
   // can init
   CAN_Init(&hcan1, User_CAN1_RxCpltCallback);

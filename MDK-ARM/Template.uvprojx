@@ -2905,6 +2905,26 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>USP/Application/task</GroupName>
+          <Files>
+            <File>
+              <FileName>aiming_controller.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\USP\Application\Robot_Module\aiming_controller.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>loader_controller.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\USP\Application\Robot_Module\loader_controller.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>main_controller.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\USP\Application\Robot_Module\main_controller.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>::Compiler</GroupName>
         </Group>
       </Groups>

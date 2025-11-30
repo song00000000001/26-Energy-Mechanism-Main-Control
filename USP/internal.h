@@ -163,6 +163,14 @@ uint32_t Referee_recv_Callback(uint8_t *Recv_Data, uint16_t ReceiveLen);
 void User_VirtualComRecCpltCallback(uint8_t *Recv_Data, uint16_t ReceiveLen);
 #endif
 
+//自定义任务函数声明
+void tskLoaderMotor(void *arg);
+void LaunchCtrl(void *arg);
+void Loader_Ctrl(void *arg);
+void tskDR16(void *arg);
+void Yaw_Task(void *arg);
+void turn1(float angle);
+
 #ifdef __cplusplus
 }
 #endif
