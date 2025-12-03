@@ -47,8 +47,10 @@ struct DR16_Snapshot_t {
     LinkageStatus_Typedef Status;
     SW_Status_Typedef S1;
     SW_Status_Typedef S2;
-    float RY_Norm;
     float RX_Norm;
+    float RY_Norm;
+    float LX_Norm;
+    float LY_Norm;
 };
 
 /* 状态机枚举定义建议 (在 internal.h) */
