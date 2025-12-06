@@ -150,10 +150,9 @@ extern Launch_Classdef Launch; // 发射类
 extern Missle_YawController_Classdef Yaw; // yaw控制类
 extern float yaw_target , yaw_goal , igniter_target_pos , igniter_goal_pos;
 
-extern int status;
 extern int cnt;
-extern int goal;
-extern int open;
+
+
 extern float visionangle;
 extern myPID anglepid;
 extern myPID speedpid;

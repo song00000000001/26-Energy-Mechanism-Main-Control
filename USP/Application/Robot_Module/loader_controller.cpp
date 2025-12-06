@@ -2,19 +2,29 @@
 #include "global_data.h"
 #include "robot_config.h"
 #include "tim.h"
+
 /**
- * @brief 装填状态控制任务
+ * @brief 装填主控任务
  * @parma None
  * @return None
  */
 void Loader_Ctrl(void *arg)
 {
+	/*	pre load for task	*/
+	Motor_CAN_COB Tx_Buff = {};
 	TickType_t xLastWakeTime_t;
 	xLastWakeTime_t = xTaskGetTickCount();
+	anglepid.SetPIDParam(4, 0, 0.1, 100, 1200);
+	speedpid.SetPIDParam(8, 1, 0, 100, 16000);
+    static uint16_t goal=0;										// 装填电机的目标值
+    bool open = 1;											// 此值为0时装填镖体，为1时准备发射
+    int status = 1;						            // 装填状态（1~4分别对应4发飞镖）
 	for (;;)
 	{
 		vTaskDelayUntil(&xLastWakeTime_t, 1);
-		if (status != 0 && status % 4 == 1) // 第一发
+
+        //装填舵机控制
+        if (status != 0 && status % 4 == 1) // 第一发
 		{
 			if (open == 0)
 			{
@@ -46,27 +56,11 @@ void Loader_Ctrl(void *arg)
 			}
 			Loader_Clamps_Release3();
 		}
-	}
-}
-/**
- * @brief 装填主控任务
- * @parma None
- * @return None
- */
-void tskLoaderMotor(void *arg)
-{
-	/*	pre load for task	*/
-	Motor_CAN_COB Tx_Buff = {};
-	TickType_t xLastWakeTime_t;
-	xLastWakeTime_t = xTaskGetTickCount();
-	anglepid.SetPIDParam(4, 0, 0.1, 100, 1200);
-	speedpid.SetPIDParam(8, 1, 0, 100, 16000);
-	for (;;)
-	{
-		vTaskDelayUntil(&xLastWakeTime_t, 1);
-		turn1(goal);
+
+        //装填电机控制
+        turn1(goal);
 		motor_dji::MotorMsgPack(Tx_Buff, loadermotor[0]);
-		xQueueSend(CAN2_TxPort, &Tx_Buff.Id2ff, 0);
+		xQueueSend(CAN2_TxPort, &Tx_Buff.Id2ff, 0);    
 	}
 }
 

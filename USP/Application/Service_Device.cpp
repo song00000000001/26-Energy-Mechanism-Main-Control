@@ -35,7 +35,7 @@
 /* Private define ------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-TaskHandle_t LoaderMotor_Handle;
+
 TaskHandle_t DR16_Handle;
 TaskHandle_t Rx_Referee_Handle;
 TaskHandle_t LaunchCtrl_Handle;
@@ -57,11 +57,10 @@ void Vision_Task(void *arg);
  */
 void Service_Devices_Init(void)
 {
-	xTaskCreate(tskLoaderMotor, "App.Motor", Small_Stack_Size, NULL, PriorityAboveNormal, &LoaderMotor_Handle);
 	xTaskCreate(LaunchCtrl, "App.LaunchCtrl", Normal_Stack_Size, NULL, PriorityAboveNormal, &LaunchCtrl_Handle);
 	xTaskCreate(Loader_Ctrl, "App.Loader_Ctrl", Small_Stack_Size, NULL, PriorityAboveNormal, &Loader_Ctrl_Handle);
-	xTaskCreate(Vision_Task, "App.Vision_Task", Small_Stack_Size, NULL, PriorityAboveNormal, &Vision_Task_Handle);
-	xTaskCreate(Yaw_Task, "App.Yaw_Task", Normal_Stack_Size, NULL, PriorityAboveNormal, &Yaw_Task_Handle);
+	//xTaskCreate(Vision_Task, "App.Vision_Task", Small_Stack_Size, NULL, PriorityAboveNormal, &Vision_Task_Handle);
+	//xTaskCreate(Yaw_Task, "App.Yaw_Task", Normal_Stack_Size, NULL, PriorityAboveNormal, &Yaw_Task_Handle);
 #if USE_SRML_DR16
 	xTaskCreate(tskDR16, "App.DR16", Small_Stack_Size, NULL, PrioritySuperHigh, &DR16_Handle);
 #endif

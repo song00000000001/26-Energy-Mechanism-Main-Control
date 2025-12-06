@@ -19,10 +19,10 @@ uint32_t vision_last_recv_time = 0;
 Missle_State_t state = DEINIT;
 float yaw_target = 0, yaw_goal = 0, igniter_target_pos = 0, igniter_goal_pos = 0;
 
-int status = 1;						            // 装填状态（1~4分别对应4发飞镖）
+
 int cnt = 0;									// 控制status在每次装填后只加一
-int goal;										// 装填电机的目标值
-int open = 0;									// 此值为0时装填镖体，为1时准备发射
+
+
 float visionangle;								// 视觉目标角
 myPID anglepid;									// 装填电机的编码器环
 myPID speedpid;									// 装填电机的速度环
