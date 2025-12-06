@@ -109,7 +109,7 @@
 #define USE_SRML_MOTOR_CTRL               0   // 电机控制库（dji电机库与pid库结合）
 #define USE_SRML_OLD_POW_CTRL             0   // 旧功控库
 // Utility
-#define USE_SRML_VOFA_MONITOR             0   // Vofa上位机
+#define USE_SRML_VOFA_MONITOR             1   // Vofa上位机
 #define USE_SRML_UPPER_MONITOR            0   // Upper上位机
 #define USE_SRML_ASUWAVE_MONITOR          0   // Asuwave上位机
 #define USE_SRML_LIST                     0

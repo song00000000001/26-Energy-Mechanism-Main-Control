@@ -16,8 +16,8 @@ void Loader_Ctrl(void *arg)
     myPID anglepid;									// 装填电机的编码器环
     myPID speedpid;									// 装填电机的速度环
 	xLastWakeTime_t = xTaskGetTickCount();
-	anglepid.SetPIDParam(4, 0, 0.1, 100, 1200);
-	speedpid.SetPIDParam(8, 1, 0, 100, 16000);
+	anglepid.SetPIDParam(10, 0, 0, 100, 1200);
+	speedpid.SetPIDParam(50, 1, 0, 1000, 16000);
     static uint16_t goal=0;										// 装填电机的目标值
     bool open = 1;											// 此值为0时装填镖体，为1时准备发射
     int status = 1;						            // 装填状态（1~4分别对应4发飞镖）

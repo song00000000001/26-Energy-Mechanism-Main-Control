@@ -7,6 +7,7 @@
  **/
 /* Includes ------------------------------------------------------------------*/
 #include "internal.h"
+#include "global_data.h"
 
 /* Private define ------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -84,10 +85,11 @@ void Task_VofaMonitor(void *arg){
 		vTaskDelayUntil(&xLastWakeTime_t, 5);
 
 		/* 在此处传入需要观察的变量，第一个参数为通道的起始编号 */
-		VofaMonitor::setDatas(0, mpu_receive.pitch, mpu_receive.yaw, mpu_receive.roll);
+		//VofaMonitor::setDatas(0, mpu_receive.pitch, mpu_receive.yaw, mpu_receive.roll);
 		//VofaMonitor::setDatas(3, data3, data4, data5);
 		//VofaMonitor::setDatas(6, data6, data7, data8, data9);
 		/* 选择串口id */
+        VofaMonitor::setDatas(0, loadermotor[0].getAngle(), loadermotor[0].getSpeed());
 		VofaMonitor::send(4);
 	}
 }
