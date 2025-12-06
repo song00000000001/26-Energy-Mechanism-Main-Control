@@ -173,5 +173,6 @@ extern uint32_t vision_last_recv_time ; // 视觉最后接收时间
 extern VisionRecvData_t vision_recv_pack;
 extern VisionSendData_t vision_send_pack;
 
+extern Robot_Ctrl_t Robot; 
 /************************ COPYRIGHT(C) SCUT-ROBOTLAB **************************/
 

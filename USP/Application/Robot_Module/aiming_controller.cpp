@@ -13,7 +13,8 @@ float Yaw_Angle[2]; // 默认前哨站和基地角度
 enum vision_aim_state_enum
 {
     MANUAL_AIM = 0,
-    VISION_AIM = 1
+    VISION_AIM = 1,
+    CORRECT_AIM = 2
 };
 
 void Yaw_Task(void *arg)
@@ -29,24 +30,19 @@ void Yaw_Task(void *arg)
 	for (;;)
 	{
 		vTaskDelayUntil(&xLastWakeTime_t, 1);
-		if (DR16.GetStatus() == DR16_ESTABLISHED)
+		if (DR16.GetStatus() == DR16_ESTABLISHED && DR16.GetS2() != SW_UP)
 		{
+            if(DR16.GetS2() == SW_MID) // 右拨杆中档，手动模式
+            {
+                vision_aim_state = MANUAL_AIM;
+            }
+            else if(DR16.GetS2() == SW_DOWN) // 右拨杆朝下，视觉模式
+            {
+                vision_aim_state = CORRECT_AIM;
+            }
+
             //如果已经校准过
             if (Yawer.is_Yaw_Init() == 1){
-                if(DR16.GetS2() == SW_UP)// 右拨杆朝上，不使能电机
-                {
-                    Yawer.disable();
-                    //continue;
-                }
-                else if(DR16.GetS2() == SW_MID) // 右拨杆中档，手动模式
-                {
-                    vision_aim_state = MANUAL_AIM;
-                }
-                else if(DR16.GetS2() == SW_DOWN) // 右拨杆朝下，视觉模式
-                {
-                    vision_aim_state = VISION_AIM;
-                }
-
                 if(vision_aim_state == MANUAL_AIM)
                 {
                     //_YawCorrectionAngle += DR16.Get_RY_Norm() * 0.1f; // 手动微调
@@ -57,7 +53,6 @@ void Yaw_Task(void *arg)
                 }
                 else if(vision_aim_state == VISION_AIM)
                 {
-                    Yawer.update(_YawCorrectionAngle + Yaw_Angle[HitTarget]); // 更改Yaw轴角度
                     /*todo
                     测试时，暂时不管视觉
                     storage_base_angle = Yaw_Angle[HitTarget];
@@ -80,10 +75,10 @@ void Yaw_Task(void *arg)
                     */
                 }
                 else{
-                    //意外情况
-                    Yawer.disable();
-                    //continue;
+                     //固定修正值模式
+                     Yawer.update(_YawCorrectionAngle + Yaw_Angle[HitTarget]); // 更改Yaw轴角度
                 }
+ 
             }
             else{
                 //未完成校准
@@ -100,7 +95,6 @@ void Yaw_Task(void *arg)
         }
 	    /*打包发送*/
         MotorMsgPack(Tx_Buff1, Yawer.YawMotor);
-        xQueueSend(CAN1_TxPort, &Tx_Buff1.Id1ff, 0);
-        //xQueueSend(CAN2_TxPort, &Tx_Buff1.Id1ff, 0);
+        xQueueSend(CAN2_TxPort, &Tx_Buff1.Id1ff, 0);
 	}
 }
