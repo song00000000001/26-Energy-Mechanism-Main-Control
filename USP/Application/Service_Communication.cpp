@@ -66,10 +66,10 @@ void Service_Communication_Init(void)
 # endif
   /* USART Management */
 #if USE_SRML_UART
-  xTaskCreate(Task_UsartReceive, "Com.Usart RxPort", Small_Stack_Size, NULL, PriorityRealtime, &UartReceivePort_Handle);
-  xTaskCreate(Task_UsartTransmit, "Com.Usart TxPort", Small_Stack_Size, NULL, PriorityRealtime, &UartTransmitPort_Handle);
+  //xTaskCreate(Task_UsartReceive, "Com.Usart RxPort", Small_Stack_Size, NULL, PriorityRealtime, &UartReceivePort_Handle);
+  //xTaskCreate(Task_UsartTransmit, "Com.Usart TxPort", Small_Stack_Size, NULL, PriorityRealtime, &UartTransmitPort_Handle);
 #endif
-  xTaskCreate(Task_ParamChanger, "change", Normal_Stack_Size, NULL, PriorityHigh, NULL);
+  //xTaskCreate(Task_ParamChanger, "change", Normal_Stack_Size, NULL, PriorityHigh, NULL);
 }
 
 /*----------------------------------------------- CAN Manager ---------------------------------------------*/
@@ -141,19 +141,19 @@ void Task_CAN1Receive(void *arg)
     /* update motor data from CAN1_RxPort */
     if (xQueueReceive(CAN1_RxPort, &CAN_RxCOB, portMAX_DELAY) == pdPASS)
     {
-      if (Launch.DeliverMotor[L].update(CAN_RxCOB.ID, CAN_RxCOB.Data))
-      {
-      }
-      else if (Launch.DeliverMotor[R].update(CAN_RxCOB.ID, CAN_RxCOB.Data))
-      {
-      }
-      else if (Launch.IgniterMotor.update(CAN_RxCOB.ID, CAN_RxCOB.Data))
-      {
-      }
-      else if (Yaw.YawMotor.update(CAN_RxCOB.ID, CAN_RxCOB.Data))
-      {}
-			else if(loadermotor[0].update(CAN_RxCOB.ID,CAN_RxCOB.Data))
-			{}
+        if (Launch.DeliverMotor[L].update(CAN_RxCOB.ID, CAN_RxCOB.Data))
+        {
+        }
+        else if (Launch.DeliverMotor[R].update(CAN_RxCOB.ID, CAN_RxCOB.Data))
+        {
+        }
+        else if (Launch.IgniterMotor.update(CAN_RxCOB.ID, CAN_RxCOB.Data))
+        {
+        }
+        else if (Yaw.YawMotor.update(CAN_RxCOB.ID, CAN_RxCOB.Data))
+        {}
+        else if(loadermotor[0].update(CAN_RxCOB.ID,CAN_RxCOB.Data))
+        {}
     }
   }
 }

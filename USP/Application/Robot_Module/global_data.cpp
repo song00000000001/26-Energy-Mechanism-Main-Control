@@ -9,7 +9,7 @@ uint8_t ParamSendPack[9];
 uint8_t CurrentCnt=1;
 float Yaw_Angle[2];
 float _YawCorrectionAngle;//yaw轴修正角
-Motor_GM6020 loadermotor[1]{5};//装填电机
+Motor_GM6020 loadermotor[1]{ID_LOADER};//装填电机
 Launch_Classdef Launch(ID_DELIVER_R, ID_DELIVER_L, ID_IGNITER); //发射类
 Missle_YawController_Classdef Yaw(ID_YAW);//yaw控制类
 VisionRecvData_t vision_recv_pack;//电视接收包

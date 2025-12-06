@@ -9,7 +9,7 @@
 #define ID_DELIVER_R                  3     // 右同步轮
 #define ID_IGNITER                    1     // 扳机丝杆   
 #define ID_YAW                        2     // 云台偏航
-#define ID_LOADER                     5     // 装填转盘
+#define ID_LOADER                     1     // 装填转盘
 
 /* ================= 电机极性定义 ================= */
 // 1 或 -1

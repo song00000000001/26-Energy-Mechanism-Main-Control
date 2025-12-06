@@ -60,7 +60,8 @@ void Loader_Ctrl(void *arg)
         //装填电机控制
         turn1(goal);
 		motor_dji::MotorMsgPack(Tx_Buff, loadermotor[0]);
-		xQueueSend(CAN2_TxPort, &Tx_Buff.Id2ff, 0);    
+        xQueueSend(CAN2_TxPort, &Tx_Buff.Id1ff, 0);   
+		//xQueueSend(CAN2_TxPort, &Tx_Buff.Id2ff, 0);    
 	}
 }
 
@@ -73,7 +74,7 @@ void turn1(float angle)
 {
 	Motor_CAN_COB Tx_Buff = {};
 	anglepid.Target = angle;
-	anglepid.Current = loadermotor[0].getEncoder();
+	anglepid.Current = loadermotor[0].getAngle();
 	anglepid.Adjust();
 	speedpid.Target = anglepid.Out;
 	speedpid.Current = loadermotor[0].getSpeed();
