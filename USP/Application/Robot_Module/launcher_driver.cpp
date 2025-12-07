@@ -4,12 +4,7 @@
 #include "launcher_driver.h"
 #include "robot_config.h" // 包含硬件定义，如 PWM 宏等
 
-/* 常量定义 */
-//这里ai的配置和原本的不一样,需要注意
-#define DELIVER_HOME_SPEED   (1000.0f) // 归零时的向上速度
-#define IGNITER_HOME_SPEED   (-1000.0f)
-#define DELIVER_OFFSET_POS   (-20.0f)  // 碰到开关后设置的初始坐标
-#define IGNITER_OFFSET_POS   (3.0f)
+
 
 // 构造函数
 Launcher_Driver::Launcher_Driver(uint8_t id_l, uint8_t id_r, uint8_t id_ign)
@@ -36,11 +31,11 @@ Launcher_Driver::Launcher_Driver(uint8_t id_l, uint8_t id_r, uint8_t id_ign)
     
     for(int i=0; i<2; i++) {
         pid_deliver_spd[i].SetPIDParam(20.0f, 2.0f, 0.0f, 8000, 16380);
-        pid_deliver_pos[i].SetPIDParam(800.f, 0.0, 0.0, 1000, 8000);
+        pid_deliver_pos[i].SetPIDParam(800.f, 0.0, 0.0, 1000, DELIVER_MAX_SPEED);
     }
     
-    pid_igniter_spd.SetPIDParam(15.0, 0.0, 0.0, 3000, 16000);
-    pid_igniter_pos.SetPIDParam(3000.0, 0.0, 0.0, 3000, 7000);
+    pid_igniter_spd.SetPIDParam(15.0, 0.0, 0.0, 3000, 6000);
+    pid_igniter_pos.SetPIDParam(3000.0, 0.0, 0.0, 3000, IGNITER_MAX_SPEED);
 }
 
 // ================= 动作接口 =================
@@ -54,8 +49,7 @@ void Launcher_Driver::start_calibration()
         pid_deliver_spd[i].clean_intergral();
         pid_deliver_pos[i].clean_intergral();
     } 
-    mode_igniter = MODE_DISABLE;
-    //mode_igniter = MODE_HOMING;
+    mode_igniter = MODE_HOMING;
     pid_igniter_spd.clean_intergral();
     pid_igniter_pos.clean_intergral();
 }
@@ -101,7 +95,6 @@ void Launcher_Driver::check_calibration_logic()
     // --- 滑块归零逻辑 ---
     // 定义局部数组方便遍历 [0]=L, [1]=R
     
-
     if (mode_deliver[0] == MODE_HOMING) {
         // 如果碰到开关 (假设低电平触发)
         if (SW_DELIVER_L_OFF) {
@@ -140,6 +133,8 @@ void Launcher_Driver::check_calibration_logic()
     // --- 丝杆归零逻辑 ---
     if (mode_igniter == MODE_HOMING) {
         if (SW_IGNITER_OFF) {
+            pid_igniter_pos.clean_intergral();
+            pid_igniter_spd.clean_intergral();
             IgniterMotor.baseAngle -= IgniterMotor.getMotorTotalAngle();
             mode_igniter = MODE_POSITION;
             is_igniter_homed = true;
@@ -194,7 +189,7 @@ void Launcher_Driver::run_1ms()
                 
             default: speed_cmd = 0; break;
         }
-
+        
         // 执行速度环
         if (mode_deliver[i] != MODE_DISABLE) {
             pid_deliver_spd[i].Target = speed_cmd;
@@ -205,7 +200,7 @@ void Launcher_Driver::run_1ms()
             DeliverMotor[i].setMotorCurrentOut(0);
         }
     }
-// 3. 丝杆控制循环
+    // 3. 丝杆控制循环
     // ------------------------------------------------
     float ign_spd_cmd = 0;
     switch (mode_igniter) {
@@ -243,7 +238,7 @@ void Launcher_Driver::run_1ms()
 // ================= 状态查询 =================
 
 bool Launcher_Driver::is_calibrated() {
-    return is_deliver_homed[0] && is_deliver_homed[1] ;//&& is_igniter_homed;
+    return is_deliver_homed[0] && is_deliver_homed[1] && is_igniter_homed;
 }
 
 bool Launcher_Driver::is_deliver_at_target() {
@@ -254,7 +249,7 @@ bool Launcher_Driver::is_deliver_at_target() {
 
 bool Launcher_Driver::is_igniter_at_target() {
     uint16_t err=abs(IgniterMotor.getMotorTotalAngle() - target_igniter_angle);
-    return (err < 2.0f);
+    return (err < 5.0f);
 }
 
 bool Launcher_Driver::get_switch_state_L() { return (read_switch_L() == GPIO_PIN_RESET); }

@@ -3,8 +3,7 @@
 #include "launcher_driver.h"
 #include "robot_config.h"
 
-#define POS_BUFFER -20
-#define POS_BOTTOM -620
+
 
 /* --- 2. 辅助变量 --- */
 static uint32_t stick_hold_timer = 0; // 用于长按判断
@@ -166,7 +165,6 @@ static void Run_Firing_Sequence()
         if ((xTaskGetTickCount() - state_timer) > 1000) {
             // 判断是否继续连发
             // if (Robot.Status.dart_count < Robot.Cmd.burst_num) ...
-            
             fire_state = FIRE_IDLE;
         }
         break;
@@ -198,23 +196,40 @@ void LaunchCtrl(void *arg)
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-
-        // ---------------- [A] 传感器与输入 (Input) ----------------
         
-        // 2. 解析遥控器/视觉指令 -> 存入 Robot.Cmd
+        //解析遥控器/视觉指令 -> 存入 Robot.Cmd
         Update_Input(); 
-
 		
-		
-        // 3. 全局离线保护 (优先级最高)
         if (DR16.GetStatus() != DR16_ESTABLISHED) {
             Robot.Status.current_state = SYS_OFFLINE;
         }
-
-        // ---------------- [B] 主状态机逻辑 (Think) ----------------
+		
+        /*在非校准状态如果发生碰撞限位的现象，则立即取消使能并且记录错误电机信息，
+        并且重置为error状态，此时会将该电机的校准状态重置，
+        需要重新进行限位校准，此时如果拨右摇杆朝下则会反向旋转对应电机，
+        拨左摇杆取消使能则进入check状态，
+        */
+		/*
+        if(Robot.Status.current_state != SYS_CALIBRATING){
+            if(SW_IGNITER_OFF||SW_YAW_L_OFF||SW_YAW_R_OFF||SW_DELIVER_L_OFF||SW_DELIVER_R_OFF){
+                Robot.Status.current_state = SYS_ERROR; // 进入错误状态
+            }
+        } */
         
+       
         switch (Robot.Status.current_state)
         {
+		/*case SYS_ERROR:
+		{
+			stop_all_motor();
+            // 恢复条件：
+            if (DR16.GetStatus() == DR16_ESTABLISHED&&DR16.GetS1()==SW_UP) {
+                Robot.Status.current_state = SYS_CHECKING;
+            }
+		}  
+			break;
+			*/
+			
         case SYS_OFFLINE:
         {
             stop_all_motor();
@@ -251,17 +266,15 @@ void LaunchCtrl(void *arg)
         case SYS_STANDBY:
             // --- 待机 / 手动模式 ---
             Launcher.set_deliver_target(POS_BUFFER); // 回缓冲
-            if (Robot.Cmd.manual_override) {
+           
+             if (Robot.Cmd.manual_override) {
                 // 手动微调逻辑
                 // 读取当前角度 + 摇杆增量
-                //float new_igniter_pos = Launcher.get_igniter_angle() + Robot.Cmd.manual_pitch_inc;
-                // 将计算结果传给驱动
-                //Launcher.set_igniter_target(new_igniter_pos);
-                
-                // 手动模式下，建议把滑块移开，防止卡住
-                //Launcher.set_deliver_target(-200.0f); // 缓冲区位置
+                float new_igniter_pos = Launcher.get_igniter_angle() + DR16.Get_LY_Norm() * 0.002f;
+                //将计算结果传给驱动
+                Launcher.set_igniter_target(new_igniter_pos);
             }
-            
+			 
             // 切换到自动模式
             if (Robot.Cmd.auto_mode) {
                 Robot.Status.current_state = SYS_AUTO_PREP;
@@ -272,10 +285,10 @@ void LaunchCtrl(void *arg)
             // --- 自动发射准备 ---
             // 确保机构归位到待发状态
 			Launcher.set_deliver_target(POS_BUFFER); // 回缓冲
-            //Launcher.set_igniter_target(150.0f);  // 去瞄准默认高度(示例)
+            Launcher.set_igniter_target(POS_IGNITER);  // 去瞄准默认高度(示例)
             
             // 检查是否到位
-            if (Launcher.is_deliver_at_target() )//&& Launcher.is_igniter_at_target()) 
+            if (Launcher.is_deliver_at_target() && Launcher.is_igniter_at_target()) 
             {  
                 Robot.Status.current_state = SYS_AUTO_FIRE;
             }
@@ -290,12 +303,12 @@ void LaunchCtrl(void *arg)
             if (!Robot.Cmd.auto_mode) Robot.Status.current_state = SYS_STANDBY;
             break;
         }
-        // ---------------- [C] 执行底层控制 (Act) ----------------
-        
-        // 只有在非 OFFLINE 且非 CHECKING 时，才允许驱动层输出电流
-        // 这是一个双重保险
+
         if (Robot.Status.current_state != SYS_OFFLINE && 
-            Robot.Status.current_state != SYS_CHECKING&&DR16.GetS1()!=SW_UP) 
+            Robot.Status.current_state != SYS_CHECKING&&
+           // Robot.Status.current_state != SYS_ERROR &&
+            DR16.GetS1()!=SW_UP
+        ) 
         {
             // 驱动层，负责计算 PID、处理归零逻辑、输出电流
             Launcher.run_1ms();

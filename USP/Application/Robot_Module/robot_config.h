@@ -20,25 +20,23 @@
 #define POLARITY_LOADER               1     // 装填转盘
 
 /* ================= 机械常数 & 目标值 ================= */
-// Deliver (滑块)
-#define POS_DELIVER_INIT        -10.0f      // 复位位置
-#define POS_DELIVER_PULL        -640.0f     // 拉栓位置
-#define SPEED_DELIVER_INIT      1000.0f     // 校准速度
 
-// Igniter (扳机丝杆)
-#define POS_IGNITER_INIT        3.0f        // 复位位置
-#define SPEED_IGNITER_INIT      2000.0f     // 校准速度
+/* 常量定义 */
+// 归零时的速度,速度环输入
+#define INIT_SPEED_YAW        -500
+#define DELIVER_HOME_SPEED   1000
+#define IGNITER_HOME_SPEED   -1500
 
-// Loader (装填转盘) - 编码器值
-#define POS_LOADER_READY        0.0f
-#define POS_LOADER_DART1        2750.0f
-#define POS_LOADER_DART2        1340.0f
-#define POS_LOADER_DART3        4090.0f
-#define POS_LOADER_DART4        6820.0f
+//角度环输出限幅
+#define DELIVER_MAX_SPEED    4000
+#define IGNITER_MAX_SPEED    3000
 
-#define INIT_SPEED_DELIVER            6000
-#define INIT_SPEED_IGNITER            -4500
-#define INIT_SPEED_YAW                -500
+#define DELIVER_OFFSET_POS   -20  // 碰到开关后设置的初始坐标
+#define IGNITER_OFFSET_POS   3   // 复位位置
+
+#define POS_BUFFER -20       // 复位位置
+#define POS_IGNITER 100     //行程电机位置
+#define POS_BOTTOM -620      // 拉栓位置
 
 //以下用到了c语言函数,需要加extern "C"修饰
 #ifdef __cplusplus
@@ -90,7 +88,7 @@ void test_servo_action();
 
 #define SW_DELIVER_L_OFF (HAL_GPIO_ReadPin(SW_DELIVER_L_GPIO_Port, SW_DELIVER_L_Pin))==GPIO_PIN_RESET
 #define SW_DELIVER_R_OFF (HAL_GPIO_ReadPin(SW_DELIVER_R_GPIO_Port, SW_DELIVER_R_Pin))==GPIO_PIN_RESET
-#define SW_IGNITER_OFF (HAL_GPIO_ReadPin(SW_IGNITER_GPIO_Port, SW_IGNITER_Pin))==GPIO_PIN_RESET
+#define SW_IGNITER_OFF (HAL_GPIO_ReadPin(SW_IGNITER_GPIO_Port, SW_IGNITER_Pin))==GPIO_PIN_SET
 
 #define SW_YAW_R_OFF (HAL_GPIO_ReadPin(SW_YAW_R_GPIO_Port, SW_YAW_R_Pin))==GPIO_PIN_RESET
 #define SW_YAW_L_OFF (HAL_GPIO_ReadPin(SW_YAW_L_GPIO_Port, SW_YAW_L_Pin))==GPIO_PIN_RESET

@@ -46,7 +46,7 @@ void Loader_Ctrl(void *arg)
         #if 0
         //测试电机gm6020-id1，用此命令
         MotorMsgPack(Tx_Buff, loadermotor);
-        xQueueSend(CAN2_TxPort, &Tx_Buff.Id1ff, 0);   
+        xQueueSend(CAN2_TxPort, &Tx_Buff.Id1ff, 0);   //注意，输出指令有误
         #elif 0
         //装填电机gm6020-id2，用此命令 
         MotorMsgPack(Tx_Buff, loadermotor);

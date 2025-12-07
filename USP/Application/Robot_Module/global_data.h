@@ -79,6 +79,7 @@ enum LaunchState_e {
 // --- 1. 枚举定义 (Enums) ---
 typedef enum {
     SYS_OFFLINE = 0,    // 离线/故障
+    //SYS_ERROR,           // 错误状态,一般是运行中电机失控装限位开关
     SYS_CHECKING,       // 自检中
     SYS_CALIBRATING,    // 归零/校准中
     SYS_STANDBY,        // 待机/手动
