@@ -56,9 +56,6 @@ abstractMotor<Motor_C610> IgniterMotor;
     /* --- 1. 初始化与配置 --- */
     void init(); // 加载PID参数，绑定回调
     
-    // 必须在主程序中绑定实际的 GPIO 读取函数
-    void attach_switch_callbacks(GPIO_PinState (*L)(), GPIO_PinState (*R)(), GPIO_PinState (*Ign)());
-
     /* --- 2. 动作接口 (Command) --- */
     // 启动归零程序 (将模式切为 HOMING)
     void start_calibration();

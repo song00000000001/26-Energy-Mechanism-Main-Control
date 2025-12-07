@@ -9,15 +9,24 @@
  * @return None
  */
 
-
-
-enum vision_aim_state_enum
+enum yaw_control_state_e
 {
     MANUAL_AIM = 0,
     VISION_AIM = 1,
     CORRECT_AIM = 2
 };
 
+void key_check(){
+    // 初始化5*pid参数
+    //Launcher.init();
+
+    // 初始状态设为自检
+    Robot.Status.current_state = SYS_CHECKING;
+    static uint8_t check_progress = 0; 
+    static bool last_sw_L = false;
+    static bool last_sw_R = false;
+    static bool last_sw_Ign = false;
+}
 
 void Yaw_Task(void *arg)
 {
@@ -31,6 +40,7 @@ void Yaw_Task(void *arg)
     static float default_yaw_target[2]; // 默认前哨站和基地角度
 
     test_servo_action(); // 测试舵机动作
+
 
 	for (;;)
 	{

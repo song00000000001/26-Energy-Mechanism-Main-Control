@@ -45,13 +45,6 @@ void Launcher_Driver::init()
     pid_igniter_pos.SetPIDParam(3000.0, 0.0, 0.0, 3000, 7000);
 }
 
-void Launcher_Driver::attach_switch_callbacks(GPIO_PinState (*L)(), GPIO_PinState (*R)(), GPIO_PinState (*Ign)())
-{
-    read_switch_L = L;
-    read_switch_R = R;
-    read_switch_Ign = Ign;
-}
-
 // ================= 动作接口 =================
 
 void Launcher_Driver::start_calibration()

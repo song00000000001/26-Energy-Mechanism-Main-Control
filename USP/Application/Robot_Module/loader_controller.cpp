@@ -22,53 +22,22 @@ void Loader_Ctrl(void *arg)
     static uint16_t goal=0;										// 装填电机的目标值
     static uint16_t dart_count = 1;						      // 装填状态（1~4分别对应4发飞镖）
 	
-    // 初始化驱动
-    Launcher.init();
-    
-    // 绑定限位开关读取函数 (请替换为你实际的 HAL 库函数)
-    Launcher.attach_switch_callbacks(
-        [](){ return READ_SW_DELIVER_L;},
-        [](){ return READ_SW_DELIVER_R; },
-        [](){ return READ_SW_IGNITER; }
-    );
-
-    // 初始状态设为自检
-    Robot.Status.current_state = SYS_CHECKING;
-    static uint8_t check_progress = 0; 
-    static bool last_sw_L = false;
-    static bool last_sw_R = false;
-    static bool last_sw_Ign = false;
+    static uint8_t yaw_safe_posizion=120+5;                      //yaw轴修正角度,根据实际情况调整
 
     for (;;)
 	{
 		vTaskDelayUntil(&xLastWakeTime_t, 1);
-        // 3. 全局离线保护 (优先级最高)
-        LinkageStatus_Typedef temp_dr16_status = DR16.GetStatus();
-        if (temp_dr16_status != DR16_ESTABLISHED) {
-            Robot.Status.current_state = SYS_OFFLINE;
-			 //失联或者自检,停止装填电机
-            loadermotor.setMotorCurrentOut(0);
-            continue;
-        }
-
-        //if(robot.status)
-        //如果状态为失联或者自检,则disable
-        //如果状态为自动发射,则依次控制,并且根据误差,推进发射流程
-        if(Robot.Status.current_state == SYS_OFFLINE )//|| Robot.Status.current_state == SYS_CHECKING)
-        {
-            
-        }
         
         //校准时，需要保持为安全位置，和第一发相同
         if(Robot.Status.current_state == SYS_CALIBRATING)
         {
-            goal = 120;//安全位置,后续可以细化流程,优化成顺序转到指定位置,而不是每次都跑到同一个地方,可能花时间。
+            goal = yaw_safe_posizion;//安全位置,后续可以细化流程,优化成顺序转到指定位置,而不是每次都跑到同一个地方,可能花时间。
             Loader_Clamps_ClampAll();
         }
 
         if (dart_count % 4 == 0) // 第一发
         {
-            goal = 120;
+            goal = yaw_safe_posizion;
             Loader_Clamps_ClampAll();
         }
         else if (dart_count % 4 == 1) // 第二发
@@ -87,7 +56,7 @@ void Loader_Ctrl(void *arg)
             Loader_Clamps_Release3();
         }
         else{//意外情况,复位
-            goal = 120;//安全位置,后续可以细化流程,优化成顺序转到指定位置,而不是每次都跑到同一个地方,可能花时间。
+            goal = yaw_safe_posizion;//安全位置,后续可以细化流程,优化成顺序转到指定位置,而不是每次都跑到同一个地方,可能花时间。
             Loader_Clamps_ClampAll();
         }
         
