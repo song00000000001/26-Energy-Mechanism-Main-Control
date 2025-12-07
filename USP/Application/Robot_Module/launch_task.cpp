@@ -265,9 +265,19 @@ void LaunchCtrl(void *arg)
 
         case SYS_STANDBY:
             // --- 待机 / 手动模式 ---
-            Launcher.set_deliver_target(POS_BUFFER); // 回缓冲
-           
-             if (Robot.Cmd.manual_override) {
+            //Launcher.set_deliver_target(POS_BUFFER); // 回缓冲
+            /*
+            static uint16_t motor_speed_test=0;
+            if(motor_speed_test<-20){
+                motor_speed_test=-20;
+            }
+            if(motor_speed_test>-600){
+                motor_speed_test-=-600;
+            }
+            
+            Launcher.set_deliver_target(motor_speed_test);
+		*/
+            if (Robot.Cmd.manual_override) {
                 // 手动微调逻辑
                 // 读取当前角度 + 摇杆增量
                 float new_igniter_pos = Launcher.get_igniter_angle() + DR16.Get_LY_Norm() * 0.002f;

@@ -23,13 +23,13 @@
 
 /* 常量定义 */
 // 归零时的速度,速度环输入
-#define INIT_SPEED_YAW        -500
-#define DELIVER_HOME_SPEED   1000
-#define IGNITER_HOME_SPEED   -1500
+#define INIT_SPEED_YAW        -600
+#define DELIVER_HOME_SPEED   6000
+#define IGNITER_HOME_SPEED   -2000
 
 //角度环输出限幅
-#define DELIVER_MAX_SPEED    4000
-#define IGNITER_MAX_SPEED    3000
+#define DELIVER_MAX_SPEED    8000
+#define IGNITER_MAX_SPEED    6000
 
 #define DELIVER_OFFSET_POS   -20  // 碰到开关后设置的初始坐标
 #define IGNITER_OFFSET_POS   3   // 复位位置

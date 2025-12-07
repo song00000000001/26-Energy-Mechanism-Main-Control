@@ -34,7 +34,7 @@ Launcher_Driver::Launcher_Driver(uint8_t id_l, uint8_t id_r, uint8_t id_ign)
         pid_deliver_pos[i].SetPIDParam(800.f, 0.0, 0.0, 1000, DELIVER_MAX_SPEED);
     }
     
-    pid_igniter_spd.SetPIDParam(15.0, 0.0, 0.0, 3000, 6000);
+    pid_igniter_spd.SetPIDParam(15.0, 0.0, 0.0, 3000, 12000);
     pid_igniter_pos.SetPIDParam(3000.0, 0.0, 0.0, 3000, IGNITER_MAX_SPEED);
 }
 
