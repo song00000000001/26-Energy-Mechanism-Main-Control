@@ -115,5 +115,14 @@ void test_servo_action();
 #define PID_LOADER_SPD_PARAM    8.0f, 1.0f, 0.0f, 100.0f, 16000.0f
 #define PID_LOADER_POS_PARAM    4.0f, 0.0f, 0.1f, 100.0f, 1200.0f
 
+/* 自检掩码定义 */
+#define MASK_DELIVER_L  (1 << 0)
+#define MASK_DELIVER_R  (1 << 1)
+#define MASK_IGNITER    (1 << 2)
+#define MASK_YAW_L      (1 << 3) 
+#define MASK_YAW_R      (1 << 4)
+
+// 定义全部通过的目标值 (0b11111 = 0x1F)
+#define MASK_ALL_PASSED (MASK_DELIVER_L | MASK_DELIVER_R | MASK_IGNITER | MASK_YAW_L | MASK_YAW_R)
 
 

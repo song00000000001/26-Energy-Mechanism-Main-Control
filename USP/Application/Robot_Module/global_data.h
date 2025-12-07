@@ -43,6 +43,14 @@ enum
   L = 1
 };
 
+enum yaw_control_state_e
+{
+    MANUAL_AIM = 0,
+    VISION_AIM = 1,
+    CORRECT_AIM = 2,
+    disable_motor =3
+};
+
 // 定义一个本地结构体，只保存我们需要的数据
 struct DR16_Snapshot_t {
     LinkageStatus_Typedef Status;
@@ -123,6 +131,7 @@ typedef struct {
 // [反馈 Feedback]: 运行中的实时数据
 typedef struct {
     System_State_e current_state; // 当前主状态
+    yaw_control_state_e yaw_control_state;//yaw轴控制状态
     uint8_t dart_count;           // 已发射计数
     // 这里不再放电机角度，因为电机角度归类管理，任务层只关心结果
 } Robot_Feedback_t;

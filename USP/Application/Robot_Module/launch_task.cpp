@@ -3,21 +3,6 @@
 #include "launcher_driver.h"
 #include "robot_config.h"
 
-/* 自检掩码定义 */
-#define MASK_DELIVER_L  (1 << 0)
-#define MASK_DELIVER_R  (1 << 1)
-#define MASK_IGNITER    (1 << 2)
-// 如果有Yaw或其他，继续往后加
-// #define MASK_YAW_L   (1 << 3) 
-
-// 定义全部通过的目标值 (0b111 = 0x07)
-#define MASK_ALL_PASSED (MASK_DELIVER_L | MASK_DELIVER_R | MASK_IGNITER)
-
-/* --- 1. 全局对象实例化 --- */
-// 定义全局机器人状态 (Cmd, Flag, Status)
-Robot_Ctrl_t Robot; 
-
-
 /* --- 2. 辅助变量 --- */
 static uint32_t stick_hold_timer = 0; // 用于长按判断
 static bool is_combo_active = false;  // 组合键激活标志
@@ -173,7 +158,7 @@ static void Run_Firing_Sequence()
         Launcher.fire_trigger();
         
         // 等待发射完成 (例如 500ms)
-        if ((xTaskGetTickCount() - state_timer) > 500) {
+        if ((xTaskGetTickCount() - state_timer) > 1000) {
             Robot.Status.dart_count++; // 计数+1
             fire_state = FIRE_COOLDOWN;
             state_timer = xTaskGetTickCount();
@@ -207,38 +192,15 @@ void LaunchCtrl(void *arg)
 {
     //can发送的包
     Motor_CAN_COB Tx_Buff;
-    // ================== 1. 初始化阶段 ==================
-    
-    // 初始化驱动
-    Launcher.init();
-    
-    // 绑定限位开关读取函数 (请替换为你实际的 HAL 库函数)
-    Launcher.attach_switch_callbacks(
-        [](){ return READ_SW_DELIVER_L;},
-        [](){ return READ_SW_DELIVER_R; },
-        [](){ return READ_SW_IGNITER; }
-    );
+ 
+    // 初始状态设为自检
+    Robot.Status.current_state = SYS_CHECKING;
 
     // 任务频率控制
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(1);
-
-    // 初始状态设为自检
-    Robot.Status.current_state = SYS_CHECKING;
-    // --- 【新增】自检专用静态变量 ---
-    // 记录哪几个开关已经检测过了 (Bitmask)
-    static uint8_t check_progress = 0; 
-    
-    // 记录上一次的按键状态 (用于检测按下瞬间)
-    // 初始设为 false (未按下)
-    static bool last_sw_L = false;
-    static bool last_sw_R = false;
-    static bool last_sw_Ign = false;
-
-    // ================== 2. 死循环 ==================
     for (;;)
     {
-        // 严格控制 1ms 周期
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
         // ---------------- [A] 传感器与输入 (Input) ----------------
@@ -270,29 +232,7 @@ void LaunchCtrl(void *arg)
         case SYS_CHECKING:
         {
             Launcher.stop(); // 确保电机无力
-            // 1. 定义检测逻辑 (Lambda函数)
-            // 参数: 当前是否按下, 上次是否按下(引用), 对应的掩码位
-            auto update_edge = [&](bool is_pressed, bool &last_pressed, uint8_t mask) {
-                // 检测上升沿 (从没按 -> 按下)
-                if (is_pressed && !last_pressed) {
-                    check_progress |= mask; // 标记该位通过
-                    // 可以在这里加蜂鸣器：Buzzer.beep(100); 提示检测到
-                }
-                last_pressed = is_pressed; // 更新历史状态
-            };
-            
-            // 2. 执行检测 (使用 Driver 提供的接口)
-            update_edge(Launcher.get_switch_state_L(),   last_sw_L,   MASK_DELIVER_L);
-            update_edge(Launcher.get_switch_state_R(),   last_sw_R,   MASK_DELIVER_R);
-            update_edge(Launcher.get_switch_state_Ign(), last_sw_Ign, MASK_IGNITER);
-
-            // 3. 处理跳过逻辑
-            if (Robot.Cmd.skip_check) {
-                check_progress = MASK_ALL_PASSED; // 强制全满
-            }
-
-            // 4. 更新全局标志位
-            Robot.Flag.Check.limit_sw_ok = (check_progress == MASK_ALL_PASSED);
+            // 1. 处理按键自检逻辑
             
             // 5. 跳转判断
             if (Robot.Flag.Check.limit_sw_ok) {
