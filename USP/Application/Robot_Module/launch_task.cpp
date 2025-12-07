@@ -105,7 +105,7 @@ static void Run_Firing_Sequence()
     case FIRE_IDLE:
         // 确保滑块在缓冲区
         Launcher.set_deliver_target(POS_BUFFER);
-        Launcher.fire_reset(); // 关舵机
+        Launcher.fire_lock(); // 关舵机
         
         // 触发条件：收到指令 且 视觉瞄准到位(可选)
         // 这里假设 Cmd.fire_command 在自动模式下由视觉改写，或者简单的连发逻辑
@@ -123,7 +123,7 @@ static void Run_Firing_Sequence()
         //    或者简单地：不更新丝杆目标，让它保持原位(有电流)或者设为0电流
         
         // 2. 滑块全速下拉
-        Launcher.fire_reset();//锁止扳机,准备扣上滑台
+        Launcher.fire_lock();//锁止扳机,准备扣上滑台
         Launcher.set_deliver_target(POS_BOTTOM);
         
         // 3. 判断到位
@@ -166,7 +166,7 @@ static void Run_Firing_Sequence()
         break;
 
     case FIRE_COOLDOWN:
-        Launcher.fire_reset(); // 舵机复位
+        Launcher.fire_lock(); 
         
         // 冷却时间 (例如 1000ms)
         if ((xTaskGetTickCount() - state_timer) > 1000) {
@@ -218,34 +218,31 @@ void LaunchCtrl(void *arg)
         switch (Robot.Status.current_state)
         {
         case SYS_OFFLINE:
-            Launcher.stop(); // 强制断电
+        {
+            stop_all_motor();
             // 恢复条件：遥控器重连
             if (DR16.GetStatus() == DR16_ESTABLISHED) {
-                // 重连后，是否要重置自检进度？
-                // 如果希望每次断电重连都不用重测，就不要清零 check_progress
-                // 如果希望必须重测，则解开下面这行的注释：
-                // check_progress = 0; 
                 Robot.Status.current_state = SYS_CHECKING;
             }
-            break;
-
+        }
+        break;
         case SYS_CHECKING:
         {
-            Launcher.stop(); // 确保电机无力
-            // 1. 处理按键自检逻辑
-            
-            // 5. 跳转判断
+            stop_all_motor(); 
+            //按键自检逻辑
+            key_check();
+            // 5个按键手动检查全部通过则进入校准状态,后续可以加入电机检查
             if (Robot.Flag.Check.limit_sw_ok) {
                 Robot.Status.current_state = SYS_CALIBRATING;
                 Launcher.start_calibration();
             }
         }
-
-            break;
+        break;
         
         case SYS_CALIBRATING:
             // 此状态下，Launcher.run_1ms() 内部正在跑归零逻辑
             // 任务层只需要等待驱动层反馈 "已校准"
+
             if (Launcher.is_calibrated()) {
                 Robot.Status.current_state = SYS_STANDBY;
             }
@@ -287,11 +284,7 @@ void LaunchCtrl(void *arg)
             break;
             
         case SYS_AUTO_FIRE:
-            // --- 自动发射进行中 ---
-            
-            // 【关键】只有在这个状态下，才运行发射序列子状态机
             Run_Firing_Sequence();
-            
             // 随时允许切回手动 (Run_Firing_Sequence 内部也会处理打断复位)
             if (!Robot.Cmd.auto_mode) Robot.Status.current_state = SYS_STANDBY;
             break;
@@ -304,14 +297,13 @@ void LaunchCtrl(void *arg)
         if (Robot.Status.current_state != SYS_OFFLINE && 
             Robot.Status.current_state != SYS_CHECKING) 
         {
-            // 这是驱动层的“心跳”，每1ms必须调一次
-            // 它负责计算 PID、处理归零逻辑、输出电流
+            // 驱动层，负责计算 PID、处理归零逻辑、输出电流
             Launcher.run_1ms();
         }
         else
         {
             // 显式停止，防止意外
-            Launcher.stop();
+            stop_all_motor();
         }
         
         // ---------------- [D] 发送 CAN 数据 ----------------

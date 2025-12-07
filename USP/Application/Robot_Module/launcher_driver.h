@@ -12,7 +12,6 @@ typedef enum {
     MODE_DISABLE = 0,   // 失能 (无力)
     MODE_HOMING,        // 归零/校准模式 (速度环寻找开关)
     MODE_POSITION,      // 位置模式 (正常工作)
-    MODE_LOCKED         // 锁定模式 (用于保护丝杆)
 } Control_Mode_e;
 
 class Launcher_Driver
@@ -71,7 +70,7 @@ abstractMotor<Motor_C610> IgniterMotor;
 
     // 舵机动作 (直接操作硬件，简单封装)
     void fire_trigger(); 
-    void fire_reset();
+    void fire_lock();
 
     /* --- 3. 核心运行 (Execute) --- */
     // 放在 1ms 任务或定时器中调用

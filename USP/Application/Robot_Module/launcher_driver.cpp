@@ -82,7 +82,7 @@ void Launcher_Driver::set_igniter_target(float angle)
 }
 
 void Launcher_Driver::fire_trigger() { servo_igniter_unlock; }
-void Launcher_Driver::fire_reset()   { servo_igniter_lock; }
+void Launcher_Driver::fire_lock()   { servo_igniter_lock; }
 
 // ================= 核心运行 (run_1ms) =================
 
@@ -182,7 +182,6 @@ void Launcher_Driver::run_1ms()
     float ign_spd_cmd = 0;
     switch (mode_igniter) {
         case MODE_DISABLE: 
-        case MODE_LOCKED:   // [新增] 锁定模式下，速度目标设为0
             ign_spd_cmd = 0; 
             break;
             
@@ -198,9 +197,8 @@ void Launcher_Driver::run_1ms()
             break;
     }
 
-    // [关键修改] 在这里把 MODE_LOCKED 加入判断条件
-    // 只要是 DISABLE 或 LOCKED，都强制输出 0 电流
-    if (mode_igniter != MODE_DISABLE && mode_igniter != MODE_LOCKED) {
+    // DISABLE强制输出 0 电流
+    if (mode_igniter != MODE_DISABLE ) {
         pid_igniter_spd.Target = ign_spd_cmd;
         pid_igniter_spd.Current = IgniterMotor.getMotorSpeed();
         pid_igniter_spd.Adjust();

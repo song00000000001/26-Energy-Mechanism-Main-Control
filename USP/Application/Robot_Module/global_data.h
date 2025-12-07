@@ -1,7 +1,6 @@
 #pragma once
 
 #include "stdint.h"
-#include "launchest.h"
 #include "Yaw_control.h"
 #include "launcher_driver.h"
 

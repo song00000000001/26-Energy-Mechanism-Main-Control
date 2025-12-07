@@ -50,11 +50,12 @@ void key_check(){
 }
 
 void stop_all_motor(){
-    Launcher.stop(); // 强制断电
+    Launcher.stop(); 
     Yawer.disable();
     loadermotor.setMotorCurrentOut(0);
     load_pid_ang.clean_intergral();
     load_pid_spd.clean_intergral();
+    Launcher.fire_lock();
 }
 
 void yaw_calibration(){
@@ -216,7 +217,7 @@ void Yaw_Task(void *arg)
             }
         case SYS_CHECKING:
             {
-                //断电
+     
                 stop_all_motor();
                 key_check();
                          
