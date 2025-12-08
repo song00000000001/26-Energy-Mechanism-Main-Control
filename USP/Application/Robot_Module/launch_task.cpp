@@ -3,92 +3,6 @@
 #include "launcher_driver.h"
 #include "robot_config.h"
 
-
-
-/* --- 2. 辅助变量 --- */
-static uint32_t stick_hold_timer = 0; // 用于长按判断
-static bool is_combo_active = false;  // 组合键激活标志
-
-/* --- 3. 输入解析函数 --- */
-static void Update_Input()
-{
-    // 本地数据快照,解决数据一致性和锁性能问题
-    DR16_Snapshot_t rc_data;
-    // 假设 GetStatus 内部不加锁，或者如果需要锁，在这里加一次即可
-    // xSemaphoreTake(DR16_mutex, portMAX_DELAY); 
-    rc_data.Status = DR16.GetStatus();
-    rc_data.S1 = DR16.GetS1();
-    rc_data.S2 = DR16.GetS2();
-    rc_data.RX_Norm = DR16.Get_RX_Norm();
-    rc_data.RY_Norm = DR16.Get_RY_Norm();
-    rc_data.LX_Norm = DR16.Get_LX_Norm();
-    rc_data.LY_Norm = DR16.Get_LY_Norm();
-    // xSemaphoreGive(DR16_mutex);
-
-    // [1] 系统基础指令
-    Robot.Cmd.sys_enable = (rc_data.S1 != SW_UP); // 左拨杆非上 -> 使能
-    Robot.Cmd.auto_mode  = (rc_data.S1 == SW_DOWN); // 左拨杆下 -> 自动
-    
-    // [2] 手动/自检指令
-    Robot.Cmd.manual_override = (rc_data.S2 == SW_DOWN); // 右拨杆下 -> 手动接管
-    Robot.Cmd.skip_check      = (rc_data.S2 == SW_MID);  // 右拨杆中 -> 跳过自检
-
-    // [3] 摇杆组合键逻辑 (长按 1s 切换模式)
-    // 定义阈值
-    
-    const float THRESHOLD = 0.8f;
-    float ly = rc_data.LY_Norm;
-    float lx = rc_data.LX_Norm;
-    
-    // 判断是否处于特定区域
-    bool region_2_burst =    (ly > THRESHOLD && lx < -THRESHOLD);  // 上+左
-    bool region_4_burst =    (ly > THRESHOLD && lx > THRESHOLD);   // 上+右
-    bool region_outpost =    (ly < -THRESHOLD && lx < -THRESHOLD); // 下+左
-    bool region_base =       (ly < -THRESHOLD && lx > THRESHOLD);  // 下+右
-
-    if (region_2_burst || region_4_burst || region_outpost || region_base) {
-        if (!is_combo_active) {
-            stick_hold_timer = xTaskGetTickCount();
-            is_combo_active = true;
-        } 
-        else {
-            // 保持了 1000ms
-            if ((xTaskGetTickCount() - stick_hold_timer) > 1000) {
-                if (region_2_burst) 
-                    ;//Robot.Cmd.burst_num = BURST_2;
-                if (region_4_burst) 
-                    ;//Robot.Cmd.burst_num = BURST_4;
-                if (region_outpost) 
-                    ;//Robot.Cmd.target = TARGET_OUTPOST;
-                if (region_base)    
-                    ;//Robot.Cmd.target = TARGET_BASE;
-                
-                // 重置以免重复触发，6s内有效
-                stick_hold_timer = xTaskGetTickCount() + 5000;
-            }
-        }
-    } 
-    else {
-        is_combo_active = false;
-    }
-
-    // [4] 手动控制量 (仅在手动模式下有效)
-    if (Robot.Cmd.manual_override) {
-        // 映射右摇杆到 Pitch (丝杆) 和 Yaw
-        Robot.Cmd.manual_pitch_inc = DR16.Get_RY_Norm() * 0.5f; // 调整系数
-        Robot.Cmd.manual_yaw_inc   = DR16.Get_RX_Norm() * 0.1f;
-        
-        // 发射指令 (手动模式下 S1 下拨也算，或者定义别的键)
-        Robot.Cmd.fire_command = (DR16.GetS1() == SW_DOWN); 
-    } else {
-        Robot.Cmd.manual_pitch_inc = 0;
-        Robot.Cmd.manual_yaw_inc = 0;
-        Robot.Cmd.fire_command = false; // 自动模式下的发射由后面逻辑决定
-    }
-}
-
-
-
 /* --- 4. 发射流程子状态机 --- */
 // 定义子状态
 typedef enum {
@@ -207,9 +121,6 @@ void LaunchCtrl(void *arg)
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        
-        //解析遥控器/视觉指令 -> 存入 Robot.Cmd
-        Update_Input(); 
 		
         if (DR16.GetStatus() != DR16_ESTABLISHED) {
             Robot.Status.current_state = SYS_OFFLINE;
