@@ -35,6 +35,7 @@ static void Update_Input()
 
     // [3] 摇杆组合键逻辑 (长按 1s 切换模式)
     // 定义阈值
+    
     const float THRESHOLD = 0.8f;
     float ly = rc_data.LY_Norm;
     float lx = rc_data.LX_Norm;
@@ -53,12 +54,16 @@ static void Update_Input()
         else {
             // 保持了 1000ms
             if ((xTaskGetTickCount() - stick_hold_timer) > 1000) {
-                if (region_2_burst) Robot.Cmd.burst_num = BURST_2;
-                if (region_4_burst) Robot.Cmd.burst_num = BURST_4;
-                if (region_outpost) Robot.Cmd.target = TARGET_OUTPOST;
-                if (region_base)    Robot.Cmd.target = TARGET_BASE;
+                if (region_2_burst) 
+                    ;//Robot.Cmd.burst_num = BURST_2;
+                if (region_4_burst) 
+                    ;//Robot.Cmd.burst_num = BURST_4;
+                if (region_outpost) 
+                    ;//Robot.Cmd.target = TARGET_OUTPOST;
+                if (region_base)    
+                    ;//Robot.Cmd.target = TARGET_BASE;
                 
-                // 重置以免重复触发，或者保持直到摇杆归位,奇怪的逻辑,好像是6s内有效
+                // 重置以免重复触发，6s内有效
                 stick_hold_timer = xTaskGetTickCount() + 5000;
             }
         }
@@ -81,6 +86,8 @@ static void Update_Input()
         Robot.Cmd.fire_command = false; // 自动模式下的发射由后面逻辑决定
     }
 }
+
+
 
 /* --- 4. 发射流程子状态机 --- */
 // 定义子状态
@@ -207,7 +214,7 @@ void LaunchCtrl(void *arg)
         if (DR16.GetStatus() != DR16_ESTABLISHED) {
             Robot.Status.current_state = SYS_OFFLINE;
         }
-		
+	
         /*在非校准状态如果发生碰撞限位的现象，则立即取消使能并且记录错误电机信息，
         并且重置为error状态，此时会将该电机的校准状态重置，
         需要重新进行限位校准，此时如果拨右摇杆朝下则会反向旋转对应电机，
@@ -263,7 +270,7 @@ void LaunchCtrl(void *arg)
         break;
         
         case SYS_CALIBRATING:
-            // 此状态下，Launcher.run_1ms() 内部正在跑归零逻辑，任务层只需要等待驱动层反馈 "已校准"
+            // 此状态下，Launcher.adjust() 内部正在跑归零逻辑，任务层只需要等待驱动层反馈 "已校准"
             //yaw控制考虑到是并行的，主状态机和子状态机采用状态位判断
             Robot.Status.yaw_control_state = YAW_CALIBRATING;
             // 1. 处理归零状态转换
@@ -335,9 +342,6 @@ void LaunchCtrl(void *arg)
             yaw_calibrating:校准模式
         */
         yaw_state_machine();
-        // 驱动层，负责计算 PID、处理归零逻辑、输出电流
-        Launcher.run_1ms();
-        Yawer.disable();
 
         if (Robot.Status.current_state != SYS_OFFLINE && 
             Robot.Status.current_state != SYS_CHECKING&&
@@ -345,12 +349,16 @@ void LaunchCtrl(void *arg)
             DR16.GetS1()!=SW_UP
         ) 
         {
+            //计算 PID
+            Launcher.adjust();
+            Yawer.adjust();
+            //输出电流
             Launcher.out_all_motor_speed();
             Yawer.yaw_out_motor_speed();
         }
         else
         {
-            // 显式停止，防止意外
+            //停止电机
             Launcher.stop_all_motor();
             Yawer.disable();
         }

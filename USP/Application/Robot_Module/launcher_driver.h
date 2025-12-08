@@ -71,7 +71,7 @@ float target_deliver_angle;     // 滑块目标角度 (位置模式用)
 
     /* --- 3. 核心运行 (Execute) --- */
     // 放在 1ms 任务或定时器中调用
-    void run_1ms();
+    void adjust();
 
     /* --- 4. 状态查询 (Feedback) --- */
     // 获取当前状态，用于任务层判断是否可以下一步

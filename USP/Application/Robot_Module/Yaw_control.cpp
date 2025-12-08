@@ -52,12 +52,14 @@ void Missle_YawController_Classdef::update(float _yaw_target)
 
 void Missle_YawController_Classdef::adjust()
 {
+    //角度环
     if(is_Yaw_Init() == 1)
     {
         PID_Yaw_Angle.Current = YawMotor.getMotorTotalAngle();
         PID_Yaw_Angle.Adjust();
         PID_Yaw_Speed.Target = PID_Yaw_Angle.Out;
     }
+    //速度环，校准过程中直接速度环控制
     else
     {
         PID_Yaw_Angle.Target = PID_Yaw_Angle.Current = YawMotor.getMotorTotalAngle();

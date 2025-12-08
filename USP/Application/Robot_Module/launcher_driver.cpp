@@ -42,7 +42,7 @@ Launcher_Driver::Launcher_Driver(uint8_t id_l, uint8_t id_r, uint8_t id_ign)
 }
 
 // ================= 动作接口 =================
-void Launcher_Driver::run_1ms()
+void Launcher_Driver::adjust()
 {
     // 计算同步误差 (仅在两个都进入位置模式后)
     float sync_comp[2] = {0, 0};
