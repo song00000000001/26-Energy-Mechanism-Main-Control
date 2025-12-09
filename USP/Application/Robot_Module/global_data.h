@@ -165,5 +165,16 @@ typedef struct {
 } Debug_Data_t;
 
 extern Debug_Data_t Debugger; // 声明全局变量
+
+
+enum Missle_State_t
+{
+	DEINIT,
+	WAIT_ACT,
+	PULL,
+	BACK,
+	WAIT_SHOOT
+};
+
 /************************ COPYRIGHT(C) SCUT-ROBOTLAB **************************/
 

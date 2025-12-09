@@ -154,8 +154,8 @@ void LaunchCtrl(void *arg)
                     Launcher.check_progress=0; // 重置自检进度
                     Robot.Status.current_state = SYS_CHECKING;
                 }
+            }
         }
-	
         /*在非校准状态如果发生碰撞限位的现象，则立即取消使能并且记录错误电机信息，
         并且重置为error状态，此时会将该电机的校准状态重置，
         需要重新进行限位校准，此时如果拨右摇杆朝下则会反向旋转对应电机，
