@@ -7,7 +7,8 @@
 
 #include "SRML.h"
 
-// 定义内部控制模式
+//不知道为什么，在global_data.h里定义会报错，只能放这里
+// 定义控制模式
 typedef enum {
     MODE_SPEED=0,       // 速度环
     MODE_ANGLE,      // 角度环
@@ -31,25 +32,20 @@ private:
     myPID pid_deliver_sync;    // 双电机同步PID
     myPID pid_igniter_spd;
     myPID pid_igniter_pos;
-
-    /* --- 3. 内部状态 (Private) --- */
-    Control_Mode_e mode_deliver[2]; // 左右滑块的独立模式
-    Control_Mode_e mode_igniter;    // 丝杆模式
-    
     
     bool is_deliver_homed[2];       // 是否已完成归零
     bool is_igniter_homed;
-    
-
-  
 
 public:
+    //电机状态
+    Control_Mode_e mode_deliver[2]; // 左右滑块的独立模式
+    Control_Mode_e mode_igniter;    // 丝杆模式
 
-abstractMotor<Motor_C620> DeliverMotor[2]; // [0]=Left, [1]=Right
-abstractMotor<Motor_C610> IgniterMotor;
-// 记录哪几个开关已经检测过了 (Bitmask)
-uint8_t check_progress; 
-float target_deliver_angle;     // 滑块目标角度 (位置模式用)
+    abstractMotor<Motor_C620> DeliverMotor[2]; // [0]=Left, [1]=Right
+    abstractMotor<Motor_C610> IgniterMotor;
+    // 记录哪几个开关已经检测过了 (Bitmask)
+    uint8_t check_progress; 
+    float target_deliver_angle;     // 滑块目标角度 (位置模式用)
     float target_igniter_angle;     // 丝杆目标角度
 
     /* --- 构造函数 --- */

@@ -150,10 +150,6 @@ void Task_CAN1Receive(void *arg)
         else if (Launcher.IgniterMotor.update(CAN_RxCOB.ID, CAN_RxCOB.Data))
         {
         }
-        else if (Yawer.YawMotor.update(CAN_RxCOB.ID, CAN_RxCOB.Data))
-        {}
-        else if(loadermotor.update(CAN_RxCOB.ID,CAN_RxCOB.Data))
-        {}
     }
   }
 }
@@ -171,16 +167,11 @@ void Task_CAN2Receive(void *arg)
     /* update motor data from CAN1_RxPort */
     if (xQueueReceive(CAN2_RxPort, &CAN_RxCOB, portMAX_DELAY) == pdPASS)
     {
-        if (Launcher.DeliverMotor[L].update(CAN_RxCOB.ID, CAN_RxCOB.Data))
-        {}
-        else if (Launcher.DeliverMotor[R].update(CAN_RxCOB.ID, CAN_RxCOB.Data))
-        {}
-        else if (Launcher.IgniterMotor.update(CAN_RxCOB.ID, CAN_RxCOB.Data))
-        {}
-        else if (Yawer.YawMotor.update(CAN_RxCOB.ID, CAN_RxCOB.Data))
-        {}
-        else if(loadermotor.update(CAN_RxCOB.ID,CAN_RxCOB.Data))
-        {}
+        /*if (Launcher.DeliverMotor[L].update(CAN_RxCOB.ID, CAN_RxCOB.Data)){}
+        else if (Launcher.DeliverMotor[R].update(CAN_RxCOB.ID, CAN_RxCOB.Data)){}
+        else if (Launcher.IgniterMotor.update(CAN_RxCOB.ID, CAN_RxCOB.Data)){}
+        else */
+        if (Yawer.YawMotor.update(CAN_RxCOB.ID, CAN_RxCOB.Data)){}
     }
   }
 }

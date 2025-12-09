@@ -89,7 +89,7 @@ void Task_VofaMonitor(void *arg){
 		//VofaMonitor::setDatas(3, data3, data4, data5);
 		//VofaMonitor::setDatas(6, data6, data7, data8, data9);
 		/* 选择串口id */
-        VofaMonitor::setDatas(0,loadermotor.getMotorTotalAngle() ,loadermotor.getMotorSpeed());
+        VofaMonitor::setDatas(0,Yawer.YawMotor.getMotorTotalAngle() ,Yawer.YawMotor.getMotorSpeed());
 		VofaMonitor::send(4);
 	}
 }

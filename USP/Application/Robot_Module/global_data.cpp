@@ -33,5 +33,7 @@ DartAimEnumdef HitTarget; //打击目标,默认打前哨站,
 // 定义全局机器人状态 (Cmd, Flag, Status)
 Robot_Ctrl_t Robot; 
 
-//keildebug调试数据结构体实例化
-Debug_Data_t Debugger;
+//校准速度结构体实例化
+calibration_speed_t calibration_speed;
+
+Debug_Data_t Debugger; // 声明全局变量

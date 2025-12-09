@@ -12,6 +12,8 @@ Missle_YawController_Classdef::Missle_YawController_Classdef(uint8_t _ID_YAW)
     PID_Yaw_Angle.I_SeparThresh = 8;
     PID_Yaw_Angle.DeadZone = 0.01f;
     PID_Yaw_Speed.SetPIDParam(20, 0, 0, 0, 18000);
+    //PID_Yaw_Speed.I_SeparThresh = 0;
+    //PID_Yaw_Speed.DeadZone = 0;
 }
 
 void Missle_YawController_Classdef::calibration()
@@ -19,7 +21,7 @@ void Missle_YawController_Classdef::calibration()
     switch (Yaw_Init_flag)
     {
     case 0:
-        PID_Yaw_Speed.Target = -INIT_SPEED_YAW;
+        PID_Yaw_Speed.Target = -calibration_speed.yaw_calibration_speed;
         
         if(SW_YAW_L_OFF)
         {
@@ -29,7 +31,7 @@ void Missle_YawController_Classdef::calibration()
         break;
     
     case 1:
-        PID_Yaw_Speed.Target = INIT_SPEED_YAW;
+        PID_Yaw_Speed.Target = calibration_speed.yaw_calibration_speed;
         if(SW_YAW_R_OFF)
         {
             MAX_YAW_ANGLE = YawMotor.getMotorTotalAngle();

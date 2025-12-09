@@ -130,6 +130,12 @@ void LaunchCtrl(void *arg)
     // 初始自检标志位失能
 	Robot.Flag.Check.limit_sw_ok=false;
     Debugger.enable_debug_mode=false;
+    //校准速度初始化
+    calibration_speed={
+	.yaw_calibration_speed=-600,
+	.deliver_calibration_speed=6000,
+    .igniter_calibration_speed=-2000
+    };
 
     // 任务频率控制
     TickType_t xLastWakeTime = xTaskGetTickCount();
@@ -143,8 +149,8 @@ void LaunchCtrl(void *arg)
         }
         else{
             // Debug 模式判定 (最高优先级的主动模式)
-            // 只有当遥控器连接，且全局 Debug 标志位被置 1 时进入
-            if (Debugger.enable_debug_mode) {
+            // 只有当遥控器连接，且全局 Debug 标志位被置 1 时进入，并且校准完成。
+            if (Debugger.enable_debug_mode&&Robot.Status.calibration_flag) {
                 Robot.Status.current_state = SYS_DEBUG;
             }
             else {
@@ -153,6 +159,9 @@ void LaunchCtrl(void *arg)
                     // 安全起见重新自检
                     Launcher.check_progress=0; // 重置自检进度
                     Robot.Status.current_state = SYS_CHECKING;
+                    //为了防止自己跳过自检（电机速度角度环状态只在校准后才会切换角度环，而debug中可能会改成速度环然后退出，那么后续就不会进入角度环模式，那就不行）
+                    
+                    Launcher.mode_deliver[1] = MODE_ANGLE;
                 }
             }
         }
@@ -161,12 +170,12 @@ void LaunchCtrl(void *arg)
         需要重新进行限位校准，此时如果拨右摇杆朝下则会反向旋转对应电机，
         拨左摇杆取消使能则进入check状态，
         */
-		/*
+		
         if(Robot.Status.current_state != SYS_CALIBRATING){
             if(SW_IGNITER_OFF||SW_YAW_L_OFF||SW_YAW_R_OFF||SW_DELIVER_L_OFF||SW_DELIVER_R_OFF){
                 Robot.Status.current_state = SYS_ERROR; // 进入错误状态
             }
-        } */
+        } 
         
        
         switch (Robot.Status.current_state)
@@ -221,8 +230,10 @@ void LaunchCtrl(void *arg)
             Robot.Status.yaw_control_state = YAW_CALIBRATING;
             // 1. 处理归零状态转换
             Launcher.check_calibration_logic();
+            Robot.Status.calibration_flag=Yawer.is_Yaw_Init()&&Launcher.is_calibrated();
+            // 2. 全部校准完毕后，切换到待机状态
             //校准完毕跳转待机状态
-            if (Yawer.is_Yaw_Init() == 1&&Launcher.is_calibrated()) {
+            if (Robot.Status.calibration_flag) {
                 Robot.Status.current_state = SYS_STANDBY;
             }
             break;
@@ -316,4 +327,5 @@ void LaunchCtrl(void *arg)
 
     }
 }
+
 

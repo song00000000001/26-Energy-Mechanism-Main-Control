@@ -2,9 +2,8 @@
   * @file   launcher_driver.cpp
   */
 #include "launcher_driver.h"
-#include "robot_config.h" // 包含硬件定义，如 PWM 宏等
-
-
+#include "robot_config.h"
+#include "global_data.h"
 
 // 构造函数
 Launcher_Driver::Launcher_Driver(uint8_t id_l, uint8_t id_r, uint8_t id_ign)
@@ -27,15 +26,15 @@ Launcher_Driver::Launcher_Driver(uint8_t id_l, uint8_t id_r, uint8_t id_ign)
     IgniterMotor.angle_unit_convert = 4.0f / (360.f * 36.f); 
 
     // PID 参数初始化
-    pid_deliver_sync.SetPIDParam(0.5f, 0.0f, 0.0f, 8000, 16000);
+    pid_deliver_sync.SetPIDParam(-0.4f, 0.0f, 0.0f, 8000, 16000);
     
     for(int i=0; i<2; i++) {
         pid_deliver_spd[i].SetPIDParam(20.0f, 2.0f, 0.0f, 8000, 16380);
-        pid_deliver_pos[i].SetPIDParam(800.f, 0.0, 0.0, 1000, DELIVER_MAX_SPEED);
+        pid_deliver_pos[i].SetPIDParam(800.f, 0.0, 0.0, 1000, 8000);
     }
     
     pid_igniter_spd.SetPIDParam(15.0, 0.0, 0.0, 3000, 12000);
-    pid_igniter_pos.SetPIDParam(3000.0, 0.0, 0.0, 3000, IGNITER_MAX_SPEED);
+    pid_igniter_pos.SetPIDParam(3000.0, 0.0, 0.0, 3000, 6000);
 
     // 自检开关检测进度
     check_progress=0; 
@@ -112,13 +111,14 @@ void Launcher_Driver::start_calibration()
     // 只有在未校准或强制请求时调用
     for(int i=0; i<2; i++) {
         mode_deliver[i] = MODE_SPEED;
-        pid_deliver_spd[i].Target = DELIVER_HOME_SPEED;
+        pid_deliver_spd[i].Target = calibration_speed.deliver_calibration_speed;
         // 清除积分，防止上次残留
         pid_deliver_spd[i].clean_intergral();
         pid_deliver_pos[i].clean_intergral();
     } 
     mode_igniter = MODE_SPEED;
-    pid_igniter_spd.Target = IGNITER_HOME_SPEED;
+    pid_igniter_spd.Target = calibration_speed.igniter_calibration_speed;
+     // 清除积分，防止上次残留
     pid_igniter_spd.clean_intergral();
     pid_igniter_pos.clean_intergral();
 }

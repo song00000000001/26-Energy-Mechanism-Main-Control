@@ -105,6 +105,7 @@ typedef struct {
     System_State_e current_state; // 当前主状态
     yaw_control_state_e yaw_control_state;//yaw轴控制状态
     uint8_t dart_count;           // 已发射计数
+    bool calibration_flag;        // 校准完成标志
     // 这里不再放电机角度，因为电机角度归类管理，任务层只关心结果
 } Robot_Feedback_t;
 
@@ -147,7 +148,6 @@ extern Launcher_Driver Launcher; // 发射驱动类
 
 extern Missle_YawController_Classdef Yawer; // yaw控制类
 
-extern abstractMotor<Motor_GM6020> loadermotor; // 装填电机抽象类
 
 
 extern uint32_t vision_last_recv_time ; // 视觉最后接收时间
@@ -156,12 +156,14 @@ extern VisionSendData_t vision_send_pack;
 
 extern Robot_Ctrl_t Robot; 
 
-
+#include "launcher_driver.h"
 // 2. 新增调试数据结构体
 typedef struct {
     // 标志位
     bool enable_debug_mode; // 在watch窗口改为true以进入调试模式(配合遥控器)
-
+    //电机状态
+    Control_Mode_e debug_mode_deliver[2]; // 左右滑块的独立模式
+    Control_Mode_e debug_mode_igniter;    // 丝杆模式
 } Debug_Data_t;
 
 extern Debug_Data_t Debugger; // 声明全局变量
@@ -176,5 +178,13 @@ enum Missle_State_t
 	WAIT_SHOOT
 };
 
+// 校准速度结构体
+typedef struct {
+	float yaw_calibration_speed;
+	float deliver_calibration_speed;
+	float igniter_calibration_speed;
+}calibration_speed_t;
+
+extern calibration_speed_t calibration_speed;
 /************************ COPYRIGHT(C) SCUT-ROBOTLAB **************************/
 
