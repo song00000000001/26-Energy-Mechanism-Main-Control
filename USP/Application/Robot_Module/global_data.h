@@ -22,20 +22,11 @@ typedef struct __DartDataStructdef
   double YawCorrectionAngle[2];//偏航修正角
 }DartDataStructdef;
 
-/**
- * @brief 发射主控任务
- * @parma None
- * @return None
- */
-enum Missle_State_t
-{
-	DEINIT,
-	WAIT_ACT,
-	PULL,
-	BACK,
-	WAIT_SHOOT
-};
 
+/*todo
+song:
+这里enum貌似用过，不知道能不能删
+*/
 enum
 {
   R = 0,
@@ -43,7 +34,7 @@ enum
 };
 
 
-// 定义一个本地结构体，只保存我们需要的数据
+//dr16快照结构体
 struct DR16_Snapshot_t {
     LinkageStatus_Typedef Status;
     SW_Status_Typedef S1;
@@ -54,24 +45,12 @@ struct DR16_Snapshot_t {
     float LY_Norm;
 };
 
-/* 状态机枚举定义建议 (在 internal.h) */
-enum LaunchState_e {
-    STATE_OFFLINE,      // 离线/失能
-    STATE_DEINIT,       // 正在初始化/归位
-    STATE_WAIT_CMD,     // 等待发射指令 (滑块在缓冲区，随时可发)
-    STATE_PULLING,      // 正在下拉蓄力
-    STATE_LATCHING,     // 到底部，等待挂机稳定 (User code: PULL delay)
-    STATE_RETURNING,    // 正在回升到缓冲区
-    STATE_FIRING,       // 正在执行发射动作
-    STATE_RELOADING,    // (预留) 正在执行自动装填动作
-    STATE_COOLDOWN      // 发射后冷却
-};
 
-
-// --- 1. 枚举定义 (Enums) ---
+//主状态枚举
 typedef enum {
-    SYS_OFFLINE = 0,    // 离线/故障
-    //SYS_ERROR,           // 错误状态,一般是运行中电机失控装限位开关
+    SYS_OFFLINE = 0,    // 离线
+    //SYS_ERROR,           // 错误状态,一般是运行中电机失控装限位开关，或者触发堵转保护
+    //SYS_DEBUG,           // 调试状态
     SYS_CHECKING,       // 自检中
     SYS_CALIBRATING,    // 归零/校准中
     SYS_STANDBY,        // 待机/手动

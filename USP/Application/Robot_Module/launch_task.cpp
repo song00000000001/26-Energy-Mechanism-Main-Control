@@ -3,6 +3,19 @@
 #include "launcher_driver.h"
 #include "robot_config.h"
 
+/*摇杆逻辑
+markdown:
+| 摇杆  | 状态     | 动作                                     |     | 摇杆  | 状态         | 动作                             |
+| --- | ------ | -------------------------------------- | --- | --- | ---------- | ------------------------------ |
+| s1  | up     | 电机失能（进check状态）                         |     | s2  | up         | 手动控制yaw和igniter                |
+|     | middle | 等待发射，（卡stay状态）                         |     |     | middle     | 使用修正值控制yaw和igniter（修正值由调参板设置）  |
+|     | down   | 激活自动发射，（进autofireprep状态），跳过自检（手动按限位开关） |     |     | down       | 使用视觉控制，如果视觉失联，转而用修正值控制，直到视觉重连。 |
+| LX  |        |                                        |     | RX  | left/right | 增量控制yaw                        |
+| LY  |        |                                        |     | RY  | up/donw    | 增量控制igniter                    |
+
+date:20251209
+*/
+
 /* --- 4. 发射流程子状态机 --- */
 // 定义子状态
 typedef enum {
