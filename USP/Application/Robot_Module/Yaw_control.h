@@ -20,7 +20,8 @@ private:
   myPID PID_Yaw_Speed;
   uint8_t Yaw_Init_flag = 0;
 public:
-
+  float yaw_target = 0;
+  float yaw_correct_angle=0;        //yaw轴修正角
   abstractMotor<Motor_GM6020> YawMotor;
   inline bool is_Yaw_Init() { return (Yaw_Init_flag == 2); }
 
@@ -30,7 +31,7 @@ public:
   void adjust();
   void disable();
   void yaw_out_motor_speed();
-  void yaw_state_machine(yaw_control_state_e yaw_state,float yaw_manual_target);
+  void yaw_state_machine(yaw_control_state_e yaw_state);
 };
 
 #endif

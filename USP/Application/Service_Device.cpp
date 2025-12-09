@@ -87,6 +87,7 @@ void Vision_Task(void *arg)
 	{
 		vTaskDelayUntil(&xLastWakeTime_t, 1);
 		vision_send_pack.mode = 3;
+		/*
 		if (DR16.GetStatus() == DR16_ESTABLISHED && DR16.GetS1() == SW_DOWN) // 左拨杆拨到下，进入视觉模式
 		{
 			vision_send_pack.tracker_bit = 1;
@@ -100,6 +101,7 @@ void Vision_Task(void *arg)
 		{
 			vision_recv_pack.target_mode = 0;
 		}
+		*/
 		//	 SRML_UART_Transmit_DMA(&UART_pack);
 		vTaskDelay(1);
 	}

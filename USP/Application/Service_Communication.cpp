@@ -141,10 +141,11 @@ void Task_CAN1Receive(void *arg)
     /* update motor data from CAN1_RxPort */
     if (xQueueReceive(CAN1_RxPort, &CAN_RxCOB, portMAX_DELAY) == pdPASS)
     {
-        if (Launcher.DeliverMotor[L].update(CAN_RxCOB.ID, CAN_RxCOB.Data))
+      //R0,L1
+        if (Launcher.DeliverMotor[1].update(CAN_RxCOB.ID, CAN_RxCOB.Data))
         {
         }
-        else if (Launcher.DeliverMotor[R].update(CAN_RxCOB.ID, CAN_RxCOB.Data))
+        else if (Launcher.DeliverMotor[0].update(CAN_RxCOB.ID, CAN_RxCOB.Data))
         {
         }
         else if (Launcher.IgniterMotor.update(CAN_RxCOB.ID, CAN_RxCOB.Data))

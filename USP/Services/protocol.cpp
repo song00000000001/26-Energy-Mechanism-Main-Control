@@ -71,7 +71,7 @@ struct DownLinkStructdef
 Missle_State_t state = DEINIT;
 uint8_t DartDataSlot[5]={0,1,2,3,4}; // 发射数据选择
 DartDataStructdef DartsData[MAX_DART_DATAPOOL_SIZE]; //发射数据
-
+DartAimEnumdef HitTarget;                            // 打击目标
 
 void SendHeartBeat();
 void Launch_Callback()

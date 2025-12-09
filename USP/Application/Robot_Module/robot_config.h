@@ -27,6 +27,7 @@
 #define IGNITER_OFFSET_POS   3   // 复位位置
 
 #define POS_BUFFER -20       // 复位位置
+#define POS_WAITLOAD -300   //等待装填位置
 #define POS_IGNITER 100     //行程电机位置
 #define POS_BOTTOM -620      // 拉栓位置
 
@@ -35,21 +36,7 @@
 extern "C"{
 #endif
 
-/* ==舵机宏== */
 
-#define servo_igniter_unlock    __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1, 170) // 扳机舵机解锁      ,120卡住,180ok
-#define servo_igniter_lock      __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1, 270) // 扳机舵机锁止
-
-/*ttodo
-以下只有1号舵机响应,其他的都不对,而且测试时用不上,所以先不管
-后续检查
-*/
-#define servo_loader_clamp1     __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 53)   // 一号夹爪夹紧
-#define servo_loader_release1   __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 100)  // 一号夹爪松开
-#define servo_loader_clamp2     __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, 126)  // 二号夹爪夹紧
-#define servo_loader_release2   __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, 170)  // 二号夹爪松开
-#define servo_loader_clamp3     __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, 288)  // 三号夹爪夹紧
-#define servo_loader_release3   __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, 360)  // 三号夹爪松开 
 
 //舵机动作组
 void Loader_Clamps_ClampAll(void);

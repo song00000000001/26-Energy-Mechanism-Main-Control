@@ -15,6 +15,20 @@ typedef enum {
     MODE_ERROR      // 失能
 } Control_Mode_e;
 
+/* --- 4. 发射流程子状态机 --- */
+// 定义子状态
+typedef enum {
+    FIRE_IDLE=0,
+    FIRE_PULL_LOAD,     //下拉到装填位置
+    FIRE_WAITLOAD,      //等待装填
+    FIRE_PULL_BOTTOM,    // 下拉到底
+    FIRE_LATCHING,   // 挂机 (等待装填归位)
+    FIRE_RETURNING,  // 回升(回到缓存区)
+    FIRE_TRANSFORE,         //动作仓储区舵机,转移新镖
+    FIRE_TRANSFORE_BACK,      //动作仓储区舵机,卡镖舵机回正，卡住镖
+    FIRE_SHOOTING,   // 开火 (舵机)
+} Fire_State_e;
+
 class Launcher_Driver
 {
 private:
@@ -37,6 +51,10 @@ private:
     bool is_igniter_homed;
 
 public:
+
+    // 发射子状态机
+    Fire_State_e fire_state = FIRE_IDLE;
+
     //电机状态
     Control_Mode_e mode_deliver[2]; // 左右滑块的独立模式
     Control_Mode_e mode_igniter;    // 丝杆模式
@@ -79,8 +97,10 @@ public:
 
     // 检查限位开关并处理归零逻辑
     void check_calibration_logic(); 
-
+    // 输出所有电机当前速度
     void out_all_motor_speed();
+    // 发射子状态机
+    void Run_Firing_Sequence();
 };
 
 #endif

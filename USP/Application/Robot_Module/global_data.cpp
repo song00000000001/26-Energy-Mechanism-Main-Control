@@ -27,7 +27,7 @@ uint32_t vision_last_recv_time = 0; // 视觉最后接收时间,communication.cp
 
 //调参板通信协议用
 //aiming_controller.cpp中修改,protocol.cpp中使用
-DartAimEnumdef HitTarget; //打击目标,默认打前哨站,
+
 
 /* --- 1. 全局对象实例化 --- */
 // 定义全局机器人状态 (Cmd, Flag, Status)

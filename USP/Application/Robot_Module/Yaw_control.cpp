@@ -85,16 +85,13 @@ void Missle_YawController_Classdef::yaw_out_motor_speed(){
 }
 
 
-void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_state,float yaw_manual_target){
+void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_state){
     
-    static float yaw_target = 0;
-    static float yaw_correct_angle=0;        //yaw轴修正角
+
 
     switch (yaw_state)
     {
     case MANUAL_AIM:
-        yaw_target -= yaw_manual_target * 0.002f;
-        yaw_target = std_lib::constrain(yaw_target, -10.2f, 10.2f);
         Yawer.update(yaw_target);
         break;
     case CORRECT_AIM:
@@ -133,9 +130,7 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_st
         //校准模式
         //进行校准，校准完成后，自动改变校准标志
         Yawer.calibration();
-        if(Yawer.is_Yaw_Init()){
-            Robot.Status.yaw_control_state = MANUAL_AIM; //校准完成后，进入手动模式
-        }
+    
         break;
     default:
         Yawer.disable();
