@@ -114,6 +114,7 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_st
         //根据目标类型选择数据组数据
         //yaw数据
         yaw_target=DartsData[slot_index].YawCorrectionAngle[HitTarget];
+        yaw_target=std_lib::constrain(yaw_target, -10.2f, 10.2f);
         /*
         todo
         song
