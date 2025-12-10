@@ -25,9 +25,6 @@ VisionRecvData_t vision_recv_pack;//电视接收包
 VisionSendData_t vision_send_pack;//电视发送包
 uint32_t vision_last_recv_time = 0; // 视觉最后接收时间,communication.cpp中更新,server发送时使用
 
-//调参板通信协议用
-//aiming_controller.cpp中修改,protocol.cpp中使用
-
 
 /* --- 1. 全局对象实例化 --- */
 // 定义全局机器人状态 (Cmd, Flag, Status)
@@ -36,4 +33,15 @@ Robot_Ctrl_t Robot;
 //校准速度结构体实例化
 calibration_speed_t calibration_speed;
 
-Debug_Data_t Debugger; // 声明全局变量
+//调试数据结构体实例化
+Debug_Data_t Debugger;
+
+//调参板数据定义
+// 打击目标
+DartAimEnumdef HitTarget; 
+//发射数据池,每组数据包含一次发射(包含两种目标)的yaw和igniter目标数据,总共是4个浮点数
+DartDataStructdef DartsData[16]; 
+//发射数据映射表,调参板会调整这个表,而本地使用这个表来在发射数据池选择哪一组数据
+uint8_t DartDataSlot[5]={0,1,2,3,4};
+
+DR16_Snapshot_t DR16_Snap; //遥控器数据快照

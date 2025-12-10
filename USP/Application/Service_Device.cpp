@@ -58,7 +58,11 @@ void Vision_Task(void *arg);
 void Service_Devices_Init(void)
 {
 	xTaskCreate(LaunchCtrl, "App.LaunchCtrl", Large_Stack_Size, NULL, PriorityAboveNormal, &LaunchCtrl_Handle);
-	//xTaskCreate(Loader_Ctrl, "App.Loader_Ctrl", Normal_Stack_Size, NULL, PriorityAboveNormal, &Loader_Ctrl_Handle);
+	/*todo
+	song
+	增大任务优先级
+	将dr16失联等实时性要求高的逻辑放到另一个任务中，防止主控制任务意外卡死(使用互斥锁或者vtaskdelay等阻塞函数)
+	*/
 	//xTaskCreate(Vision_Task, "App.Vision_Task", Small_Stack_Size, NULL, PriorityAboveNormal, &Vision_Task_Handle);
 	//xTaskCreate(Yaw_Task, "App.Yaw_Task", Normal_Stack_Size, NULL, PriorityAboveNormal, &Yaw_Task_Handle);
 #if USE_SRML_DR16

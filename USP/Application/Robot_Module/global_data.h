@@ -4,23 +4,6 @@
 #include "Yaw_control.h"
 #include "launcher_driver.h"
 
-// 飞镖数据存储相关定义
-//最大飞镖数据池大小?待确认
-#define MAX_DART_DATAPOOL_SIZE 16
-
-//飞镖数据结构体,用于选择目标是基地还是前哨站
-typedef enum __DartAimEnumdef
-{
-  Outpost = 0,
-  Base = 1
-}DartAimEnumdef;
-
-//飞镖数据结构体,用于存储飞镖目标数据
-typedef struct __DartDataStructdef
-{
-  double Ignitergoal[2]; //扳机目标位置
-  double YawCorrectionAngle[2];//偏航修正角
-}DartDataStructdef;
 
 #pragma pack(1)
     struct VisionRecvData_t
@@ -86,7 +69,6 @@ typedef enum {
 typedef struct {
     bool sys_enable;        // 系统使能
     bool auto_mode;         // 自动模式开关
-    bool manual_override;   // 手动微调开关
     bool skip_check;        // 跳过自检
     bool fire_command;      // 发射指令 (todo视觉触发)
 
@@ -147,15 +129,6 @@ typedef struct {
 extern Debug_Data_t Debugger; // 声明全局变量
 
 
-enum Missle_State_t
-{
-	DEINIT,
-	WAIT_ACT,
-	PULL,
-	BACK,
-	WAIT_SHOOT
-};
-
 // 校准速度结构体
 typedef struct {
 	float yaw_calibration_speed;
@@ -165,4 +138,23 @@ typedef struct {
 
 extern calibration_speed_t calibration_speed;
 
+//调参板数据结构
+//用于存储调参板传来的飞镖目标数据
+typedef struct __DartDataStructdef
+{
+  double Ignitergoal[2]; //扳机目标位置
+  double YawCorrectionAngle[2];//偏航修正角
+}DartDataStructdef;
 
+//用于选择目标是基地还是前哨站
+typedef enum __DartAimEnumdef
+{
+  Outpost = 0,
+  Base = 1
+}DartAimEnumdef;
+
+extern DartDataStructdef DartsData[];   //发射数据存储池
+extern DartAimEnumdef HitTarget;        //打击目标
+extern uint8_t DartDataSlot[];          //发射数据映射表
+
+extern DR16_Snapshot_t DR16_Snap; //遥控器数据快照

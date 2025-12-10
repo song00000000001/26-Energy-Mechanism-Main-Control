@@ -110,6 +110,8 @@ void Launcher_Driver::adjust()
         if(mode_deliver[i]==MODE_ANGLE){
             // 串级PID: 位置环 -> 速度环
             pid_deliver_pos[i].Target = target_deliver_angle + sync_comp[i];
+            //这里加入限幅保护
+            pid_deliver_pos[i].Target=std_lib::constrain(pid_deliver_pos[i].Target,POS_DELIVER_MIN,POS_DELIVER_MAX);
             pid_deliver_pos[i].Current = DeliverMotor[i].getMotorTotalAngle();
             pid_deliver_pos[i].Adjust();
             //速度环的输入为角度环输出
@@ -131,6 +133,8 @@ void Launcher_Driver::adjust()
     if(mode_deliver[0]==MODE_ANGLE){
         // 串级PID: 位置环 -> 速度环
         pid_igniter_pos.Target = target_igniter_angle;
+        //这里加入限幅保护
+        pid_igniter_pos.Target=std_lib::constrain(pid_igniter_pos.Target, IGNITER_MIN_POS, IGNITER_MAX_POS);
         pid_igniter_pos.Current = IgniterMotor.getMotorTotalAngle();
         pid_igniter_pos.Adjust();
         pid_igniter_spd.Target = pid_igniter_pos.Out;

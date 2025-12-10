@@ -92,29 +92,28 @@ void LaunchCtrl(void *arg)
             }
             //s2
             if(DR16.GetS2()==SW_UP){
-                Robot.Cmd.manual_override=true;
                 //Robot.Status.yaw_control_state = MANUAL_AIM; //切换到手动瞄准
                 //这里无需切换,保持即可,不然会抢占校准状态,校准完后,主状态机自动切换到手动模式
             }
             else if(DR16.GetS2()==SW_MID){
-                Robot.Cmd.manual_override=false;
                 Robot.Status.yaw_control_state = CORRECT_AIM; //切换到修正值瞄准
             }
             else{
-                Robot.Cmd.manual_override=false;
                 Robot.Status.yaw_control_state = VISION_AIM; //切换到视觉瞄准
             }
-            // 手动微调 igniter
-            if (Robot.Cmd.manual_override) {
-                // 手动微调逻辑
-                // 读取当前角度 + 摇杆增量
-                float new_igniter_pos = Launcher.IgniterMotor.getMotorTotalAngle()+ DR16.Get_LY_Norm() * 0.002f;
-                //将计算结果传给驱动
-                Launcher.target_igniter_angle=new_igniter_pos;
-                
-                Yawer.yaw_target -= DR16.Get_RX_Norm() * 0.002f;
-                Yawer.yaw_target = std_lib::constrain(Yawer.yaw_target, -10.2f, 10.2f);
-            }
+            /*todo
+            song
+            修改所有调用dr16数据的地方为快照数据。
+            目前就只有yaw的手动微调用了
+            */
+
+            DR16_Snap.LX_Norm=DR16.Get_LX_Norm();
+            DR16_Snap.LY_Norm=DR16.Get_LY_Norm();
+            DR16_Snap.RX_Norm=DR16.Get_RX_Norm();
+            DR16_Snap.RY_Norm=DR16.Get_RY_Norm();
+            DR16_Snap.S1=DR16.GetS1();
+            DR16_Snap.S2=DR16.GetS2();
+            DR16_Snap.Status=DR16.GetStatus();
         }
         /*在非校准状态如果发生碰撞限位的现象，则立即取消使能并且记录错误电机信息，
         并且重置为error状态，此时会将该电机的校准状态重置,  
@@ -208,6 +207,10 @@ void LaunchCtrl(void *arg)
                 Yawer.mode_YAW = MODE_ANGLE; //切换回角度环
                 Yawer.yaw_target=0;
             }
+            if(Launcher.is_calibrated()){
+                Launcher.target_igniter_angle=POS_IGNITER;  // 默认力度
+                Launcher.target_deliver_angle=POS_BUFFER;   // 回缓冲
+            }
             // 1. 处理归零状态转换
             Launcher.check_calibration_logic();
             Robot.Flag.Status.is_calibrated=Yawer.is_Yaw_Init()&&Launcher.is_calibrated();
@@ -219,7 +222,6 @@ void LaunchCtrl(void *arg)
             break;
 
         case SYS_STANDBY:
-			 
             // 切换到自动模式
             if (Robot.Cmd.auto_mode) {
                 Launcher.fire_state = FIRE_IDLE; // 重置发射子状态机
@@ -229,10 +231,9 @@ void LaunchCtrl(void *arg)
             
         case SYS_AUTO_PREP:
             // --- 自动发射准备 ---
-            // 确保机构归位到待发状态
-			Launcher.target_igniter_angle=POS_BUFFER; // 回缓冲
-            Launcher.target_igniter_angle=POS_IGNITER;  // 去瞄准默认高度(示例)
-            
+            //确保机构归位到待发状态
+			Launcher.target_deliver_angle=POS_BUFFER;   // 回缓冲
+
             // 检查是否到位
             if (Launcher.is_deliver_at_target() && Launcher.is_igniter_at_target()) 
             {  
@@ -258,7 +259,7 @@ void LaunchCtrl(void *arg)
             disable_motor:失能电机
             yaw_calibrating:校准模式
         */
-        Yawer.yaw_state_machine(Robot.Status.yaw_control_state);
+        Yawer.yaw_state_machine(Robot.Status.yaw_control_state, DR16_Snap.LX_Norm, DR16_Snap.LY_Norm);
 
         // 2. 堵转保护 (全局生效，除 Debug/Offline)
         if (Robot.Status.current_state != SYS_OFFLINE  

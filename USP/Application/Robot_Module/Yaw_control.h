@@ -36,7 +36,7 @@ public:
   void adjust();
   void disable();
   void yaw_out_motor_speed();
-  void yaw_state_machine(yaw_control_state_e yaw_state);
+  void yaw_state_machine(yaw_control_state_e yaw_state,float LX,float LY);
   bool yaw_stall_check(float limit_output, float threhold_rpm, uint32_t time_ms);
 };
 

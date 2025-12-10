@@ -94,24 +94,41 @@ void Missle_YawController_Classdef::yaw_out_motor_speed(){
 }
 
 
-void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_state){
-    
-
+void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_state,float LX,float LY){
     
     switch (yaw_state)
     {
     case MANUAL_AIM:
-        Yawer.update(yaw_target);
+        // 手动微调逻辑
+        Launcher.target_igniter_angle-=LY * 0.002f;
+        Launcher.target_igniter_angle=std_lib::constrain(Launcher.target_igniter_angle, IGNITER_MIN_POS, IGNITER_MAX_POS);
+        yaw_target -= LX * 0.002f;
+        yaw_target = std_lib::constrain(yaw_target, -10.2f, 10.2f);
+        update(yaw_target);
         break;
     case CORRECT_AIM:
-        //根据目标选择修正角度
-        //固定修正值模式
-        Yawer.update(yaw_correct_angle); // 更改Yaw轴角度
+    {
+        //读取调参板设置的发射数据
+        //根据发射计数选择数据槽数组
+        uint8_t slot_index=DartDataSlot[Robot.Status.dart_count];
+        //根据目标类型选择数据组数据
+        //yaw数据
+        yaw_target=DartsData[slot_index].YawCorrectionAngle[HitTarget];
+        /*
+        todo
+        song
+        这里用了外面的类，不太好改，就先放这里吧
+        */
+        //发射力度数据
+        Launcher.target_igniter_angle=DartsData[slot_index].Ignitergoal[HitTarget];
+        Launcher.target_igniter_angle=std_lib::constrain(Launcher.target_igniter_angle, IGNITER_MIN_POS, IGNITER_MAX_POS);
+        update(yaw_target); // 更改Yaw轴角度
+    }
         break;
     case VISION_AIM:
         //视觉模式
-        //todo
-        {/*todo
+        {
+        /*todo
         测试时，暂时不管视觉
         storage_base_angle = default_yaw_target[HitTarget];
 
@@ -133,7 +150,8 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_st
         //计算电机pid
         Yawer.adjust();
         */
-       }
+        }
+        Yawer.disable();
         break;
     case YAW_CALIBRATING:
         //校准模式
