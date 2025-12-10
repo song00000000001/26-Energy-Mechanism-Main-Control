@@ -28,7 +28,7 @@ class Launcher_Driver
 private:
     /* --- 1. 硬件对象 (Private: 外部不可见) --- */
     // 堵转计时器
-    uint32_t stall_timer_deliver[2];
+    uint32_t stall_timer_deliver;
     uint32_t stall_timer_igniter;
     
     // 限位开关读取函数指针

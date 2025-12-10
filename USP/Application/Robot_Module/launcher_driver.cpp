@@ -79,8 +79,7 @@ Launcher_Driver::Launcher_Driver(uint8_t id_l, uint8_t id_r, uint8_t id_ign)
     // 自检开关检测进度
     check_progress=0; 
     // 初始化堵转计时器
-    stall_timer_deliver[0] = 0; 
-    stall_timer_deliver[1] = 0;
+    stall_timer_deliver = 0; 
     stall_timer_igniter = 0;
     mode_deliver[0] = MODE_SPEED;
     mode_deliver[1] = MODE_SPEED;
@@ -258,7 +257,7 @@ void Launcher_Driver::stop_yaw_motor(){
     // Yawer.disable();
    /*todo
    song
-   将yaw合并到发射类中,考虑下合并事宜后再操作,现在检查电机状态问题.
+   将yaw合并到发射类中,考虑下合并事宜后再操作,现在在任务中直接调用 Yawer.disable();解决。
    */
 }
 
@@ -330,7 +329,9 @@ void Launcher_Driver::Run_Firing_Sequence()
             break;
 
         case FIRE_WAITLOAD:
-            //todo,调用装填舵机,使升降机下放
+            //调用装填舵机,使升降机下放
+            servo_loader_down1;
+            servo_loader_down2;
             //等装填完毕
             if ((xTaskGetTickCount() - state_timer) > 500) {
                 fire_state = FIRE_PULL_BOTTOM;
@@ -348,6 +349,9 @@ void Launcher_Driver::Run_Firing_Sequence()
 
         case FIRE_LATCHING:
             //装填舵机动作使升降机归位
+            servo_loader_up1;
+            servo_loader_up2;
+            //等待升降机归位完毕
             if ((xTaskGetTickCount() - state_timer) > 500) {
                 fire_state = FIRE_RETURNING;
             }
@@ -406,15 +410,17 @@ bool Launcher_Driver::check_deliver_stall(float limit_output,float threhold_rpm,
 {
     uint32_t now = xTaskGetTickCount();
     bool is_stalled = false;
+    //这里用或逻辑检测左右滑块是否堵转，任意一侧堵转即返回堵转状态，所以不需要两个计时器
     bool stalled_check=(abs(pid_deliver_spd[0].Out)>limit_output&&abs(DeliverMotor[0].getMotorSpeed())<threhold_rpm);
     stalled_check|=(abs(pid_deliver_spd[1].Out)>limit_output&&abs(DeliverMotor[1].getMotorSpeed())<threhold_rpm);
     if(stalled_check) {
-        if (stall_timer_deliver[0] == 0) stall_timer_deliver[0] = now;
-        else if (now - stall_timer_deliver[0] > time_ms) is_stalled = true;
+        if (stall_timer_deliver == 0) stall_timer_deliver = now;
+        else if (now - stall_timer_deliver > time_ms) is_stalled = true;
     } 
     else {
-        stall_timer_deliver[0] = 0;
+        stall_timer_deliver = 0;
     }
+    
     return is_stalled;
 }
 

@@ -9,9 +9,7 @@
 
 void System_Device_Init(void);
 void System_Task_Init(void);
-//void Launch_Callback();
-//uint8_t getLoadStatus();
-//bool Is_Launching();
+
 #ifdef __cplusplus
 }
 #endif
