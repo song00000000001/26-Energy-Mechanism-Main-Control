@@ -29,12 +29,6 @@
     };
 #pragma pack()
 
-extern uint32_t vision_last_recv_time ; // 视觉最后接收时间
-extern VisionRecvData_t vision_recv_pack;
-extern VisionSendData_t vision_send_pack;
-
-
-//todo
 //dr16快照结构体
 struct DR16_Snapshot_t {
     LinkageStatus_Typedef Status;
@@ -54,7 +48,6 @@ typedef enum {
 //主状态枚举
 typedef enum {
     SYS_OFFLINE = 0,    // 离线
-    //SYS_ERROR,           // 错误状态,一般是运行中电机失控装限位开关，或者触发堵转保护
     SYS_DEBUG,           // 调试状态
     SYS_CHECKING,       // 自检中
     SYS_CALIBRATING,    // 归零/校准中
@@ -64,18 +57,22 @@ typedef enum {
     SYS_AUTO_FIRE       // 自动发射进行中
 } System_State_e;
 
-// --- 2. 交互结构体 ---
 
 // [指令 Cmd]: 任务层根据遥控器算出来的“意图”
 typedef struct {
     bool sys_enable;        // 系统使能
-    bool auto_mode;         // 自动模式开关
+    bool autofire_enable;   // 自动发射模式标志位
     bool skip_check;        // 跳过自检
-    bool fire_command;      // 发射指令 (todo视觉触发)
+    bool fire_command;      // 发射指令 
+    /*todo
+    song
+    后期和视觉联动可以使用该标志位
+    并且增加超时处理。
+    */
 
 } Robot_Cmd_t;
 
-// [监控 Monitor]: 硬件反馈上来的“健康状况”
+// [监控 Monitor]: 硬件反馈上来的“状况”
 typedef struct {
     struct {
         bool limit_sw_ok;   // 限位开关自检通过
@@ -92,43 +89,25 @@ typedef struct {
 typedef struct {
     System_State_e current_state; // 当前主状态
     yaw_control_state_e yaw_control_state;//yaw轴控制状态
-    
     uint8_t dart_count;           // 已发射计数
-
 } Robot_Feedback_t;
 
-// --- 3. 全局数据包 ---
+//数据包
 typedef struct {
     Robot_Cmd_t      Cmd;
     Robot_Monitor_t  Flag;
     Robot_Feedback_t Status;
 } Robot_Ctrl_t;
 
-extern Launcher_Driver Launcher; // 发射驱动类
-extern Missle_YawController_Classdef Yawer; // yaw控制类
-extern Robot_Ctrl_t Robot; 
 
-typedef struct {
-    float limit_output;
-    float threhold_rpm;
-    uint32_t time_ms;
-} stall_params_t;
-
-// 2. 新增调试数据结构体
+//调试数据结构体
 typedef struct {
     // 标志位
     bool enable_debug_mode; // 在watch窗口改为true以进入调试模式(配合遥控器)
     //电机状态
     Control_Mode_e debug_mode_deliver[2]; // 左右滑块的独立模式
     Control_Mode_e debug_mode_igniter;    // 丝杆模式
-    //堵转参数
-    stall_params_t stall_params_deliver;
-    stall_params_t stall_params_igniter;
-    stall_params_t stall_params_yaw;
 } Debug_Data_t;
-
-extern Debug_Data_t Debugger; // 声明全局变量
-
 
 // 校准速度结构体
 typedef struct {
@@ -137,7 +116,6 @@ typedef struct {
 	float igniter_calibration_speed;
 }calibration_speed_t;
 
-extern calibration_speed_t calibration_speed;
 
 //调参板数据结构
 //用于存储调参板传来的飞镖目标数据
@@ -154,8 +132,15 @@ typedef enum __DartAimEnumdef
   Base = 1
 }DartAimEnumdef;
 
-extern DartDataStructdef DartsData[];   //发射数据存储池
-extern DartAimEnumdef HitTarget;        //打击目标
-extern uint8_t DartDataSlot[];          //发射数据映射表
-
-extern DR16_Snapshot_t DR16_Snap; //遥控器数据快照
+extern Launcher_Driver Launcher; 
+extern Missle_YawController_Classdef Yawer; 
+extern Robot_Ctrl_t Robot; 
+extern Debug_Data_t Debugger; 
+extern calibration_speed_t calibration_speed;
+extern DartDataStructdef DartsData[];   
+extern DartAimEnumdef HitTarget;       
+extern uint8_t DartDataSlot[];          
+extern DR16_Snapshot_t DR16_Snap; 
+extern uint32_t vision_last_recv_time ; 
+extern VisionRecvData_t vision_recv_pack;
+extern VisionSendData_t vision_send_pack;
