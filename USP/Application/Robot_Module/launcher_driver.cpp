@@ -1,10 +1,6 @@
-/**
-  * @file   launcher_driver.cpp
-  */
 #include "launcher_driver.h"
 #include "robot_config.h"
 #include "global_data.h"
-
 
 //定义舵机测试结构体，方便调节测试舵机行程
 typedef struct 
@@ -18,7 +14,6 @@ typedef struct
     uint16_t transfomer_ccr_lock;
     uint16_t transfomer_ccr_unlock;
 }servo_ccr_debug;
-
 servo_ccr_debug servo_ccr={
     170,    //igniter_ccr_unlock
     270,    //igniter_ccr_lock
@@ -29,20 +24,18 @@ servo_ccr_debug servo_ccr={
     126,    //transfomer_ccr_lock
     170     //transfomer_ccr_unlock
 };
-
-/* ==舵机宏== */
-
+// 舵机宏
 #define servo_igniter_unlock    __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1,servo_ccr.igniter_ccr_unlock ) // 扳机舵机解锁      ,120卡住,170ok
 #define servo_igniter_lock      __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1,servo_ccr.igniter_ccr_lock ) // 扳机舵机锁止
 
 /*todo
+song
 查出引脚填写在下面。
 定义装填舵机和转移舵机的宏
 */
 //装填舵机即升降机左右的舵机，上为升，下为下降，下降即装填飞镖，上升即清空发射区
 #define servo_loader_up1     __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, servo_ccr.loader1_ccr_up)   // 装填舵机左，上升
 #define servo_loader_down1   __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, servo_ccr.loader1_ccr_down)  // 装调舵机左，下降
-
 #define servo_loader_up2     __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, servo_ccr.loader2_ccr_up)  // 装填舵机右，上升
 #define servo_loader_down2   __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, servo_ccr.loader2_ccr_down)  // 装填舵机右，下降
 //转移舵机即动作舱储存区的卡镖舵机，负责将新镖从储存区转移到发射区
@@ -60,6 +53,7 @@ Launcher_Driver::Launcher_Driver(uint8_t id_l, uint8_t id_r, uint8_t id_ign)
     DeliverMotor[0].Polarity = POLARITY_DELIVER_L;
     DeliverMotor[1].Polarity = POLARITY_DELIVER_R;
     IgniterMotor.Polarity = POLARITY_IGNITER;
+    // 校准状态初始化
     is_deliver_homed[0] = false;
     is_deliver_homed[1] = false;
     is_igniter_homed = false;
@@ -69,19 +63,13 @@ Launcher_Driver::Launcher_Driver(uint8_t id_l, uint8_t id_r, uint8_t id_ign)
     DeliverMotor[1].angle_unit_convert = deliver_ratio;
     IgniterMotor.angle_unit_convert = 4.0f / (360.f * 36.f); 
 
-    // PID 参数初始化
-    pid_deliver_sync.SetPIDParam(-0.4f, 0.0f, 0.0f, 8000, 16000);
-    
-    for(int i=0; i<2; i++) {
-        pid_deliver_spd[i].SetPIDParam(20.0f, 2.0f, 0.0f, 8000, 16380);
-        pid_deliver_pos[i].SetPIDParam(800.f, 0.0, 0.0, 1000, 8000);
-    }
-    
-    pid_igniter_spd.SetPIDParam(15.0, 0.0, 0.0, 3000, 12000);
-    pid_igniter_pos.SetPIDParam(3000.0, 0.0, 0.0, 3000, 6000);
 
-    // 自检开关检测进度
+    // 自检开关检测进度初始化
     check_progress=0; 
+    // 初始模式均为速度环
+    mode_deliver[0] = MODE_SPEED;
+    mode_deliver[1] = MODE_SPEED;
+    mode_igniter = MODE_SPEED;
 }
 
 // ================= 动作接口 =================
@@ -108,6 +96,8 @@ void Launcher_Driver::adjust()
         if(mode_deliver[i]==MODE_ANGLE){
             // 串级PID: 位置环 -> 速度环
             pid_deliver_pos[i].Target = target_deliver_angle + sync_comp[i];
+            //这里加入限幅保护
+            pid_deliver_pos[i].Target=std_lib::constrain(pid_deliver_pos[i].Target,POS_DELIVER_MIN,POS_DELIVER_MAX);
             pid_deliver_pos[i].Current = DeliverMotor[i].getMotorTotalAngle();
             pid_deliver_pos[i].Adjust();
             //速度环的输入为角度环输出
@@ -126,19 +116,20 @@ void Launcher_Driver::adjust()
             pid_deliver_pos[i].clean_intergral();
         }
     }
-    if(mode_deliver[0]==MODE_ANGLE){
+    if(mode_igniter==MODE_ANGLE){
         // 串级PID: 位置环 -> 速度环
         pid_igniter_pos.Target = target_igniter_angle;
+        //这里加入限幅保护
+        pid_igniter_pos.Target=std_lib::constrain(pid_igniter_pos.Target, IGNITER_MIN_POS, IGNITER_MAX_POS);
         pid_igniter_pos.Current = IgniterMotor.getMotorTotalAngle();
         pid_igniter_pos.Adjust();
-        pid_igniter_spd.Target = pid_igniter_pos.Out;
         //速度环的输入为角度环输出
-        pid_igniter_spd.Target = pid_deliver_pos[0].Out;
+        pid_igniter_spd.Target = pid_igniter_pos.Out;
         //速度环
         pid_igniter_spd.Current = IgniterMotor.getMotorSpeed();
         pid_igniter_spd.Adjust();
     }
-    else if(mode_deliver[0]==MODE_SPEED){
+    else if(mode_igniter==MODE_SPEED){
         pid_igniter_spd.Current = IgniterMotor.getMotorSpeed();
         pid_igniter_spd.Adjust();
     }
@@ -152,6 +143,11 @@ void Launcher_Driver::adjust()
 
 void Launcher_Driver::start_calibration()
 {
+    //清空标志位,以便多次校准
+	Yawer.Yaw_Init_flag=0;
+    is_deliver_homed[0] = false;
+    is_deliver_homed[1] = false;
+    is_igniter_homed = false;
     // 只有在未校准或强制请求时调用
     for(int i=0; i<2; i++) {
         mode_deliver[i] = MODE_SPEED;
@@ -184,12 +180,12 @@ void Launcher_Driver::check_calibration_logic()
             mode_deliver[0] = MODE_ANGLE;
             is_deliver_homed[0] = true;
             
-            // 3. 设定当前位置为初始目标 (防止跳变)
+            // 3. 设定当前位置为初始目标
             target_deliver_angle = DELIVER_OFFSET_POS;
         }
     }
 
-    if (!is_deliver_homed[0]) {
+    if (!is_deliver_homed[1]) {
         // 如果碰到开关 (假设低电平触发)
         if (SW_DELIVER_R_OFF) {
 			pid_deliver_spd[1].clean_intergral();
@@ -201,7 +197,7 @@ void Launcher_Driver::check_calibration_logic()
             mode_deliver[1] = MODE_ANGLE;
             is_deliver_homed[1] = true;
             
-            // 3. 设定当前位置为初始目标 (防止跳变)
+            // 3. 设定当前位置为初始目标
             target_deliver_angle = DELIVER_OFFSET_POS;
         }
     }
@@ -251,13 +247,12 @@ void Launcher_Driver::out_all_motor_speed(){
     IgniterMotor.setMotorCurrentOut(pid_igniter_spd.Out);
 }
 
-void Launcher_Driver::stop_yaw_motor(){
-    // Yawer.disable();
-   /*todo
+
+/*todo
    song
-   将yaw合并到发射类中,考虑下合并事宜后再操作,现在检查电机状态问题.
-   */
-}
+   考虑将yaw合并到发射类中。
+*/
+
 
 void Launcher_Driver::stop_deliver_motor(){
     for(int i=0;i<2;i++){
@@ -276,8 +271,6 @@ void Launcher_Driver::stop_igniter_motor(){
 void Launcher_Driver::stop_all_motor(){
     stop_igniter_motor();
     stop_deliver_motor();
-    stop_yaw_motor();
-
     fire_lock();
 }
 
@@ -286,24 +279,21 @@ bool Launcher_Driver::is_calibrated() {
     return is_deliver_homed[0] && is_deliver_homed[1] && is_igniter_homed;
 }
 
-bool Launcher_Driver::is_deliver_at_target() {
+bool Launcher_Driver::is_deliver_at_target(float threshold) {
     uint16_t err=abs(DeliverMotor[0].getMotorTotalAngle() - target_deliver_angle);
-    return (err < 5.0f);
+    return (err < threshold);
 }
 
-bool Launcher_Driver::is_igniter_at_target() {
+bool Launcher_Driver::is_igniter_at_target(float threshold) {
     uint16_t err=abs(IgniterMotor.getMotorTotalAngle() - target_igniter_angle);
-    return (err < 5.0f);
+    return (err < threshold);
 }
 
 
 /*发射状态机*/
-
 void Launcher_Driver::Run_Firing_Sequence()
 {
-    
     static uint32_t state_timer = 0;
-
     switch (fire_state)
     {
         case FIRE_IDLE:
@@ -312,7 +302,7 @@ void Launcher_Driver::Run_Firing_Sequence()
             fire_lock(); // 锁止扳机舵机
             //todo: 视觉瞄准到位触发
             Robot.Cmd.fire_command=true;
-            if (Robot.Cmd.fire_command&&is_deliver_at_target()) {
+            if (Robot.Cmd.fire_command&&is_deliver_at_target(5)) {
                 fire_state = FIRE_PULL_LOAD;
             }
             break;
@@ -320,14 +310,16 @@ void Launcher_Driver::Run_Firing_Sequence()
         case FIRE_PULL_LOAD:
             //下拉滑块到装填位置
             target_deliver_angle=(POS_WAITLOAD);
-            if (is_deliver_at_target()) {
+            if (is_deliver_at_target(5)) {
                 state_timer = xTaskGetTickCount();
                 fire_state = FIRE_WAITLOAD;
             }
             break;
 
         case FIRE_WAITLOAD:
-            //todo,调用装填舵机,使升降机下放
+            //调用装填舵机,使升降机下放
+            servo_loader_down1;
+            servo_loader_down2;
             //等装填完毕
             if ((xTaskGetTickCount() - state_timer) > 500) {
                 fire_state = FIRE_PULL_BOTTOM;
@@ -337,7 +329,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         case FIRE_PULL_BOTTOM:
             //滑块全速下拉到底
             target_deliver_angle=(POS_BOTTOM);
-            if (is_deliver_at_target()) {
+            if (is_deliver_at_target(5)) {
                 state_timer = xTaskGetTickCount();
                 fire_state = FIRE_LATCHING;
             }
@@ -345,6 +337,9 @@ void Launcher_Driver::Run_Firing_Sequence()
 
         case FIRE_LATCHING:
             //装填舵机动作使升降机归位
+            servo_loader_up1;
+            servo_loader_up2;
+            //等待升降机归位完毕
             if ((xTaskGetTickCount() - state_timer) > 500) {
                 fire_state = FIRE_RETURNING;
             }
@@ -353,7 +348,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         case FIRE_RETURNING:
             // 滑块回缓冲区
             target_deliver_angle=(POS_BUFFER);
-            if (is_deliver_at_target()) {
+            if (is_deliver_at_target(5)) {
                 fire_state = FIRE_TRANSFORE;
                 state_timer = xTaskGetTickCount();
             }
@@ -390,8 +385,9 @@ void Launcher_Driver::Run_Firing_Sequence()
             break;
         
         // 异常打断：如果突然切出手制动，重置状态机
-        if (!Robot.Cmd.auto_mode) {
+        if (!Robot.Cmd.autofire_enable) {
             fire_state = FIRE_IDLE;
         }
     }
 }
+

@@ -6,14 +6,8 @@
 #define _LAUNCHER_DRIVER_H_
 
 #include "SRML.h"
+#include "robot_types.h"
 
-//不知道为什么，在global_data.h里定义会报错，只能放这里
-// 定义控制模式
-typedef enum {
-    MODE_SPEED=0,       // 速度环
-    MODE_ANGLE,      // 角度环
-    MODE_ERROR      // 失能
-} Control_Mode_e;
 
 /* --- 4. 发射流程子状态机 --- */
 // 定义子状态
@@ -32,26 +26,16 @@ typedef enum {
 class Launcher_Driver
 {
 private:
-    /* --- 1. 硬件对象 (Private: 外部不可见) --- */
-
-    
-    // 限位开关读取函数指针
-    GPIO_PinState (*read_switch_L)(void);
-    GPIO_PinState (*read_switch_R)(void);
-    GPIO_PinState (*read_switch_Ign)(void);
-
-    /* --- 2. 算法对象 (Private) --- */
-    myPID pid_deliver_spd[2];
-    myPID pid_deliver_pos[2];
-    myPID pid_deliver_sync;    // 双电机同步PID
-    myPID pid_igniter_spd;
-    myPID pid_igniter_pos;
-    
-    bool is_deliver_homed[2];       // 是否已完成归零
-    bool is_igniter_homed;
-
+ 
 public:
+    // 校准状态
+    bool is_deliver_homed[2],is_igniter_homed;      
 
+    // PID 对象
+    myPID pid_deliver_spd[2],pid_deliver_pos[2];    
+    myPID pid_deliver_sync;    // 双电机同步PID
+    myPID pid_igniter_spd,pid_igniter_pos;
+   
     // 发射子状态机
     Fire_State_e fire_state = FIRE_IDLE;
 
@@ -59,40 +43,39 @@ public:
     Control_Mode_e mode_deliver[2]; // 左右滑块的独立模式
     Control_Mode_e mode_igniter;    // 丝杆模式
 
-    abstractMotor<Motor_C620> DeliverMotor[2]; // [0]=Left, [1]=Right
+    //抽象电机对象
+    abstractMotor<Motor_C620> DeliverMotor[2];  // [0]=Left, [1]=Right
     abstractMotor<Motor_C610> IgniterMotor;
+
     // 记录哪几个开关已经检测过了 (Bitmask)
     uint8_t check_progress; 
+    // 目标位置，debug时可以
     float target_deliver_angle;     // 滑块目标角度 (位置模式用)
     float target_igniter_angle;     // 丝杆目标角度
 
-    /* --- 构造函数 --- */
     Launcher_Driver(uint8_t id_l, uint8_t id_r, uint8_t id_ign);
     
-    /* --- 2. 动作接口 (Command) --- */
-    // 启动归零程序 (将模式切为 HOMING)
+    // 启动校准(归零)程序
     void start_calibration();
     
     // 强制停止/失能
-    void stop_yaw_motor();
     void stop_deliver_motor();
     void stop_igniter_motor();
     void stop_all_motor();
 
-    // 舵机动作 (直接操作硬件，简单封装)
-    void fire_unlock(); 
-    void fire_lock();
+    // 舵机动作，简单封装防止vscode报错
+    void fire_unlock(); // 解锁扳机舵机
+    void fire_lock();   // 锁定扳机舵机
 
-    /* --- 3. 核心运行 (Execute) --- */
-    // 放在 1ms 任务或定时器中调用
+    // 根据电机模式（角度环，速度环，失能）调用 PID 计算
     void adjust();
 
-    /* --- 4. 状态查询 (Feedback) --- */
     // 获取当前状态，用于任务层判断是否可以下一步
     bool is_calibrated();          // 全系统是否已校准
-    bool is_deliver_at_target();   // 滑块是否到位
-    bool is_igniter_at_target();   // 丝杆是否到位
-
+    bool is_deliver_at_target(float threshold);   // 滑块是否到位
+    bool is_igniter_at_target(float threshold);   // 丝杆是否到位
+    
+    // 自检状态检查按键状态
     void key_check();
 
     // 检查限位开关并处理归零逻辑
@@ -101,6 +84,8 @@ public:
     void out_all_motor_speed();
     // 发射子状态机
     void Run_Firing_Sequence();
+
+
 };
 
 #endif

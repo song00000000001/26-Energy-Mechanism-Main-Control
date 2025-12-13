@@ -68,10 +68,6 @@ struct DownLinkStructdef
 }DownLinkPack;
 #pragma pack()
 
-Missle_State_t state = DEINIT;
-uint8_t DartDataSlot[5]={0,1,2,3,4}; // 发射数据选择
-DartDataStructdef DartsData[MAX_DART_DATAPOOL_SIZE]; //发射数据
-DartAimEnumdef HitTarget;                            // 打击目标
 
 void SendHeartBeat();
 void Launch_Callback()
@@ -85,7 +81,7 @@ void packDecoder(uint8_t * _addr,uint8_t len)
   {
     if(len != sizeof(LaunchSequceChangePack)) // 检查数据包长度
       return;
-    memcpy(&LaunchSequceChangePack,_addr,len);
+    std::memcpy(&LaunchSequceChangePack,_addr,len);
     if(std_lib::CRC8(&LaunchSequceChangePack,sizeof(LaunchSequceChangePack)) != 0) //检查CRC校验
       return;
     DartDataSlot[LaunchSequceChangePack.seq_indx + 1] = LaunchSequceChangePack.param_indx;
@@ -94,7 +90,7 @@ void packDecoder(uint8_t * _addr,uint8_t len)
   {
     if(len != sizeof(ParamChangePack)) // 检查数据包长度
       return;
-    memcpy(&ParamChangePack,_addr,len);
+    std::memcpy(&ParamChangePack,_addr,len);
     if(std_lib::CRC8(&ParamChangePack,sizeof(ParamChangePack)) != 0) //检查CRC校验
       return;
     DartsData[ParamChangePack.param_indx].Ignitergoal[Outpost] =ParamChangePack.outpost_launch;
@@ -106,7 +102,7 @@ void packDecoder(uint8_t * _addr,uint8_t len)
   {
     if(len != sizeof(MisCmdPack)) // 检查数据包长度
       return;
-    memcpy(&MisCmdPack,_addr,len);
+    std::memcpy(&MisCmdPack,_addr,len);
     if(std_lib::CRC8(&MisCmdPack,sizeof(MisCmdPack)) != 0) //检查CRC校验
       return;
     HitTarget = (DartAimEnumdef)MisCmdPack.payload;
@@ -115,7 +111,7 @@ void packDecoder(uint8_t * _addr,uint8_t len)
   {
     if(len != sizeof(MisCmdPack)) // 检查数据包长度
       return;
-    memcpy(&MisCmdPack,_addr,len);
+    std::memcpy(&MisCmdPack,_addr,len);
     if(std_lib::CRC8(&MisCmdPack,sizeof(MisCmdPack)) != 0) //检查CRC校验
       return;
     Launch_Callback(); //射
@@ -124,7 +120,7 @@ void packDecoder(uint8_t * _addr,uint8_t len)
   {
     if(len != sizeof(MisCmdPack)) // 检查数据包长度
       return;
-    memcpy(&MisCmdPack,_addr,len);
+    std::memcpy(&MisCmdPack,_addr,len);
     if(std_lib::CRC8(&MisCmdPack,sizeof(MisCmdPack)) != 0) //检查CRC校验
       return;
     if(MisCmdPack.payload != 0xff)
@@ -133,23 +129,14 @@ void packDecoder(uint8_t * _addr,uint8_t len)
   }
 }
 
-/**
- * @brief 飞镖调参版数据查询接口
- *
- * @return uint8_t
- */
 
-bool Is_Launching()
-{
-	return (state == WAIT_SHOOT || state == PULL);
-}
 
 void SendHeartBeat()
 {
   DownLinkPack.SOF = 0xA5;
   DownLinkPack.CmdID = 0x11;
-  //DownLinkPack.cur_num = CurrentCnt - 1;
- if(Is_Launching())
+  DownLinkPack.cur_num = Robot.Status.dart_count - 1;
+ if(Robot.Status.current_state == SYS_AUTO_FIRE)
  {
    DownLinkPack.launcher_state = 4; //回传镖架状态
  }
@@ -157,7 +144,7 @@ void SendHeartBeat()
  {
    DownLinkPack.launcher_state = 1;
  }
- DownLinkPack.ref_state = Referee.status;
+  DownLinkPack.ref_state = Referee.status;
   DownLinkPack.remote_state = DR16.GetStatus() == DR16_ESTABLISHED;
   DownLinkPack.target = HitTarget;
   USART_COB tmp;
