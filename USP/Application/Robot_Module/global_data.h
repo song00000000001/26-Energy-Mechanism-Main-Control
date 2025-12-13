@@ -82,6 +82,7 @@ typedef struct {
     struct {
         bool rc_connected;      // 遥控器连接
         bool is_calibrated; // 系统是否已完全校准
+        bool stop_continus_fire;    // 停止连发标志位
     } Status;
 } Robot_Monitor_t;
 
@@ -90,6 +91,7 @@ typedef struct {
     System_State_e current_state; // 当前主状态
     yaw_control_state_e yaw_control_state;//yaw轴控制状态
     uint8_t dart_count;           // 已发射计数
+
 } Robot_Feedback_t;
 
 //数据包

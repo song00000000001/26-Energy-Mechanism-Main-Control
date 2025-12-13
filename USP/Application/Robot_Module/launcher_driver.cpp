@@ -48,6 +48,11 @@ Launcher_Driver::Launcher_Driver(uint8_t id_l, uint8_t id_r, uint8_t id_ign)
       IgniterMotor(id_ign)
 {
     stop_all_motor();
+    //初始化舵机位置
+    servo_loader_up1;
+    servo_loader_up2;
+    servo_transfomer_lock;
+    servo_igniter_lock;
 
     // 电机参数初始化 (极性、减速比)
     DeliverMotor[0].Polarity = POLARITY_DELIVER_L;
@@ -95,7 +100,9 @@ void Launcher_Driver::adjust()
         //按需执行角度环
         if(mode_deliver[i]==MODE_ANGLE){
             // 串级PID: 位置环 -> 速度环
-            pid_deliver_pos[i].Target = target_deliver_angle + sync_comp[i];
+            float target_with_sync = target_deliver_angle + sync_comp[i];
+            target_with_sync=std_lib::constrain(target_with_sync,POS_DELIVER_MIN,POS_DELIVER_MAX);
+            pid_deliver_pos[i].Target = target_with_sync;
             //这里加入限幅保护
             pid_deliver_pos[i].Target=std_lib::constrain(pid_deliver_pos[i].Target,POS_DELIVER_MIN,POS_DELIVER_MAX);
             pid_deliver_pos[i].Current = DeliverMotor[i].getMotorTotalAngle();
@@ -118,6 +125,7 @@ void Launcher_Driver::adjust()
     }
     if(mode_igniter==MODE_ANGLE){
         // 串级PID: 位置环 -> 速度环
+        target_igniter_angle=std_lib::constrain(target_igniter_angle,IGNITER_MIN_POS,IGNITER_MAX_POS);
         pid_igniter_pos.Target = target_igniter_angle;
         //这里加入限幅保护
         pid_igniter_pos.Target=std_lib::constrain(pid_igniter_pos.Target, IGNITER_MIN_POS, IGNITER_MAX_POS);
@@ -235,11 +243,6 @@ void Launcher_Driver::key_check(){
     
 }
 
-//解锁扳机舵机
-void Launcher_Driver::fire_unlock() { servo_igniter_unlock; }
-//锁定扳机舵机
-void Launcher_Driver::fire_lock()   { servo_igniter_lock; }
-
 void Launcher_Driver::out_all_motor_speed(){
     for(int i=0;i<2;i++){
         DeliverMotor[i].setMotorCurrentOut(pid_deliver_spd[i].Out);
@@ -271,7 +274,7 @@ void Launcher_Driver::stop_igniter_motor(){
 void Launcher_Driver::stop_all_motor(){
     stop_igniter_motor();
     stop_deliver_motor();
-    fire_lock();
+    servo_igniter_lock;
 }
 
 // ================= 状态查询 =================
@@ -289,105 +292,284 @@ bool Launcher_Driver::is_igniter_at_target(float threshold) {
     return (err < threshold);
 }
 
+/*
+//todo: 视觉瞄准到位触发
+Robot.Cmd.fire_command=true;
+if (Robot.Cmd.fire_command&&is_deliver_at_target(5)) {
+    fire_state = FIRE_PULL_LOAD;
+}
+*/
 
 /*发射状态机*/
 void Launcher_Driver::Run_Firing_Sequence()
 {
     static uint32_t state_timer = 0;
+    uint32_t current_time = xTaskGetTickCount();
     switch (fire_state)
     {
         case FIRE_IDLE:
             // 确保滑块在缓冲区
             target_deliver_angle=(POS_BUFFER);
-            fire_lock(); // 锁止扳机舵机
-            //todo: 视觉瞄准到位触发
-            Robot.Cmd.fire_command=true;
-            if (Robot.Cmd.fire_command&&is_deliver_at_target(5)) {
-                fire_state = FIRE_PULL_LOAD;
-            }
-            break;
-
-        case FIRE_PULL_LOAD:
-            //下拉滑块到装填位置
-            target_deliver_angle=(POS_WAITLOAD);
+            servo_igniter_lock; // 锁止扳机舵机
             if (is_deliver_at_target(5)) {
-                state_timer = xTaskGetTickCount();
-                fire_state = FIRE_WAITLOAD;
+                fire_state = FIRE_PULL_DOWN_1;
             }
             break;
 
-        case FIRE_WAITLOAD:
-            //调用装填舵机,使升降机下放
-            servo_loader_down1;
-            servo_loader_down2;
-            //等装填完毕
-            if ((xTaskGetTickCount() - state_timer) > 500) {
-                fire_state = FIRE_PULL_BOTTOM;
-            }
-            break;
-
-        case FIRE_PULL_BOTTOM:
-            //滑块全速下拉到底
+        //下拉滑块到底部扳机
+        case FIRE_PULL_DOWN_1:
             target_deliver_angle=(POS_BOTTOM);
             if (is_deliver_at_target(5)) {
-                state_timer = xTaskGetTickCount();
-                fire_state = FIRE_LATCHING;
+                state_timer = current_time;
+                fire_state = FIRE_WAIT_BOTTOM_1;
             }
             break;
 
-        case FIRE_LATCHING:
-            //装填舵机动作使升降机归位
-            servo_loader_up1;
-            servo_loader_up2;
-            //等待升降机归位完毕
-            if ((xTaskGetTickCount() - state_timer) > 500) {
-                fire_state = FIRE_RETURNING;
+        // 底部等待
+        case FIRE_WAIT_BOTTOM_1:
+            if ((current_time - state_timer) > 500) {
+                state_timer = current_time;
+                fire_state = FIRE_RETURN_UP_1;
             }
             break;
 
-        case FIRE_RETURNING:
-            // 滑块回缓冲区
+        // 滑块回缓冲区
+        case FIRE_RETURN_UP_1:
             target_deliver_angle=(POS_BUFFER);
             if (is_deliver_at_target(5)) {
-                fire_state = FIRE_TRANSFORE;
-                state_timer = xTaskGetTickCount();
-            }
-            break;
-            
-        case FIRE_TRANSFORE:
-            //卡镖舵机松开，转移新镖到发射区
-            servo_transfomer_unlock;
-            if ((xTaskGetTickCount() - state_timer) > 250) {
-                state_timer = xTaskGetTickCount();
-                fire_state = FIRE_TRANSFORE_BACK;
-            }
-
-            break;
-            
-        case FIRE_TRANSFORE_BACK:
-            //卡镖舵机回正，卡住新镖
-            servo_transfomer_lock;
-            if ((xTaskGetTickCount() - state_timer) > 250) {
-                state_timer = xTaskGetTickCount();
-                fire_state = FIRE_SHOOTING;
+                state_timer = current_time;
+                fire_state = FIRE_WAIT_UP_1;
             }
             break;
 
-        case FIRE_SHOOTING:
+        // 缓冲区等待
+        case FIRE_WAIT_UP_1:
+            if ((current_time - state_timer) > 500) {
+                state_timer = current_time;
+                fire_state = FIRE_SHOOTING_1;
+            }
+            break;    
+
+        // 射击
+        case FIRE_SHOOTING_1:
             servo_igniter_unlock; // 解锁扳机舵机，发射
             // 等待发射完成
-            if ((xTaskGetTickCount() - state_timer) > 3000) {
+            if ((current_time - state_timer) > 2000) {
+                state_timer= current_time;
                 Robot.Status.dart_count++; // 计数+1
-                // 判断是否继续连发
-                // if (Robot.Status.dart_count < xxx) ...
-                fire_state = FIRE_IDLE;
+                fire_state = FIRE_PULL_DOWN_2;
+            }
+            break;
+
+        // 滑块回缓冲区
+        case FIRE_PULL_DOWN_2:
+            target_deliver_angle=(POS_BUFFER);
+            if (is_deliver_at_target(5)) {
+                state_timer = current_time;
+                fire_state = FIRE_WAIT_BOTTOM_2;
+            }
+            break;
+            
+        //底部等待
+        case FIRE_WAIT_BOTTOM_2:
+            if ((current_time - state_timer) > 500) {
+                state_timer = current_time;
+                fire_state = FIRE_RETURN_UP_2;
+            }
+            break;
+
+        // 滑块回缓冲区
+        case FIRE_RETURN_UP_2:
+            target_deliver_angle=(POS_BUFFER);
+            if (is_deliver_at_target(5)) {
+                state_timer = current_time;
+                fire_state = FIRE_WAIT_UP_2;
+            }
+            break;
+        // 缓冲区等待
+        case FIRE_WAIT_UP_2:
+            if ((current_time - state_timer) > 500) {
+                state_timer = current_time;
+                fire_state = FIRE_RELOAD_LOWER_2;
             }
             break;
         
-        // 异常打断：如果突然切出手制动，重置状态机
-        if (!Robot.Cmd.autofire_enable) {
+        // 升降机下降，装填下一发
+        case FIRE_RELOAD_LOWER_2:
+            servo_loader_down1;
+            servo_loader_down2;
+            if ((current_time - state_timer) >500) {
+                state_timer = current_time;
+                fire_state = FIRE_SHOOTING_2;
+            }
+            break;
+
+        // 射击    
+        case FIRE_SHOOTING_2:
+            servo_igniter_unlock; // 解锁扳机舵机，发射
+            if ((current_time - state_timer) > 3000) {
+                Robot.Status.dart_count++; // 计数+1
+                state_timer= current_time;
+                fire_state = FIRE_RELOAD_LIFT_3;
+            }
+            break;
+
+        // 升降机上升，准备装填第三发
+        case FIRE_RELOAD_LIFT_3:
+            servo_loader_up1;
+            servo_loader_up2;
+            if ((current_time - state_timer) >500) {
+                state_timer = current_time;
+                fire_state = FIRE_RELOAD_RELEASE_3;
+            }
+            break;
+
+        // 卡镖释放，转移下一发到发射区
+        case FIRE_RELOAD_RELEASE_3:
+            servo_transfomer_unlock; // 松开卡镖舵机，转移下一发到发射区
+            if ((current_time - state_timer) >200) {
+                servo_transfomer_lock; // 重新卡住卡镖舵机
+                state_timer = current_time;
+                fire_state = FIRE_PULL_DOWN_3;
+            }
+            break;
+        
+        //下拉滑块到底部扳机
+        case FIRE_PULL_DOWN_3:
+            target_deliver_angle=(POS_BOTTOM);
+            if (is_deliver_at_target(5)) {
+                state_timer = current_time;
+                fire_state = FIRE_WAIT_BOTTOM_3;
+            }
+            break;    
+
+        // 底部等待
+        case FIRE_WAIT_BOTTOM_3:
+            if ((current_time - state_timer) > 500) {
+                state_timer = current_time;
+                fire_state = FIRE_RETURN_UP_3;
+            }
+            break;
+
+        // 滑块回缓冲区
+        case FIRE_RETURN_UP_3:
+            target_deliver_angle=(POS_BUFFER);
+            if (is_deliver_at_target(5)) {
+                state_timer = current_time;
+                fire_state = FIRE_WAIT_UP_3;
+            }
+            break;
+
+        // 缓冲区等待
+        case FIRE_WAIT_UP_3:
+            if ((current_time - state_timer) > 500) {
+                state_timer = current_time;
+                fire_state = FIRE_RELOAD_LOWER_3;
+            }
+            break;
+        
+        // 升降机下降，装填下一发
+        case FIRE_RELOAD_LOWER_3:
+            servo_loader_down1;
+            servo_loader_down2;
+            if ((current_time - state_timer) >500) {
+                state_timer = current_time;
+                fire_state = FIRE_SHOOTING_3;
+            }
+            break;
+        
+        // 射击
+        case FIRE_SHOOTING_3:
+            servo_igniter_unlock; // 解锁扳机舵机，发射
+            if ((current_time - state_timer) > 3000) {
+                Robot.Status.dart_count++; // 计数+1
+                state_timer= current_time;
+                fire_state = FIRE_RELOAD_LIFT_4;
+            }
+            break;
+
+        // 升降机上升，准备装填第四发
+        case FIRE_RELOAD_LIFT_4:
+            servo_loader_up1;
+            servo_loader_up2;
+            if ((current_time - state_timer) >500) {
+                state_timer = current_time;
+                fire_state = FIRE_RELOAD_RELEASE_4;
+            }
+            break;
+
+        // 卡镖释放，转移下一发到发射区
+        case FIRE_RELOAD_RELEASE_4:
+            servo_transfomer_unlock; // 松开卡镖舵机，转移下一发到发射区
+            if ((current_time - state_timer) >200) {
+                servo_transfomer_lock; // 重新卡住卡镖舵机
+                state_timer = current_time;
+                fire_state = FIRE_PULL_DOWN_4;
+            }
+            break;
+
+        //下拉滑块到底部扳机
+        case FIRE_PULL_DOWN_4:
+            target_deliver_angle=(POS_BOTTOM);
+            if (is_deliver_at_target(5)) {
+                state_timer = current_time;
+                fire_state = FIRE_WAIT_BOTTOM_4;
+            }
+            break;
+        
+        // 底部等待
+        case FIRE_WAIT_BOTTOM_4:
+            if ((current_time - state_timer) > 500) {
+                state_timer = current_time;
+                fire_state = FIRE_RETURN_UP_4;
+            }
+            break;
+        
+        // 滑块回缓冲区
+        case FIRE_RETURN_UP_4:
+            target_deliver_angle=(POS_BUFFER);
+            if (is_deliver_at_target(5)) {
+                state_timer = current_time;
+                fire_state = FIRE_WAIT_UP_4;
+            }
+            break;
+
+        // 缓冲区等待
+        case FIRE_WAIT_UP_4:
+            if ((current_time - state_timer) > 500) {
+                state_timer = current_time;
+                fire_state = FIRE_RELOAD_LOWER_4; // 完成发射，回到闲置状态
+            }
+            break;
+
+        // 升降机下降，装填第四发
+        case FIRE_RELOAD_LOWER_4:
+            servo_loader_down1;
+            servo_loader_down2;
+            if ((current_time - state_timer) >500) {
+                state_timer = current_time;
+                fire_state = FIRE_SHOOTING_4;
+            }
+            break;
+
+        // 射击    
+        case FIRE_SHOOTING_4:
+            servo_igniter_unlock; // 解锁扳机舵机，发射
+            if ((current_time - state_timer) > 3000) {
+                Robot.Status.dart_count++; // 计数+1
+                state_timer= current_time;
+                fire_state = FIRE_IDLE; // 完成发射，回到闲置状态
+                //每打4发,就需要将S1回中再下按,否则不会继续发射
+                //if(Robot.Status.dart_count>0&&Robot.Status.dart_count%4==0){
+                Robot.Flag.Status.stop_continus_fire=true;
+                Robot.Status.current_state = SYS_STANDBY;
+                //}
+            }
+            break;    
+
+        default:
             fire_state = FIRE_IDLE;
-        }
+            break;
     }
 }
 

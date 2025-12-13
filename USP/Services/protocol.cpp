@@ -135,7 +135,7 @@ void SendHeartBeat()
 {
   DownLinkPack.SOF = 0xA5;
   DownLinkPack.CmdID = 0x11;
-  DownLinkPack.cur_num = Robot.Status.dart_count - 1;
+  DownLinkPack.cur_num = Robot.Status.dart_count;
  if(Robot.Status.current_state == SYS_AUTO_FIRE)
  {
    DownLinkPack.launcher_state = 4; //回传镖架状态
