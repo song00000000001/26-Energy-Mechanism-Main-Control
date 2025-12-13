@@ -187,19 +187,23 @@ void LaunchCtrl(void *arg)
         {
             //按键自检逻辑
             Launcher.key_check();
-            // 3. 处理跳过逻辑
+            //处理跳过逻辑
             if (Robot.Cmd.skip_check) {
                 Launcher.check_progress = MASK_ALL_PASSED; // 强制全满
             }
 
-            // 4. 更新全局标志位
+            //更新全局标志位
             Robot.Flag.Check.limit_sw_ok = (Launcher.check_progress == MASK_ALL_PASSED);
-   
-            // 5个按键手动检查全部通过则进入校准状态,后续可以加入电机检查
+
+            //5个按键手动检查全部通过则进入校准状态,后续可以加入电机检查
             if (Robot.Flag.Check.limit_sw_ok) {
-                Robot.Status.current_state = SYS_CALIBRATING;
-                //注意,这里启动了校准过程,会配置电机为速度环,直到撞到限位开关
-                Launcher.start_calibration();
+                //自检完后,如果没有任何一个限位开关被按下时,才等于1。
+                bool key_released_temp=!(SW_YAW_L_OFF||SW_YAW_R_OFF||SW_DELIVER_L_OFF||SW_DELIVER_R_OFF||SW_IGNITER_OFF);
+                if(key_released_temp){
+                    Robot.Status.current_state = SYS_CALIBRATING;
+                    //注意,这里启动了校准过程,会配置电机为速度环,直到撞到限位开关
+                    Launcher.start_calibration();
+                }
             }
         }
         break;
