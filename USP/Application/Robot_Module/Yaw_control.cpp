@@ -167,7 +167,6 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_st
         //计算电机pid
         adjust();
         }
-        disable();
         break;
     case YAW_CALIBRATING:
         //校准模式
