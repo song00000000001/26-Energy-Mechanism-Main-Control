@@ -50,6 +50,7 @@ typedef enum {
     SYS_OFFLINE = 0,    // 离线
     SYS_DEBUG,           // 调试状态
     SYS_CHECKING,       // 自检中
+    SYS_CHECKED,        // 自检完成,用于延时，防止过快进入校准模式导致校准异常
     SYS_CALIBRATING,    // 归零/校准中
 	SYS_CALIBRATED,      // 校准完成,归位
     SYS_STANDBY,        // 待机/手动
@@ -82,6 +83,7 @@ typedef struct {
     struct {
         bool rc_connected;      // 遥控器连接
         bool is_calibrated; // 系统是否已完全校准
+        bool stop_continus_fire;    // 停止连发标志位
     } Status;
 } Robot_Monitor_t;
 
@@ -90,6 +92,7 @@ typedef struct {
     System_State_e current_state; // 当前主状态
     yaw_control_state_e yaw_control_state;//yaw轴控制状态
     uint8_t dart_count;           // 已发射计数
+
 } Robot_Feedback_t;
 
 //数据包

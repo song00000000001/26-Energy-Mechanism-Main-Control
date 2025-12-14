@@ -8,7 +8,7 @@
 #include "SRML.h"
 #include "robot_types.h"
 
-
+#if 0
 /* --- 4. 发射流程子状态机 --- */
 // 定义子状态
 typedef enum {
@@ -22,14 +22,57 @@ typedef enum {
     FIRE_TRANSFORE_BACK,      //动作仓储区舵机,卡镖舵机回正，卡住镖
     FIRE_SHOOTING,   // 开火 (舵机)
 } Fire_State_e;
+#else
+/* --- 4. 发射流程子状态机 --- */
+typedef enum {
+    FIRE_IDLE = 0,          // 闲置/决策状态
+	FIRE_IGNITER_DELAY,
+    //第一发
+    FIRE_PULL_DOWN_1,       // 滑块下拉
+    FIRE_WAIT_BOTTOM_1,     // 底部等待
+    FIRE_RETURN_UP_1,       // 滑块回缓冲区
+    FIRE_WAIT_UP_1,         // 缓冲区等待
+    FIRE_SHOOTING_1,        // 射击
 
+    //第二发
+    FIRE_PULL_DOWN_2,       // 滑块下拉
+    FIRE_WAIT_BOTTOM_2,     // 底部等待
+    FIRE_RETURN_UP_2,       // 滑块回缓冲区
+    FIRE_WAIT_UP_2,         // 缓冲区等待
+    FIRE_RELOAD_LOWER_2,    // 升降机下降
+    FIRE_SHOOTING_2,        // 射击
+
+    //第三发
+    FIRE_RELOAD_LIFT_3,      // 升降机上升
+    FIRE_RELOAD_RELEASE_3,   // 卡镖释放
+    FIRE_PULL_DOWN_3,        // 滑块下拉
+    FIRE_WAIT_BOTTOM_3,      // 底部等待
+    FIRE_RETURN_UP_3,        // 滑块回缓冲区
+    FIRE_WAIT_UP_3,          // 缓冲区等待
+    FIRE_RELOAD_LOWER_3,     // 升降机下降
+    FIRE_SHOOTING_3,         // 射击
+
+    //第四发
+    FIRE_RELOAD_LIFT_4,      // 升降机上升
+    FIRE_RELOAD_RELEASE_4,   // 卡镖释放
+    FIRE_PULL_DOWN_4,        // 滑块下拉
+    FIRE_WAIT_BOTTOM_4,      // 底部等待
+    FIRE_RETURN_UP_4,        // 滑块回缓冲区
+    FIRE_WAIT_UP_4,          // 缓冲区等待
+    FIRE_RELOAD_LOWER_4,     // 升降机下降
+    FIRE_SHOOTING_4,         // 射击
+          
+} Fire_State_e;
+#endif
 class Launcher_Driver
 {
 private:
  
 public:
     // 校准状态
-    bool is_deliver_homed[2],is_igniter_homed;      
+    bool is_deliver_homed[2],is_igniter_homed;     
+    
+    uint32_t calibration_start_time; // 记录校准开始时间，用于超时检测
 
     // PID 对象
     myPID pid_deliver_spd[2],pid_deliver_pos[2];    
@@ -62,10 +105,6 @@ public:
     void stop_deliver_motor();
     void stop_igniter_motor();
     void stop_all_motor();
-
-    // 舵机动作，简单封装防止vscode报错
-    void fire_unlock(); // 解锁扳机舵机
-    void fire_lock();   // 锁定扳机舵机
 
     // 根据电机模式（角度环，速度环，失能）调用 PID 计算
     void adjust();
