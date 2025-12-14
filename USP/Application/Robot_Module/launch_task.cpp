@@ -62,7 +62,7 @@ void LaunchCtrl(void *arg)
     calibration_speed={
 	.yaw_calibration_speed=-300,
 	.deliver_calibration_speed=600,
-    .igniter_calibration_speed=-800
+    .igniter_calibration_speed=-1000
     };
 
     
@@ -276,7 +276,7 @@ void LaunchCtrl(void *arg)
             
         case SYS_AUTO_PREP:
             // --- 自动发射准备 ---
-            Launcher.target_igniter_angle=POS_IGNITER;  // 默认发射力度
+            //Launcher.target_igniter_angle=POS_IGNITER;  // 默认发射力度
             
             // 检查是否到位
             if (Launcher.is_deliver_at_target(5) && Launcher.is_igniter_at_target(5)) 

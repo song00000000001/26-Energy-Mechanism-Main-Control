@@ -311,11 +311,18 @@ void Launcher_Driver::Run_Firing_Sequence()
             // 确保滑块在缓冲区
             target_deliver_angle=(POS_BUFFER);
             servo_igniter_lock; // 锁止扳机舵机
+			
             if (is_deliver_at_target(5)) {
-                fire_state = FIRE_PULL_DOWN_1;
+				state_timer = current_time;
+                fire_state = FIRE_IGNITER_DELAY;
             }
             break;
-
+		case FIRE_IGNITER_DELAY:
+			if ((current_time - state_timer) > 500) {
+                state_timer = current_time;
+                fire_state = FIRE_PULL_DOWN_1;
+            }
+			break;
         //下拉滑块到底部扳机
         case FIRE_PULL_DOWN_1:
             target_deliver_angle=(POS_BOTTOM);
@@ -346,7 +353,13 @@ void Launcher_Driver::Run_Firing_Sequence()
         case FIRE_WAIT_UP_1:
             if ((current_time - state_timer) > 500) {
                 state_timer = current_time;
-                fire_state = FIRE_SHOOTING_1;
+                
+                //测试时为了方便实现拨一次杆打一发,在这里修改跳转逻辑
+                #if 1
+                    fire_state = FIRE_SHOOTING_4;
+                #else
+                    fire_state = FIRE_SHOOTING_1;
+                #endif
             }
             break;    
 

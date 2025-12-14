@@ -26,7 +26,7 @@ typedef enum {
 /* --- 4. 发射流程子状态机 --- */
 typedef enum {
     FIRE_IDLE = 0,          // 闲置/决策状态
-
+	FIRE_IGNITER_DELAY,
     //第一发
     FIRE_PULL_DOWN_1,       // 滑块下拉
     FIRE_WAIT_BOTTOM_1,     // 底部等待
