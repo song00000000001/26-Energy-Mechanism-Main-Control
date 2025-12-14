@@ -283,12 +283,12 @@ bool Launcher_Driver::is_calibrated() {
 }
 
 bool Launcher_Driver::is_deliver_at_target(float threshold) {
-    uint16_t err=abs(DeliverMotor[0].getMotorTotalAngle() - target_deliver_angle);
+    float err=abs(DeliverMotor[0].getMotorTotalAngle() - target_deliver_angle);
     return (err < threshold);
 }
 
 bool Launcher_Driver::is_igniter_at_target(float threshold) {
-    uint16_t err=abs(IgniterMotor.getMotorTotalAngle() - target_igniter_angle);
+    float err=abs(IgniterMotor.getMotorTotalAngle() - target_igniter_angle);
     return (err < threshold);
 }
 
