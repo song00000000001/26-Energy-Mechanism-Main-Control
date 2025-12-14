@@ -88,7 +88,6 @@ void Missle_YawController_Classdef::yaw_out_motor_speed(){
     YawMotor.setMotorCurrentOut(PID_Yaw_Speed.Out);
 }
 
-
 void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_state,float LX,float LY){
     
     switch (yaw_state)
@@ -134,18 +133,35 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_st
             song
             测试视觉
         */
-        if (vision_recv_pack.ros == 1)
+        if(vision_recv_pack.target_mode==0)//若视觉未识别到引导灯，则先自行扫描
         {
-            yaw_target += 0.0003;
+            int8_t direction_temp=1;
+            if(yaw_target>=3)
+            {
+                direction_temp=-1;
+            }
+            else if(yaw_target<=-3)
+            {
+                direction_temp=1;
+            }
+            yaw_target+=0.012f*direction_temp;
         }
-        if (vision_recv_pack.ros == 2)
+        else//识别到目标则微调
         {
-            yaw_target -= 0.0003;
+            if (vision_recv_pack.ros == 1)
+            {
+                yaw_target += 0.0003;
+            }
+            if (vision_recv_pack.ros == 2)
+            {
+                yaw_target -= 0.0003;
+            }
+            if (vision_recv_pack.ros == 0)
+            {
+                yaw_target += 0;
+            }
         }
-        if (vision_recv_pack.ros == 0)
-        {
-            yaw_target += 0;
-        }
+        //统一限幅并更新pid
         yaw_target = std_lib::constrain(yaw_target, -10.2f, 10.2f);
         update(yaw_target);
         //计算电机pid
