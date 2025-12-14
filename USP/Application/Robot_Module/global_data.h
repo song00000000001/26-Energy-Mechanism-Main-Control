@@ -50,6 +50,7 @@ typedef enum {
     SYS_OFFLINE = 0,    // 离线
     SYS_DEBUG,           // 调试状态
     SYS_CHECKING,       // 自检中
+    SYS_CHECKED,        // 自检完成,用于延时，防止过快进入校准模式导致校准异常
     SYS_CALIBRATING,    // 归零/校准中
 	SYS_CALIBRATED,      // 校准完成,归位
     SYS_STANDBY,        // 待机/手动

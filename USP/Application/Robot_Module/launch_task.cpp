@@ -82,12 +82,15 @@ void LaunchCtrl(void *arg)
     Yawer.PID_Yaw_Angle.DeadZone = 0.01f;
     Yawer.PID_Yaw_Speed.SetPIDParam(20, 0, 0, 0, 18000);
 
+    
     // 任务频率控制
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(1);
+    uint32_t main_task_now = xTaskGetTickCount();
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        main_task_now = xTaskGetTickCount();
         // 1. 更新遥控器快照数据 & 处理遥控器逻辑
         /*todo
         song
@@ -211,13 +214,19 @@ void LaunchCtrl(void *arg)
                 //自检完后,如果没有任何一个限位开关被按下时,才等于1。
                 bool key_released_temp=!(SW_YAW_L_OFF||SW_YAW_R_OFF||SW_DELIVER_L_OFF||SW_DELIVER_R_OFF||SW_IGNITER_OFF);
                 if(key_released_temp){
-                    Robot.Status.current_state = SYS_CALIBRATING;
-                    //注意,这里启动了校准过程,会配置电机为速度环,直到撞到限位开关
-                    Launcher.start_calibration();
+                    Robot.Status.current_state = SYS_CHECKED;
+                    Launcher.calibration_start_time=main_task_now; //记录校准开始时间
                 }
             }
         }
         break;
+        case SYS_CHECKED:
+            if(main_task_now-Launcher.calibration_start_time>500){
+                //注意,这里启动了校准过程,会配置电机为速度环,直到撞到限位开关
+                Launcher.start_calibration();
+                Robot.Status.current_state=SYS_CALIBRATING;
+            }
+            break;
         
         case SYS_CALIBRATING:
             Robot.Status.yaw_control_state = YAW_CALIBRATING;

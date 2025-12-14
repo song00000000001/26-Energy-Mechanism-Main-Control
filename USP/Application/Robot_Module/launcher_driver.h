@@ -70,7 +70,9 @@ private:
  
 public:
     // 校准状态
-    bool is_deliver_homed[2],is_igniter_homed;      
+    bool is_deliver_homed[2],is_igniter_homed;     
+    
+    uint32_t calibration_start_time; // 记录校准开始时间，用于超时检测
 
     // PID 对象
     myPID pid_deliver_spd[2],pid_deliver_pos[2];    
