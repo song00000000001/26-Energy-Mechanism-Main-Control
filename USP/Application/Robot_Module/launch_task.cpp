@@ -91,6 +91,7 @@ void LaunchCtrl(void *arg)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
         main_task_now = xTaskGetTickCount();
+
         // 1. 更新遥控器快照数据 & 处理遥控器逻辑
         /*todo
         song
@@ -158,6 +159,13 @@ void LaunchCtrl(void *arg)
     
         }
 
+        //注意,这里的debug跳过了所有保护功能,是在主控单独测试时使用的。
+        #if 1
+        if (Debugger.enable_debug_mode) {
+            Robot.Status.current_state = SYS_DEBUG;
+        }
+        #endif
+        
         switch (Robot.Status.current_state)
         {
         case SYS_DEBUG:
