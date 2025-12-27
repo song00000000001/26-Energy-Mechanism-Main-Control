@@ -124,7 +124,8 @@ public:
     // 发射子状态机
     void Run_Firing_Sequence();
 
-
+    //舵机PWM测试
+    void servo_pwm_test();
 };
 
 #endif

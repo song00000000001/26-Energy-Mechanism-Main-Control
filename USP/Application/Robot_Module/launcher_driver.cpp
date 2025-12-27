@@ -2,28 +2,7 @@
 #include "robot_config.h"
 #include "global_data.h"
 
-//定义舵机测试结构体，方便调节测试舵机行程
-typedef struct 
-{
-    uint16_t igniter_ccr_unlock;
-    uint16_t igniter_ccr_lock;
-    uint16_t loader1_ccr_up;
-    uint16_t loader1_ccr_down;
-    uint16_t loader2_ccr_up;
-    uint16_t loader2_ccr_down;
-    uint16_t transfomer_ccr_lock;
-    uint16_t transfomer_ccr_unlock;
-}servo_ccr_debug;
-servo_ccr_debug servo_ccr={
-    170,    //igniter_ccr_unlock
-    270,    //igniter_ccr_lock
-    53,     //loader1_ccr_up
-    100,    //loader1_ccr_down
-    288,    //loader2_ccr_up
-    360,    //loader2_ccr_down
-    126,    //transfomer_ccr_lock
-    170     //transfomer_ccr_unlock
-};
+
 // 舵机宏
 #define servo_igniter_unlock    __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1,servo_ccr.igniter_ccr_unlock ) // 扳机舵机解锁      ,120卡住,170ok
 #define servo_igniter_lock      __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1,servo_ccr.igniter_ccr_lock ) // 扳机舵机锁止
@@ -589,5 +568,12 @@ void Launcher_Driver::Run_Firing_Sequence()
             fire_state = FIRE_IDLE;
             break;
     }
+}
+
+void Launcher_Driver::servo_pwm_test(){
+    servo_transfomer_lock;
+    servo_loader_up1;
+    servo_loader_up2;
+    servo_igniter_lock;
 }
 

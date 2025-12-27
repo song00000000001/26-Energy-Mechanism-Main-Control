@@ -167,6 +167,11 @@ void LaunchCtrl(void *arg)
             // 2. adjust() 依然运行，但 target 不会被代码修改
             // 3. 用户在 Watch 窗口直接修改 Launcher.pid_xxx.Target 或 Kp Ki Kd
 
+            //测试代码,用于测试PWM功能
+            #if 1
+                Launcher.servo_pwm_test();
+
+            #endif
             //利用debug结构体修改电机模式
             Launcher.mode_deliver[0]=Debugger.debug_mode_deliver[0];
             Launcher.mode_deliver[1]=Debugger.debug_mode_deliver[1];

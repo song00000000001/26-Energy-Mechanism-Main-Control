@@ -37,3 +37,14 @@ Debug_Data_t Debugger;
 DR16_Snapshot_t DR16_Snap; 
 
 
+
+servo_ccr_debug servo_ccr={
+    170,    //igniter_ccr_unlock
+    270,    //igniter_ccr_lock
+    53,     //loader1_ccr_up
+    100,    //loader1_ccr_down
+    288,    //loader2_ccr_up
+    360,    //loader2_ccr_down
+    126,    //transfomer_ccr_lock
+    170     //transfomer_ccr_unlock
+};
