@@ -5,11 +5,10 @@
 #include "stm32f4xx_hal_tim.h"
 
 /* ================= 电机 ID 定义 ================= */
-#define ID_DELIVER_L                  4     // 左同步轮
-#define ID_DELIVER_R                  3     // 右同步轮
-#define ID_IGNITER                    1     // 扳机丝杆   
-#define ID_YAW                        2     // 云台偏航
-#define ID_LOADER                     5     // 装填转盘，测试id为1
+#define ID_YAW                        2     // 云台偏航,can2
+#define ID_IGNITER                    1     // 扳机丝杆,can1   
+#define ID_DELIVER_R                  3     // 右同步轮,can1
+#define ID_DELIVER_L                  4     // 左同步轮,can1
 
 /* ================= 电机极性定义 ================= */
 // 1 或 -1
@@ -75,7 +74,7 @@ void test_servo_action();
 
 #define SW_DELIVER_L_OFF (HAL_GPIO_ReadPin(SW_DELIVER_L_GPIO_Port, SW_DELIVER_L_Pin))==GPIO_PIN_RESET
 #define SW_DELIVER_R_OFF (HAL_GPIO_ReadPin(SW_DELIVER_R_GPIO_Port, SW_DELIVER_R_Pin))==GPIO_PIN_RESET
-#define SW_IGNITER_OFF (HAL_GPIO_ReadPin(SW_IGNITER_GPIO_Port, SW_IGNITER_Pin))==GPIO_PIN_SET
+#define SW_IGNITER_OFF (HAL_GPIO_ReadPin(SW_IGNITER_GPIO_Port, SW_IGNITER_Pin))==GPIO_PIN_RESET
 
 #define SW_YAW_R_OFF (HAL_GPIO_ReadPin(SW_YAW_R_GPIO_Port, SW_YAW_R_Pin))==GPIO_PIN_RESET
 #define SW_YAW_L_OFF (HAL_GPIO_ReadPin(SW_YAW_L_GPIO_Port, SW_YAW_L_Pin))==GPIO_PIN_RESET

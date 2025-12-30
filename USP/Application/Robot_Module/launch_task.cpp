@@ -161,9 +161,10 @@ void LaunchCtrl(void *arg)
 
         //注意,这里的debug跳过了所有保护功能,是在主控单独测试时使用的。
         #if 1
-        if (Debugger.enable_debug_mode) {
+        //if (Debugger.enable_debug_mode) {
             Robot.Status.current_state = SYS_DEBUG;
-        }
+		
+       // }
         #endif
         
         switch (Robot.Status.current_state)
@@ -186,7 +187,7 @@ void LaunchCtrl(void *arg)
             Launcher.mode_igniter=Debugger.debug_mode_igniter;
             
             // 如果手动失能，则回 Checking 状态
-            if (Robot.Status.current_state == SYS_DEBUG && !Robot.Cmd.sys_enable) {
+            if (0&&Robot.Status.current_state == SYS_DEBUG && !Robot.Cmd.sys_enable) {
                 // 安全起见重新自检
                 Launcher.check_progress=0; // 重置自检进度
                 Robot.Status.current_state = SYS_CHECKING;
