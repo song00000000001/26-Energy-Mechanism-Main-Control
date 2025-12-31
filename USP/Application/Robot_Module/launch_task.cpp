@@ -158,14 +158,6 @@ void LaunchCtrl(void *arg)
             }
     
         }
-
-        //注意,这里的debug跳过了所有保护功能,是在主控单独测试时使用的。
-        #if 1
-        //if (Debugger.enable_debug_mode) {
-            Robot.Status.current_state = SYS_DEBUG;
-		
-       // }
-        #endif
         
         switch (Robot.Status.current_state)
         {
@@ -176,11 +168,6 @@ void LaunchCtrl(void *arg)
             // 2. adjust() 依然运行，但 target 不会被代码修改
             // 3. 用户在 Watch 窗口直接修改 Launcher.pid_xxx.Target 或 Kp Ki Kd
 
-            //测试代码,用于测试PWM功能
-            #if 1
-                Launcher.servo_pwm_test();
-
-            #endif
             //利用debug结构体修改电机模式
             Launcher.mode_deliver[0]=Debugger.debug_mode_deliver[0];
             Launcher.mode_deliver[1]=Debugger.debug_mode_deliver[1];
@@ -342,6 +329,10 @@ void LaunchCtrl(void *arg)
             //停止电机
             Launcher.stop_all_motor();
             Yawer.disable();
+            //舵机测试放在这里，这样只需要失能就可以测试舵机
+            if (Debugger.enable_debug_mode) {
+                Launcher.servo_pwm_test();
+            }
         }
         
         MotorMsgPack(Tx_Buff1, Yawer.YawMotor);
