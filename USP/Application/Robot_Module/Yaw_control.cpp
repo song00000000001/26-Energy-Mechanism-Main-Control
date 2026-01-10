@@ -30,6 +30,7 @@ void Missle_YawController_Classdef::calibration()
         PID_Yaw_Speed.Target = calibration_speed.yaw_calibration_speed;
         if(SW_YAW_R_OFF)
         {
+            //这里的MAX也有点奇怪,后面用constrain的时候看起来是min
             MAX_YAW_ANGLE = YawMotor.getMotorTotalAngle();
             Yaw_Init_flag = 2;
             PID_Yaw_Angle.Target = 0.5 * MAX_YAW_ANGLE;
@@ -88,7 +89,6 @@ void Missle_YawController_Classdef::yaw_out_motor_speed(){
     YawMotor.setMotorCurrentOut(PID_Yaw_Speed.Out);
 }
 
-
 void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_state,float LX,float LY){
     
     switch (yaw_state)
@@ -96,8 +96,10 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_st
     case MANUAL_AIM:
         // 手动微调逻辑
         Launcher.target_igniter_angle-=LY * 0.02f;
+        //这里直接用角度（实际上是距离）限幅，因为丝杆和滑块电机可以得到简单的线性映射关系，抽象电机库可以直接配置映射参数。
         Launcher.target_igniter_angle=std_lib::constrain(Launcher.target_igniter_angle, IGNITER_MIN_POS, IGNITER_MAX_POS);
         yaw_target -= LX * 0.02f;
+        //这里的限幅和其他电机不同,用的是镖架整体朝向的角度值,在update里进行三角函数转换后还会对电机编码器角度再限幅一次。
         yaw_target = std_lib::constrain(yaw_target, -10.2f, 10.2f);
         update(yaw_target);
         break;
@@ -134,24 +136,40 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_st
             song
             测试视觉
         */
-        if (vision_recv_pack.ros == 1)
+        if(vision_recv_pack.target_mode==0)//若视觉未识别到引导灯，则先自行扫描
         {
-            yaw_target += 0.0003;
+            int8_t direction_temp=1;
+            if(yaw_target>=3)
+            {
+                direction_temp=-1;
+            }
+            else if(yaw_target<=-3)
+            {
+                direction_temp=1;
+            }
+            yaw_target+=0.012f*direction_temp;
         }
-        if (vision_recv_pack.ros == 2)
+        else//识别到目标则微调
         {
-            yaw_target -= 0.0003;
+            if (vision_recv_pack.ros == 1)
+            {
+                yaw_target += 0.0003;
+            }
+            if (vision_recv_pack.ros == 2)
+            {
+                yaw_target -= 0.0003;
+            }
+            if (vision_recv_pack.ros == 0)
+            {
+                yaw_target += 0;
+            }
         }
-        if (vision_recv_pack.ros == 0)
-        {
-            yaw_target += 0;
-        }
+        //统一限幅并更新pid
         yaw_target = std_lib::constrain(yaw_target, -10.2f, 10.2f);
         update(yaw_target);
         //计算电机pid
         adjust();
         }
-        disable();
         break;
     case YAW_CALIBRATING:
         //校准模式
