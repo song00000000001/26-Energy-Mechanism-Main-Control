@@ -36,4 +36,29 @@ Debug_Data_t Debugger;
 //遥控器数据快照
 DR16_Snapshot_t DR16_Snap; 
 
+/*舵机调参记录
+撒放舵机从松开到锁定
+A8-igniter:170~270
 
+升降机从下到上，舵机运动范围
+B7左舵机loader2:235~100
+B6右舵机loader1:75~190
+
+卡镖从卡锁到松开:
+A11-transfomer:126~170
+
+*/
+
+servo_ccr_debug servo_ccr={
+    170,    //igniter_ccr_unlock
+    270,    //igniter_ccr_lock
+
+    190,    //loader1_ccr_up
+    75,     //loader1_ccr_down
+
+    100,    //loader2_ccr_up
+    235,    //loader2_ccr_down
+
+    205,    //transfomer_ccr_lock
+    180     //transfomer_ccr_unlock
+};

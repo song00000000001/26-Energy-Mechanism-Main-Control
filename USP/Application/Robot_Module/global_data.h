@@ -106,7 +106,7 @@ typedef struct {
 //调试数据结构体
 typedef struct {
     // 标志位
-    bool enable_debug_mode; // 在watch窗口改为true以进入调试模式(配合遥控器)
+    uint8_t enable_debug_mode; // 在watch窗口改为true以进入调试模式(配合遥控器)
     //电机状态
     Control_Mode_e debug_mode_deliver[2]; // 左右滑块的独立模式
     Control_Mode_e debug_mode_igniter;    // 丝杆模式
@@ -135,6 +135,20 @@ typedef enum __DartAimEnumdef
   Base = 1
 }DartAimEnumdef;
 
+
+//定义舵机测试结构体，方便调节测试舵机行程
+typedef struct 
+{
+    uint16_t igniter_ccr_unlock;
+    uint16_t igniter_ccr_lock;
+    uint16_t loader1_ccr_up;
+    uint16_t loader1_ccr_down;
+    uint16_t loader2_ccr_up;
+    uint16_t loader2_ccr_down;
+    uint16_t transfomer_ccr_lock;
+    uint16_t transfomer_ccr_unlock;
+}servo_ccr_debug;
+
 extern Launcher_Driver Launcher; 
 extern Missle_YawController_Classdef Yawer; 
 extern Robot_Ctrl_t Robot; 
@@ -147,3 +161,4 @@ extern DR16_Snapshot_t DR16_Snap;
 extern uint32_t vision_last_recv_time ; 
 extern VisionRecvData_t vision_recv_pack;
 extern VisionSendData_t vision_send_pack;
+extern servo_ccr_debug servo_ccr;
