@@ -111,24 +111,25 @@ void System_Device_Init(void)
 void System_Task_Init(void)
 {
   /* Queue Init */
-  CAN1_TxPort = xQueueCreate(6, sizeof(CAN_COB));
-  CAN1_RxPort = xQueueCreate(6, sizeof(CAN_COB));
-  CAN2_TxPort = xQueueCreate(6, sizeof(CAN_COB));
-  CAN2_RxPort = xQueueCreate(6, sizeof(CAN_COB));
-  USART_TxPort = xQueueCreate(6, sizeof(USART_COB));
-  USART_RxPort = xQueueCreate(6, sizeof(USART_COB));
+    CAN1_TxPort = xQueueCreate(6, sizeof(CAN_COB));
+    CAN1_RxPort = xQueueCreate(6, sizeof(CAN_COB));
+    CAN2_TxPort = xQueueCreate(6, sizeof(CAN_COB));
+    CAN2_RxPort = xQueueCreate(6, sizeof(CAN_COB));
+    USART_TxPort = xQueueCreate(6, sizeof(USART_COB));
+    USART_RxPort = xQueueCreate(6, sizeof(USART_COB));
 #if USE_SRML_DR16
-  DR16_QueueHandle = xQueueCreate(3, sizeof(USART_COB));
+    DR16_QueueHandle = xQueueCreate(3, sizeof(USART_COB));
 #endif
-/* Semaphore Init */
-/* Mutex Init */
+    /* Semaphore Init */
+    /* Mutex Init */
 #if USE_SRML_DR16
-  DR16_mutex = xSemaphoreCreateMutex();
+    DR16_mutex = xSemaphoreCreateMutex();
 #endif
-  /* Task Init */
-  Service_Communication_Init();
-  Service_Devices_Init();
-  Service_Debug_Init();
+    OpenLog_mutex = xSemaphoreCreateMutex();
+    /* Task Init */
+    Service_Communication_Init();
+    Service_Devices_Init();
+    Service_Debug_Init();
 }
 
 #if USE_SRML_MPU6050

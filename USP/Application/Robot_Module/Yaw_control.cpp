@@ -109,25 +109,15 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e *yaw_s
     */
     if(Robot.Flag.Status.vision_connected)//视觉连接
     {
-        *yaw_state = VISION_AIM;
+        *yaw_state = YAW_VISION_AIM;
     }
     else if(Robot.Flag.Status.tool_panel_connected)//调参板连接
     {
-        *yaw_state = CORRECT_AIM;
+        *yaw_state = YAW_CORRECT_AIM;
     }
-    /*
-    else if(DR16_Snap.S2==)//拨动摇杆
-    {
-        *yaw_state = MANUAL_AIM;
-    }
-    else
-    {
-        *yaw_state = DISABLE_MOTOR;
-    }   
-    */
     switch (*yaw_state)
     {
-    case MANUAL_AIM:
+    case YAW_MANUAL_AIM:
         // 手动微调逻辑
         Launcher.target_igniter_angle-=RC_Y * 0.02f;
         //这里直接用角度（实际上是距离）限幅，因为丝杆和滑块电机可以得到简单的线性映射关系，抽象电机库可以直接配置映射参数。
@@ -137,7 +127,7 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e *yaw_s
         yaw_target = std_lib::constrain(yaw_target, -10.2f, 10.2f);
         update(yaw_target);
         break;
-    case CORRECT_AIM:
+    case YAW_CORRECT_AIM:
     {
         //读取调参板设置的发射数据
         //根据发射计数选择数据槽数组
@@ -163,7 +153,7 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e *yaw_s
         update(yaw_target); // 更改Yaw轴角度
     }
         break;
-    case VISION_AIM:
+    case YAW_VISION_AIM:
         //视觉模式
         {
         /*todo
@@ -211,16 +201,21 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e *yaw_s
         calibration();
         mode_YAW = MODE_SPEED; //校准过程中采用速度模式
         break;
-    case DISABLE_MOTOR:
+    case YAW_DISABLE_MOTOR:
     default:
         disable();
         break;
     }
 
     //日志记录yaw子状态
-    static yaw_control_state_e last_yaw_state = MANUAL_AIM;
+    static yaw_control_state_e last_yaw_state = YAW_MANUAL_AIM;
     if (last_yaw_state != *yaw_state) {
+        #if enum_X_Macros_disable
         LOG_INFO("Yaw Control State Change: %d -> %d", last_yaw_state, *yaw_state);
+        #else
+        LOG_INFO("Yaw Control State Change: %s -> %s", Yaw_Control_State_To_Str(last_yaw_state), Yaw_Control_State_To_Str(*yaw_state));
+        #endif
+
         last_yaw_state = *yaw_state;
     }
 

@@ -26,8 +26,8 @@
 U1: vision
 U2: DR16
 U3: tool panal
-U4: LOG
-
+U5: LOG
+U4不知道是谁在发东西，先用u5代替。u5本来是给裁判系统用的，不过裁判系统只用收不发，所以没关系
 */
 
 #if USE_SRML_CAN
@@ -423,9 +423,9 @@ void Task_LogTransmit(void *arg){
         while (OpenLog.Send() == 0);
         #else
         //如果有待发送的数据包，则发送一个，否则内部会跳过
-        OpenLog.Send();
+        while (OpenLog.Send() == 0);
         #endif
-        vTaskDelay(pdMS_TO_TICKS(30));
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 

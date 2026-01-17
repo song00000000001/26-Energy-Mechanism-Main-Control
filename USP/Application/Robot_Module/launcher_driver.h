@@ -9,21 +9,10 @@
 #include "SRML.h"
 #include "robot_types.h"
 
-#if 0
+#if enum_X_Macros_disable
 /* --- 4. 发射流程子状态机 --- */
 // 定义子状态
-typedef enum {
-    FIRE_IDLE=0,
-    FIRE_PULL_LOAD,     //下拉到装填位置
-    FIRE_WAITLOAD,      //等待装填
-    FIRE_PULL_BOTTOM,    // 下拉到底
-    FIRE_LATCHING,   // 挂机 (等待装填归位)
-    FIRE_RETURNING,  // 回升(回到缓存区)
-    FIRE_TRANSFORE,         //动作仓储区舵机,转移新镖
-    FIRE_TRANSFORE_BACK,      //动作仓储区舵机,卡镖舵机回正，卡住镖
-    FIRE_SHOOTING,   // 开火 (舵机)
-} Fire_State_e;
-#else
+
 /* --- 4. 发射流程子状态机 --- */
 typedef enum {
     FIRE_IDLE = 0,          // 闲置/决策状态
@@ -68,13 +57,98 @@ typedef enum {
     FIRE_SHOOTING_4,         // 射击
           
 } Fire_State_e;
+#else
+//仿照global_data.h中的状态枚举定义方式
+//1. 定义 X-列表：
+#define FIRE_STATE_LIST(X) \
+    X(FIRE_IDLE)               \
+    X(FIRE_IGNITER_DELAY)      \
+    X(FIRE_CALIBRATION_1)      \
+    X(FIRE_PULL_DOWN_1)        \
+    X(FIRE_WAIT_BOTTOM_1)      \
+    X(FIRE_RETURN_UP_1)        \
+    X(FIRE_WAIT_UP_1)          \
+    X(FIRE_SHOOTING_1)         \
+    X(FIRE_CALIBRATION_2)      \
+    X(FIRE_PULL_DOWN_2)        \
+    X(FIRE_WAIT_BOTTOM_2)      \
+    X(FIRE_RETURN_UP_2)        \
+    X(FIRE_WAIT_UP_2)          \
+    X(FIRE_RELOAD_LOWER_2)     \
+    X(FIRE_SHOOTING_2)         \
+    X(FIRE_CALIBRATION_3)      \
+    X(FIRE_RELOAD_LIFT_3)      \
+    X(FIRE_RELOAD_RELEASE_3)   \
+    X(FIRE_PULL_DOWN_3)        \
+    X(FIRE_WAIT_BOTTOM_3)      \
+    X(FIRE_RETURN_UP_3)        \
+    X(FIRE_WAIT_UP_3)          \
+    X(FIRE_RELOAD_LOWER_3)     \
+    X(FIRE_SHOOTING_3)         \
+    X(FIRE_CALIBRATION_4)      \
+    X(FIRE_RELOAD_LIFT_4)      \
+    X(FIRE_RELOAD_RELEASE_4)   \
+    X(FIRE_PULL_DOWN_4)        \
+    X(FIRE_WAIT_BOTTOM_4)      \
+    X(FIRE_RETURN_UP_4)        \
+    X(FIRE_WAIT_UP_4)          \
+    X(FIRE_RELOAD_LOWER_4)     \
+    X(FIRE_SHOOTING_4)
+// 自动生成枚举定义
+enum Fire_State_e {
+    #define AS_ENUM(name) name,
+    FIRE_STATE_LIST(AS_ENUM)
+    #undef AS_ENUM
+};  
+//2. 自动生成转换函数：
+inline const char* Fire_State_To_Str(Fire_State_e state) {
+    switch(state) {
+        #define AS_CASE(name) case name: return #name;
+        FIRE_STATE_LIST(AS_CASE)
+        #undef AS_CASE
+        default: return "UNKNOWN";
+    }
+}
+//3. 在日志中使用：
+//LOG_INFO("State changed to: %s", Fire_State_To_Str(Robot.Launcher.fire_state));
+//增加新状态时，只需在 FIRE_STATE_LIST 中添加一行，枚举和字符串会自动同步。
 #endif
+
+#if enum_X_Macros_disable
+/* --- 5. 装填状态机 --- */
 typedef enum {
-    LOAD_MODE_UP = 0,       // 升降机强制处于顶部（待机/复位）
-    LOAD_MODE_FOLLOW,       // 随动模式：根据滑块位置线性计算高度
-    LOAD_MODE_PARAL,        // 平行
-    LOAD_MODE_FULL_DOWN,    // 最低,脱离飞镖
+    LOAD_STOWED = 0,       // 升降机强制处于顶部（待机/复位）
+    LOAD_DYNAMIC_SYNC,       // 随动模式：根据滑块位置线性计算高度
+    LOAD_PRE_LOAD,        // 平行
+    LOAD_ENGAGED,    // 最低,脱离飞镖
 } Loader_Target_Mode_e;
+#else
+//仿照global_data.h中的状态枚举定义方式
+//1. 定义 X-列表：
+#define LOADER_TARGET_MODE_LIST(X) \
+    X(LOAD_STOWED)           \
+    X(LOAD_DYNAMIC_SYNC)       \
+    X(LOAD_PRE_LOAD)        \
+    X(LOAD_ENGAGED)
+// 自动生成枚举定义
+enum Loader_Target_Mode_e {
+    #define AS_ENUM(name) name,
+    LOADER_TARGET_MODE_LIST(AS_ENUM)
+    #undef AS_ENUM
+};
+//2. 自动生成转换函数：
+inline const char* Loader_Target_Mode_To_Str(Loader_Target_Mode_e mode) {
+    switch(mode) {
+        #define AS_CASE(name) case name: return #name;
+        LOADER_TARGET_MODE_LIST(AS_CASE)
+        #undef AS_CASE
+        default: return "UNKNOWN";
+    }
+}
+//3. 在日志中使用：
+//LOG_INFO("Loader mode changed to: %s", Loader_Target_Mode_To_Str(Robot.Launcher.loader_target_mode));
+//增加新状态时，只需在 LOADER_TARGET_MODE_LIST 中添加一行，枚举和字符串会自动同步。
+#endif
 
 class Launcher_Driver
 {
@@ -109,7 +183,7 @@ public:
     float target_igniter_angle;     // 丝杆目标角度
 
     //装填状态机
-    Loader_Target_Mode_e loader_target_mode = LOAD_MODE_UP; 
+    Loader_Target_Mode_e loader_target_mode = LOAD_STOWED; 
 
     Launcher_Driver(uint8_t id_l, uint8_t id_r, uint8_t id_ign);
     

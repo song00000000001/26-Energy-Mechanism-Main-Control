@@ -28,6 +28,9 @@ QueueHandle_t DR16_QueueHandle; //	dr16（串口） 接收队列
 SemaphoreHandle_t DR16_mutex; //	dr16互斥量
 #endif
 
+//openlog互斥量
+SemaphoreHandle_t OpenLog_mutex;
+
 /* Notifications */
 
 /* Other Resources -----------------------------------------------------------*/

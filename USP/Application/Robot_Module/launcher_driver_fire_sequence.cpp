@@ -17,7 +17,7 @@ void Launcher_Driver::Run_Firing_Sequence()
             //target_deliver_angle=(POS_BUFFER);
             servo_igniter_lock; // 锁止扳机舵机
 			servo_transfomer_lock;
-            loader_target_mode=LOAD_MODE_UP;
+            loader_target_mode=LOAD_STOWED;
             if (1||is_deliver_at_target(5)) {
 				state_timer = current_time;
                 fire_state = FIRE_IGNITER_DELAY;
@@ -113,7 +113,7 @@ void Launcher_Driver::Run_Firing_Sequence()
 
         // 滑块回底部
         case FIRE_PULL_DOWN_2:
-            loader_target_mode=LOAD_MODE_FOLLOW;
+            loader_target_mode=LOAD_DYNAMIC_SYNC;
             target_deliver_angle=(POS_BOTTOM);
             /*todo
             song
@@ -131,7 +131,7 @@ void Launcher_Driver::Run_Firing_Sequence()
             if (is_deliver_at_target(5)) {
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_BOTTOM_2;
-                loader_target_mode=LOAD_MODE_PARAL;
+                loader_target_mode=LOAD_PRE_LOAD;
             }
             #endif
                 
@@ -151,7 +151,7 @@ void Launcher_Driver::Run_Firing_Sequence()
             if (is_deliver_at_target(5)) {
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_UP_2;
-                loader_target_mode=LOAD_MODE_FULL_DOWN;
+                loader_target_mode=LOAD_ENGAGED;
             }
             break;
         // 缓冲区等待
@@ -187,7 +187,7 @@ void Launcher_Driver::Run_Firing_Sequence()
 
         // 升降机上升，准备装填第三发
         case FIRE_RELOAD_LIFT_3:
-            loader_target_mode=LOAD_MODE_UP;
+            loader_target_mode=LOAD_STOWED;
             if ((current_time - state_timer) >loader_up_delay) {
                 state_timer = current_time;
                 fire_state = FIRE_RELOAD_RELEASE_3;
@@ -216,12 +216,12 @@ void Launcher_Driver::Run_Firing_Sequence()
 
         //下拉滑块到底部扳机
         case FIRE_PULL_DOWN_3:
-            loader_target_mode=LOAD_MODE_FOLLOW;
+            loader_target_mode=LOAD_DYNAMIC_SYNC;
             target_deliver_angle=(POS_BOTTOM);
             if (is_deliver_at_target(5)) {
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_BOTTOM_3;
-                loader_target_mode=LOAD_MODE_PARAL;
+                loader_target_mode=LOAD_PRE_LOAD;
             }
             break;    
 
@@ -239,7 +239,7 @@ void Launcher_Driver::Run_Firing_Sequence()
             if (is_deliver_at_target(5)) {
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_UP_3;
-                loader_target_mode=LOAD_MODE_FULL_DOWN;
+                loader_target_mode=LOAD_ENGAGED;
             }
             break;
 
@@ -276,7 +276,7 @@ void Launcher_Driver::Run_Firing_Sequence()
 
         // 升降机上升，准备装填第四发
         case FIRE_RELOAD_LIFT_4:
-            loader_target_mode=LOAD_MODE_UP;
+            loader_target_mode=LOAD_STOWED;
             if ((current_time - state_timer) >loader_up_delay) {
                 state_timer = current_time;
                 fire_state = FIRE_RELOAD_RELEASE_4;
@@ -305,12 +305,12 @@ void Launcher_Driver::Run_Firing_Sequence()
 
         //下拉滑块到底部扳机
         case FIRE_PULL_DOWN_4:
-            loader_target_mode=LOAD_MODE_FOLLOW;
+            loader_target_mode=LOAD_DYNAMIC_SYNC;
             target_deliver_angle=(POS_BOTTOM);
             if (is_deliver_at_target(5)) {
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_BOTTOM_4;
-                loader_target_mode=LOAD_MODE_PARAL;
+                loader_target_mode=LOAD_PRE_LOAD;
             }
             break;
         
@@ -328,7 +328,7 @@ void Launcher_Driver::Run_Firing_Sequence()
             if (is_deliver_at_target(5)) {
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_UP_4;
-                loader_target_mode=LOAD_MODE_FULL_DOWN;
+                loader_target_mode=LOAD_ENGAGED;
             }
             break;
 
@@ -363,7 +363,7 @@ void Launcher_Driver::Run_Firing_Sequence()
                 //每打4发,就需要将S1回中再下按,否则不会继续发射
                 if(Robot.Status.dart_count%4==0){
                     Robot.Flag.Status.stop_continus_fire=true;
-                    Robot.Status.current_state = SYS_STANDBY;
+                    Robot.Status.current_state = SYS_AUTOFIRE_SUSPEND;
                 }
             }
             break;    
@@ -376,7 +376,12 @@ void Launcher_Driver::Run_Firing_Sequence()
     static Fire_State_e last_fire_state = FIRE_IDLE;
     if (fire_state != last_fire_state) 
     {
+        #if enum_X_Macros_disable
         LOG_INFO("Fire State Change: %d -> %d", last_fire_state,fire_state);
+        #else
+        LOG_INFO("Fire State Change: %s -> %s", Fire_State_To_Str(last_fire_state), Fire_State_To_Str(fire_state));
+        #endif
         last_fire_state = fire_state;
     }
 }
+
