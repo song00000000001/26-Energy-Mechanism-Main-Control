@@ -70,6 +70,7 @@ extern QueueHandle_t DR16_QueueHandle;
 #if USE_SRML_DR16
 extern SemaphoreHandle_t DR16_mutex;
 #endif
+extern SemaphoreHandle_t OpenLog_mutex;
 /* Mutexes */
 /* Notifications */
 /* Other Resources -----------------------------------------------------------*/

@@ -107,6 +107,8 @@ void Launcher_Driver::adjust()
         pid_igniter_spd.clean_intergral();
     }
     //校准后,限位开关意外触发记录
+    #if 0
+    //由于限位开关延迟问题，容易误触发，这里先注释掉
     if(is_calibrated()){
         if(SW_DELIVER_L_OFF) {
             LOG_WARN("Left Deliver Limit Switch Triggered when calibrated");
@@ -118,6 +120,7 @@ void Launcher_Driver::adjust()
             LOG_WARN("Left Deliver Limit Switch Triggered when calibrated");
         }
     }     
+    #endif
 }
 /*todo
 song
@@ -130,6 +133,7 @@ void Launcher_Driver::start_calibration()
 {
     LOG_INFO("Launcher Calibration Started");
     //清空标志位,以便多次校准
+    Robot.Flag.Status.is_calibrated=0;
 	Yawer.Yaw_Init_flag=0;
     is_deliver_homed[0] = false;
     is_deliver_homed[1] = false;
@@ -278,6 +282,19 @@ void Launcher_Driver::stop_all_motor(){
 // ================= 状态查询 =================
 bool Launcher_Driver::is_calibrated() {
     return is_deliver_homed[0] && is_deliver_homed[1] && is_igniter_homed;
+}
+
+// 状态查询细化
+bool Launcher_Driver::is_deliver_L_calibrated() {
+    return is_deliver_homed[0];
+}
+
+bool Launcher_Driver::is_deliver_R_calibrated() {
+    return is_deliver_homed[1];
+}
+
+bool Launcher_Driver::is_igniter_calibrated() {
+    return is_igniter_homed;
 }
 
 bool Launcher_Driver::is_deliver_at_target(float threshold) {

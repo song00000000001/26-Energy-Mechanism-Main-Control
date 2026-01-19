@@ -34,7 +34,7 @@ extern "C" {
 
 //igniter最小/大位置
 #define IGNITER_MIN_POS 2.0f
-#define IGNITER_MAX_POS 100.0f
+#define IGNITER_MAX_POS 200.0f
 //deliver最小/大位置
 #define POS_DELIVER_MIN -648.0f
 #define POS_DELIVER_MAX -5.0f
@@ -124,6 +124,16 @@ yaw_L:PA7
 
 // 定义全部通过的目标值 (0b11111 = 0x1F)
 #define MASK_ALL_PASSED (MASK_DELIVER_L | MASK_DELIVER_R | MASK_IGNITER | MASK_YAW_L | MASK_YAW_R)
+
+#define MASK_DELIVER_L_CALIBRATED (1 << 0)
+#define MASK_DELIVER_R_CALIBRATED (1 << 1)
+#define MASK_IGNITER_CALIBRATED (1 << 2)
+#define MASK_YAW_L_CALIBRATED (1 << 3)
+#define MASK_YAW_R_CALIBRATED (1 << 4)
+
+#define MASK_ALL_CALIBRATED (MASK_DELIVER_L_CALIBRATED | MASK_DELIVER_R_CALIBRATED | MASK_IGNITER_CALIBRATED | MASK_YAW_L_CALIBRATED | MASK_YAW_R_CALIBRATED)
+
+#define enum_X_Macros_disable 0
 
 #ifdef __cplusplus
 }
