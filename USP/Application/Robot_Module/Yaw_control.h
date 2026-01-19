@@ -5,14 +5,45 @@
 #include "SRML.h"
 #include "robot_types.h"
 
+//仿照global_data.h中的状态枚举定义方式
+#if enum_X_Macros_disable
 enum yaw_control_state_e
 {
-    MANUAL_AIM = 0,
-    VISION_AIM,
-    CORRECT_AIM,
+    YAW_MANUAL_AIM = 0,
+    YAW_VISION_AIM,
+    YAW_CORRECT_AIM,
     YAW_CALIBRATING,
-    DISABLE_MOTOR 
+    YAW_DISABLE_MOTOR 
 };
+#else
+//1. 定义 X-列表：
+#define YAW_CONTROL_STATE_LIST(X) \
+    X(YAW_MANUAL_AIM)         \
+    X(YAW_VISION_AIM)         \
+    X(YAW_CORRECT_AIM)        \
+    X(YAW_CALIBRATING)    \
+    X(YAW_DISABLE_MOTOR)
+//自动生成枚举定义
+enum yaw_control_state_e {
+    #define AS_ENUM(name) name,
+    YAW_CONTROL_STATE_LIST(AS_ENUM)
+    #undef AS_ENUM
+};
+
+//自动生成转换函数：
+inline const char* Yaw_Control_State_To_Str(yaw_control_state_e state) {
+    switch(state) {
+        #define AS_CASE(name) case name: return #name;
+        YAW_CONTROL_STATE_LIST(AS_CASE)
+        #undef AS_CASE
+        default: return "UNKNOWN";
+    }
+}
+
+//2. 在日志中使用：
+//LOG_INFO("State changed to: %s", Yaw_Control_State_To_Str(Robot.Status.yaw_control_state));
+//增加新状态时，只需在 YAW_CONTROL_STATE_LIST 中添加一行，枚举和字符串会自动同步。
+#endif
 
 class Missle_YawController_Classdef
 {
@@ -44,19 +75,22 @@ public:
     void yaw_out_motor_speed();
     //yaw轴子状态机,包含状态如下,同时会对行程电机进行控制
     /*
-        manual_aim:手动瞄准
-        vision_aim:视觉瞄准
-        correct_aim调参板瞄准
-        disable_motor:失能电机
+        YAW_MANUAL_AIM:手动瞄准
+        YAW_VISION_AIM:视觉瞄准
+        YAW_CORRECT_AIM调参板瞄准
+        YAW_DISABLE_MOTOR:失能电机
         yaw_calibrating:校准模式
     */
     
-    void yaw_state_machine(yaw_control_state_e yaw_state,float LX,float LY);
+    void yaw_state_machine(yaw_control_state_e *yaw_state,float RC_X,float RC_Y);
     // 判断yaw轴是否到达目标角度
     bool isMotorAngleReached(float threshold);
         
     // 判断yaw轴是否初始化完成
     inline bool is_Yaw_Init() { return (Yaw_Init_flag == 2); }
+    //校准细化
+    inline bool is_Yaw_L_calibrated() { return (Yaw_Init_flag >= 1); }
+    inline bool is_Yaw_R_calibrated() { return (Yaw_Init_flag == 2); }
 };
 
 #endif

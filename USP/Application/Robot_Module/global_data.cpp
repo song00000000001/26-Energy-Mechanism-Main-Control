@@ -8,6 +8,7 @@
 VisionRecvData_t vision_recv_pack;//电视接收包
 VisionSendData_t vision_send_pack;//电视发送包
 uint32_t vision_last_recv_time = 0; // 视觉最后接收时间,communication.cpp中更新,server发送时使用
+
 /*todo
 song
 1.确认视觉数据结构体内容
@@ -50,15 +51,25 @@ A11-transfomer:126~170
 */
 
 servo_ccr_debug servo_ccr={
-    170,    //igniter_ccr_unlock
-    270,    //igniter_ccr_lock
+    295,    //igniter_ccr_unlock
+    360,    //igniter_ccr_lock
 
-    205,    //loader1_ccr_up
+    210,    //loader1_ccr_up
     75,     //loader1_ccr_down
 
-    118,    //loader2_ccr_up
-    250,    //loader2_ccr_down
+    100,    //loader2_ccr_up
+    230,    //loader2_ccr_down
 
     220,    //transfomer_ccr_lock
     180     //transfomer_ccr_unlock
 };
+
+protocol_status_t Protocol_Status[4]={
+    {false,0,100,0.0f,0.5f}, //CAN1,MOTOR_DELIVER_L
+    {false,0,100,0.0f,0.5f}, //CAN1,MOTOR_DELIVER_R
+    {false,0,100,0.0f,0.5f}, //CAN1,MOTOR_IGNITER
+    {false,0,100,0.0f,0.5f}  //CAN2,MOTOR_YAW
+};
+
+bool is_loader_simulating = false;    // 模拟标志位
+float simulated_loader_pos = -20.0f; // 模拟滑块位置

@@ -39,16 +39,19 @@
 TaskHandle_t DR16_Handle;
 TaskHandle_t Rx_Referee_Handle;
 TaskHandle_t LaunchCtrl_Handle;
-//TaskHandle_t motor_HAndle;
 TaskHandle_t Loader_Ctrl_Handle;
 TaskHandle_t Vision_Task_Handle;
+TaskHandle_t log_Handle;
+TaskHandle_t protocol_status_monitor_Handle;
+TaskHandle_t load_test_ctrl_Handle;
 //TaskHandle_t Yaw_Task_Handle;
 /* Private function declarations ---------------------------------------------*/
 void tskDR16(void *arg);
 void Rx_Referee(void *arg);
 void Vision_Task(void *arg);
-
-
+void Task_LogTransmit(void *arg);
+void Task_protocal_status_monitor(void *arg);
+void Task_load_test_ctrl(void *arg);
 /* Function prototypes -------------------------------------------------------*/
 /**
  * @brief  Initialization of device management service
@@ -65,11 +68,18 @@ void Service_Devices_Init(void)
 	*/
 	xTaskCreate(Vision_Task, "App.Vision_Task", Small_Stack_Size, NULL, PriorityAboveNormal, &Vision_Task_Handle);
 	xTaskCreate(Loader_Ctrl, "App.Loader_Ctrl", Normal_Stack_Size, NULL, PriorityAboveNormal, &Loader_Ctrl_Handle);
+    xTaskCreate(Task_load_test_ctrl, "App.load_test_ctrl", Small_Stack_Size, NULL, PriorityNormal, &load_test_ctrl_Handle);
+
 #if USE_SRML_DR16
 	xTaskCreate(tskDR16, "App.DR16", Small_Stack_Size, NULL, PrioritySuperHigh, &DR16_Handle);
 #endif
 #if USE_SRML_REFEREE
 	xTaskCreate(Rx_Referee, "Rx_Referee", Normal_Stack_Size, NULL, PriorityNormal, &Rx_Referee_Handle);
+#endif
+#if 1
+    xTaskCreate(Task_LogTransmit,"log.tx_task",Normal_Stack_Size,NULL,PriorityLow,&log_Handle);
+#elif 0
+    xTaskCreate(Task_protocal_status_monitor,"protocal.status",Normal_Stack_Size,NULL,PriorityLow,&protocol_status_monitor_Handle);
 #endif
 }
 

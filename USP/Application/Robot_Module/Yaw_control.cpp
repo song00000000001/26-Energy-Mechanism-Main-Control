@@ -74,7 +74,19 @@ void Missle_YawController_Classdef::adjust()
     }
     PID_Yaw_Speed.Current = YawMotor.getMotorSpeed();
     PID_Yaw_Speed.Adjust();
-    
+    #if 0 //由于限位开关延迟问题，容易误触发，这里先注释掉
+    //意外触发限位开关log
+    if(Yaw_Init_flag == 2){
+        if(SW_YAW_L_OFF)
+        {
+            LOG_WARN("Yaw Left Limit Switch Triggered when calibrated");
+        }
+        if(SW_YAW_R_OFF)
+        {
+            LOG_WARN("Yaw Right Limit Switch Triggered when calibrated");
+        }
+    }
+    #endif
 }
 
 void Missle_YawController_Classdef::disable()
@@ -89,21 +101,40 @@ void Missle_YawController_Classdef::yaw_out_motor_speed(){
     YawMotor.setMotorCurrentOut(PID_Yaw_Speed.Out);
 }
 
-void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_state,float LX,float LY){
-    
-    switch (yaw_state)
+void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e *yaw_state,float RC_X,float RC_Y){
+    /*todo
+    song
+    修改yaw轴子状态机状态控制，由摇杆控制转为设备连接状态控制。即如果调参板连上了，就用调参板,否则用遥控器。
+    如果视觉连上了，就优先用视觉，否则检查调参板，最后才是遥控器，如果遥控也没连上，就失能。
+    */
+    //由于没校准就触发以下状态会造成bug，先加个校准完成的判断
+    if(!is_Yaw_Init())
     {
-    case MANUAL_AIM:
+        *yaw_state = YAW_CALIBRATING;
+    }
+    else{
+        if(Robot.Flag.Status.vision_connected)//视觉连接
+        {
+            *yaw_state = YAW_VISION_AIM;
+        }
+        else if(Robot.Flag.Status.tool_panel_connected)//调参板连接
+        {
+            *yaw_state = YAW_CORRECT_AIM;
+        }
+    }
+    switch (*yaw_state)
+    {
+    case YAW_MANUAL_AIM:
         // 手动微调逻辑
-        Launcher.target_igniter_angle-=LY * 0.02f;
+        Launcher.target_igniter_angle-=RC_Y * 0.02f;
         //这里直接用角度（实际上是距离）限幅，因为丝杆和滑块电机可以得到简单的线性映射关系，抽象电机库可以直接配置映射参数。
         Launcher.target_igniter_angle=std_lib::constrain(Launcher.target_igniter_angle, IGNITER_MIN_POS, IGNITER_MAX_POS);
-        yaw_target -= LX * 0.02f;
+        yaw_target -= RC_X * 0.02f;
         //这里的限幅和其他电机不同,用的是镖架整体朝向的角度值,在update里进行三角函数转换后还会对电机编码器角度再限幅一次。
         yaw_target = std_lib::constrain(yaw_target, -10.2f, 10.2f);
         update(yaw_target);
         break;
-    case CORRECT_AIM:
+    case YAW_CORRECT_AIM:
     {
         //读取调参板设置的发射数据
         //根据发射计数选择数据槽数组
@@ -127,9 +158,21 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_st
         Launcher.target_igniter_angle=DartsData[1].Ignitergoal[0];
         Launcher.target_igniter_angle=std_lib::constrain(Launcher.target_igniter_angle, IGNITER_MIN_POS, IGNITER_MAX_POS);
         update(yaw_target); // 更改Yaw轴角度
+
+        //记录角度和力度变化，为了方便找到数据变化点，用warn等级输出，并且加上当前发射计数,将yaw和行程合并输出
+        static float last_yaw_target=0;
+        static float last_igniter_target=0;
+        if(std::abs(last_yaw_target - yaw_target) > 0.01f || std::abs(last_igniter_target - Launcher.target_igniter_angle) > 0.01f)
+        {
+            LOG_WARN("----Dart num:%d Target Update----", Robot.Status.dart_count);
+            LOG_WARN("Yaw Target: %.2f -> %.2f,Igniter Target: %.2f -> %.2f", 
+                last_yaw_target, yaw_target, last_igniter_target, Launcher.target_igniter_angle);
+            last_yaw_target = yaw_target;
+            last_igniter_target = Launcher.target_igniter_angle;
+        }
     }
         break;
-    case VISION_AIM:
+    case YAW_VISION_AIM:
         //视觉模式
         {
         /*todo
@@ -176,11 +219,43 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e yaw_st
         //进行校准，校准完成后，自动改变校准标志
         calibration();
         mode_YAW = MODE_SPEED; //校准过程中采用速度模式
+        //日志记录校准状态
+        static uint8_t last_yaw_calib_flag = 0;
+        if (last_yaw_calib_flag != Yaw_Init_flag) {
+            LOG_INFO("Yaw Calibration State Change: %d -> %d", last_yaw_calib_flag, Yaw_Init_flag);
+            switch (Yaw_Init_flag)
+            {
+            case 0:
+                LOG_INFO("Yaw Calibration: Moving to Left Limit");
+                break;
+            case 1:
+                LOG_INFO("Yaw Calibration: Left Limit Reached, Moving to Right Limit");
+                break;
+            case 2:
+                LOG_INFO("Yaw Calibration: Right Limit Reached, Calibration Complete");
+                break;
+            default:
+                break;
+            }
+            last_yaw_calib_flag = Yaw_Init_flag;
+        }
         break;
-    case DISABLE_MOTOR:
+    case YAW_DISABLE_MOTOR:
     default:
         disable();
         break;
+    }
+
+    //日志记录yaw子状态
+    static yaw_control_state_e last_yaw_state = YAW_MANUAL_AIM;
+    if (last_yaw_state != *yaw_state) {
+        #if enum_X_Macros_disable
+        LOG_INFO("Yaw Control State Change: %d -> %d", last_yaw_state, *yaw_state);
+        #else
+        LOG_INFO("Yaw Control State Change: %s -> %s", Yaw_Control_State_To_Str(last_yaw_state), Yaw_Control_State_To_Str(*yaw_state));
+        #endif
+
+        last_yaw_state = *yaw_state;
     }
 
 }

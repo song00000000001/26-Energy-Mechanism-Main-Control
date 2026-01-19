@@ -20,20 +20,27 @@ todo:
 
 date:2025/12/10/0:47
 */
-
+inline const char* Get_SW_Str(uint8_t sw) {
+    switch (sw) {
+        case SW_UP:   return "UP";
+        case SW_MID:  return "MID";
+        case SW_DOWN: return "DOWN";
+        default:      return "NONE";
+    }
+}
 
 /*发射主控任务*/
 void LaunchCtrl(void *arg)
 {
     //can发送的包
     Motor_CAN_COB Tx_Buff,Tx_Buff1;
- 
+
     //初始状态设为离线
-    Robot.Status.current_state=SYS_OFFLINE;
+    Robot.Status.current_state=SYS_DISCONNECTED;
     // 重置自检进度
     Launcher.check_progress=0; 
     //yaw轴控制状态初始化为失能
-    Robot.Status.yaw_control_state=DISABLE_MOTOR;
+    Robot.Status.yaw_control_state=YAW_MANUAL_AIM;
     //初始化飞镖发射数量
     Robot.Status.dart_count=0;
     //初始自检限位开关标志位失能
@@ -58,16 +65,38 @@ void LaunchCtrl(void *arg)
         .enable_debug_mode=0,//用于debug中进入debug状态
         .debug_mode_deliver={MODE_SPEED,MODE_SPEED},
         .debug_mode_igniter=MODE_SPEED ,
+        .debug_loader_pos=POS_BOTTOM,
+        .debug_fire_type=0 //调整发射类型，0为连发一二三四，1为单发第一发，2为单发第二发，3为单发第三发。  
     };
-
+    #if CONSERVATIVE_TEST_PARAMS
     //校准速度初始化
     calibration_speed={
 	.yaw_calibration_speed=-300,
-	.deliver_calibration_speed=1200,
-    .igniter_calibration_speed=-1000
+	.deliver_calibration_speed=600,
+    .igniter_calibration_speed=-600
     };
-
+    // PID 参数初始化
+    Launcher.pid_deliver_sync.SetPIDParam(-0.4f, 0.0f, 0.0f, 8000, 10000);
     
+    for(int i=0; i<2; i++) {
+        Launcher.pid_deliver_spd[i].SetPIDParam(20.0f, 2.0f, 0.0f, 8000, 14000);
+        Launcher.pid_deliver_pos[i].SetPIDParam(800.f, 0.0, 0.0, 1000, 6000);
+    }
+    
+    Launcher.pid_igniter_spd.SetPIDParam(15.0, 0.0, 0.0, 3000, 8000);
+    Launcher.pid_igniter_pos.SetPIDParam(3000.0, 0.0, 0.0, 3000, 4000);
+
+    Yawer.PID_Yaw_Angle.SetPIDParam(15, 0, 0, 0, 200);
+    Yawer.PID_Yaw_Angle.I_SeparThresh = 8;
+    Yawer.PID_Yaw_Angle.DeadZone = 0.01f;
+    Yawer.PID_Yaw_Speed.SetPIDParam(20, 0, 0, 0, 12000);
+    #else
+	//校准速度初始化
+    calibration_speed={
+	.yaw_calibration_speed=-600,
+	.deliver_calibration_speed=1200,
+    .igniter_calibration_speed=-1200
+    };
     // PID 参数初始化
     Launcher.pid_deliver_sync.SetPIDParam(-0.4f, 0.0f, 0.0f, 8000, 16000);
     
@@ -83,12 +112,24 @@ void LaunchCtrl(void *arg)
     Yawer.PID_Yaw_Angle.I_SeparThresh = 8;
     Yawer.PID_Yaw_Angle.DeadZone = 0.01f;
     Yawer.PID_Yaw_Speed.SetPIDParam(20, 0, 0, 0, 18000);
-
-    Launcher.servo_pwm_test_lock_up();
+	#endif
+    
     // 任务频率控制
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(1);
     uint32_t main_task_now = xTaskGetTickCount();
+
+	LOG_INFO("Launch Control Task Started.\n");
+    #if enum_X_Macros_disable
+    LOG_INFO("Initial System State: %d,yaw_control_state: %d,loader_target_mode: %d\n", 
+        Robot.Status.current_state, Robot.Status.yaw_control_state, Launcher.loader_target_mode);
+    #else
+    LOG_INFO("Initial System State: %s,yaw_control_state: %s,loader_target_mode: %s\n", 
+        System_State_To_Str(Robot.Status.current_state),
+        Yaw_Control_State_To_Str(Robot.Status.yaw_control_state),
+        Loader_Target_Mode_To_Str(Launcher.loader_target_mode));
+    #endif
+
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
@@ -101,7 +142,8 @@ void LaunchCtrl(void *arg)
         主任务不能被阻塞。
         */
         // 尝试拿锁，参数为 0 表示：拿不到立刻返回，不等待，不阻塞
-        if (xSemaphoreTake(DR16_mutex, 0) == pdTRUE){
+        if (xSemaphoreTake(DR16_mutex, 0) == pdTRUE)
+        {
             // 1. 拿到了锁：更新快照
             DR16_Snap.Status = DR16.GetStatus();
             DR16_Snap.LX_Norm = DR16.Get_LX_Norm();
@@ -112,20 +154,70 @@ void LaunchCtrl(void *arg)
             DR16_Snap.S2 = DR16.GetS2();
             
             // 2. 释放锁
-            xSemaphoreGive(DR16_mutex);}
+            xSemaphoreGive(DR16_mutex);
+        }
 
+        // 记录遥控器指令变化
+        /*todo
+        song
+        可能会影响性能,需要测试。
+        也可以只在状态变化时打印。
+        */
+		#if 0	
+        static DR16_Snapshot_t last_DR16_Snap = DR16_Snap;
+        if(memcmp(&last_DR16_Snap, &DR16_Snap, sizeof(DR16_Snapshot_t)) != 0) {
+            LOG_INFO("DR16 Updated: S1=%d, S2=%d, LX=%.2f, LY=%.2f, RX=%.2f, RY=%.2f", 
+                DR16_Snap.S1, DR16_Snap.S2, DR16_Snap.LX_Norm, DR16_Snap.LY_Norm, DR16_Snap.RX_Norm, DR16_Snap.RY_Norm);
+            memcpy(&last_DR16_Snap, &DR16_Snap, sizeof(DR16_Snapshot_t));
+        }
+		#else
+        //由于上面打印信息太多,改为只打印开关变化
+		static uint8_t last_S1 = DR16_Snap.S1;
+        static uint8_t last_S2 = DR16_Snap.S2;
+        if (last_S1 != DR16_Snap.S1) {
+            LOG_INFO("DR16 Switch Updated: S1=%s -> %s", 
+                Get_SW_Str(last_S1), Get_SW_Str(DR16_Snap.S1));
+            last_S1 = DR16_Snap.S1;
+            /*
+            日志增加手动触发失能和暂停时，记录各电机的运动位置，用于判断当时是否出现电机角度脱离软件限位的情况（即撞了限位开关。）以及卡死时电机位置。
+            还要记录限位开关状态，辅助确认是否撞击。
+            */
+            if(DR16_Snap.S1==SW_UP){
+                LOG_ERROR("System Disabled by User!");
+                LOG_ERROR("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
+                    Yawer.YawMotor.getMotorAngle(), 
+                    Launcher.DeliverMotor[0].getMotorAngle(), 
+                    Launcher.DeliverMotor[1].getMotorAngle(),
+                     Launcher.IgniterMotor.getMotorAngle());
+                LOG_ERROR("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
+                    SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
+            }
+            else if(DR16_Snap.S1==SW_MID){
+                LOG_WARN("Autofire Paused by User!");
+                LOG_WARN("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
+                    Yawer.YawMotor.getMotorAngle(), 
+                    Launcher.DeliverMotor[0].getMotorAngle(), 
+                    Launcher.DeliverMotor[1].getMotorAngle(),
+                     Launcher.IgniterMotor.getMotorAngle());
+                LOG_WARN("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
+                    SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
+            }
+
+        }
+        if (last_S2 != DR16_Snap.S2) {
+            LOG_INFO("DR16 Switch Updated: S2=%s -> %s", 
+                Get_SW_Str(last_S2), Get_SW_Str(DR16_Snap.S2));
+            last_S2 = DR16_Snap.S2;
+        }
+		#endif
+
+        // 处理遥控器连接状态及模式切换
         if (DR16_Snap.Status != DR16_ESTABLISHED) {
             Robot.Flag.Status.rc_connected = false;
-            Robot.Status.current_state = SYS_OFFLINE;
+            Robot.Status.current_state = SYS_DISCONNECTED;
         }
         else{
             Robot.Flag.Status.rc_connected = true;
-            // Debug 模式判定 (最高优先级的主动模式)
-            // 只有当遥控器连接，且全局 Debug 标志位被置 1 时进入，并且校准完成。
-            /*if (Debugger.enable_debug_mode&&Robot.Flag.Status.is_calibrated) {
-                Robot.Status.current_state = SYS_DEBUG;
-            }*/
-
             // 处理遥控器开关逻辑
             // 手动失能开关 S1向上
             if(DR16_Snap.S1==SW_UP){
@@ -147,15 +239,15 @@ void LaunchCtrl(void *arg)
             }
             //s2
             //为了防止抢占校准状态,增加校准状态判断
-            if(Robot.Status.current_state!=SYS_CALIBRATING&&Yawer.is_Yaw_Init()){
+            if(Robot.Status.current_state!=SYS_HOMING&&Yawer.is_Yaw_Init()){
                 if(DR16_Snap.S2==SW_UP){
-                    Robot.Status.yaw_control_state = MANUAL_AIM; //切换到手动瞄准
+                    
                 }
                 else if(DR16_Snap.S2==SW_MID){
-                    Robot.Status.yaw_control_state = CORRECT_AIM; //切换到修正值瞄准
+                    
                 }
                 else{
-                    Robot.Status.yaw_control_state = VISION_AIM; //切换到视觉瞄准
+                    Robot.Status.yaw_control_state=YAW_MANUAL_AIM;
                 }
             }
     
@@ -163,44 +255,15 @@ void LaunchCtrl(void *arg)
         
         switch (Robot.Status.current_state)
         {
-        case SYS_DEBUG:
-        {
-             // 在 Debug 模式下：
-            // 1. 不执行任何自动逻辑 (fire sequence等)
-            // 2. adjust() 依然运行，但 target 不会被代码修改
-            // 3. 用户在 Watch 窗口直接修改 Launcher.pid_xxx.Target 或 Kp Ki Kd
-
-            //利用debug结构体修改电机模式
-            Launcher.mode_deliver[0]=Debugger.debug_mode_deliver[0];
-            Launcher.mode_deliver[1]=Debugger.debug_mode_deliver[1];
-            Launcher.mode_igniter=Debugger.debug_mode_igniter;
-            
-            // 如果手动失能，则回 Checking 状态
-            if (0&&Robot.Status.current_state == SYS_DEBUG && !Robot.Cmd.sys_enable) {
-                // 安全起见重新自检
-                Launcher.check_progress=0; // 重置自检进度
-                Robot.Status.current_state = SYS_CHECKING;
-                //为了防止自己跳过自检（电机速度角度环状态只在校准后才会切换角度环，而debug中可能会改成速度环然后退出，那么后续就不会进入角度环模式，那就不行）
-                Launcher.mode_deliver[0] = MODE_ANGLE;
-                Launcher.mode_deliver[1] = MODE_ANGLE;
-                Launcher.mode_igniter = MODE_ANGLE;
-                // 重置目标值为当前值，防止猛冲
-                Launcher.target_deliver_angle = Launcher.DeliverMotor[0].getMotorTotalAngle(); 
-                Launcher.target_igniter_angle = Launcher.IgniterMotor.getMotorTotalAngle();
-            }
-            
-        }
-        break;
-			
-        case SYS_OFFLINE:
+        case SYS_DISCONNECTED:
         {
             // 恢复条件：遥控器重连
             if (Robot.Flag.Status.rc_connected) {
-                Robot.Status.current_state = SYS_CHECKING;
+                Robot.Status.current_state = SYS_MANUAL_TEST_KEY;
             }
         }
         break;
-        case SYS_CHECKING:
+        case SYS_MANUAL_TEST_KEY:
         {
             //按键自检逻辑
             Launcher.key_check();
@@ -216,66 +279,113 @@ void LaunchCtrl(void *arg)
             if (Robot.Flag.Check.limit_sw_ok) {
                 //自检完后,如果没有任何一个限位开关被按下时,才等于1。
                 bool key_released_temp=!(SW_YAW_L_OFF||SW_YAW_R_OFF||SW_DELIVER_L_OFF||SW_DELIVER_R_OFF||SW_IGNITER_OFF);
-                if(key_released_temp){
-                    Robot.Status.current_state = SYS_CHECKED;
-                    Launcher.calibration_start_time=main_task_now; //记录校准开始时间
+                if(key_released_temp&&Robot.Cmd.sys_enable){
+                    //上面的条件加入了系统使能判断,一是防止手动按键后突然就开始校准伤人，二是防止限位开关延时导致校准失准。
+                    LOG_INFO("Manual Test Key Passed, Starting Homing Sequence.");
+                    Launcher.servo_pwm_test_lock_up();
+                    Launcher.start_calibration();//注意,这里启动了校准过程,会配置电机为速度环,直到撞到限位开关
+                    Robot.Status.current_state=SYS_HOMING;
                 }
             }
+
+            // 日志记录手动检查进度
+            static uint8_t last_check_progress = 0;
+            if (last_check_progress != Launcher.check_progress) {    
+                // 打印进度变化，显示后5位二进制状态
+                LOG_INFO("Check Progress Updated: [" BIN5_FMT "] -> [" BIN5_FMT "]", 
+                        BIN5_VAL(last_check_progress), BIN5_VAL(Launcher.check_progress));
+
+                // 根据掩码位判断当前是哪个开关被触发（利用刚才更新的那一位）
+                uint8_t triggered_bit = Launcher.check_progress ^ last_check_progress;
+                if (triggered_bit & MASK_DELIVER_L) {
+                    LOG_INFO("Switch Deliver L Checked! Current: [" BIN5_FMT "]", BIN5_VAL(Launcher.check_progress));   
+                }
+                if (triggered_bit & MASK_DELIVER_R) {
+                    LOG_INFO("Switch Deliver R Checked! Current: [" BIN5_FMT "]", BIN5_VAL(Launcher.check_progress));
+                }
+                if (triggered_bit & MASK_IGNITER) {
+                    LOG_INFO("Switch Igniter Checked! Current: [" BIN5_FMT "]", BIN5_VAL(Launcher.check_progress));
+                }
+                if (triggered_bit & MASK_YAW_L) {
+                    LOG_INFO("Switch Yaw L Checked! Current: [" BIN5_FMT "]", BIN5_VAL(Launcher.check_progress));
+                }
+                if (triggered_bit & MASK_YAW_R) {
+                    LOG_INFO("Switch Yaw R Checked! Current: [" BIN5_FMT "]", BIN5_VAL(Launcher.check_progress));
+                }  
+
+                last_check_progress = Launcher.check_progress;
+            }
+
         }
         break;
-        case SYS_CHECKED:
-            if(main_task_now-Launcher.calibration_start_time>500){
-                //注意,这里启动了校准过程,会配置电机为速度环,直到撞到限位开关
-                Launcher.start_calibration();
-                Robot.Status.current_state=SYS_CALIBRATING;
-            }
-            break;
         
-        case SYS_CALIBRATING:
+        case SYS_HOMING:
             Robot.Status.yaw_control_state = YAW_CALIBRATING;
-
+            //更新校准标志位
+            if(Yawer.is_Yaw_L_calibrated()){
+                Robot.Flag.Status.is_calibrated|=MASK_YAW_L_CALIBRATED;
+            }
+            if(Yawer.is_Yaw_R_calibrated()){
+                Robot.Flag.Status.is_calibrated|=MASK_YAW_R_CALIBRATED;
+            }
+            if(Launcher.is_deliver_R_calibrated()){
+                Robot.Flag.Status.is_calibrated|=MASK_DELIVER_R_CALIBRATED;
+            }
+            if(Launcher.is_deliver_L_calibrated()){
+                Robot.Flag.Status.is_calibrated|=MASK_DELIVER_L_CALIBRATED;
+            }
+            if(Launcher.is_igniter_calibrated()){
+                Launcher.target_igniter_angle=IGNITER_OFFSET_POS;  // 回到缓冲位置
+                Robot.Flag.Status.is_calibrated|=MASK_IGNITER_CALIBRATED;
+            }
             //校准完毕后角度环到安全位置，到达后停止
             if(Yawer.is_Yaw_Init()){
-                Robot.Status.yaw_control_state = MANUAL_AIM; //校准完成后，进入手动模式
+                Robot.Status.yaw_control_state = YAW_MANUAL_AIM; //校准完成后，进入手动模式
                 Yawer.mode_YAW = MODE_ANGLE; //切换回角度环
-                Yawer.yaw_target=0;
+                Yawer.yaw_target=0;//回到中间位置
             }
             if(Launcher.is_calibrated()){
                 Launcher.target_igniter_angle=IGNITER_OFFSET_POS;  // 回到缓冲位置
-                //Launcher.target_deliver_angle=POS_BUFFER;   // 回缓冲
+                /*
+                Launcher.target_deliver_angle=POS_BUFFER;   // 回缓冲位置
+                由于发射流程的校准需求,在check_calibration_logic();配置了角度环设置和回缓冲位置,这里就不设置了。
+                */
+            }
+
+            //日志记录校准位变化
+            static uint8_t last_calibration_progress = 0;
+            if (last_calibration_progress != Robot.Flag.Status.is_calibrated) {
+                LOG_INFO("Calibration Progress Updated: 0x%02X -> 0x%02X", last_calibration_progress, Robot.Flag.Status.is_calibrated);
+                last_calibration_progress = Robot.Flag.Status.is_calibrated;
             }
 
             //检查限位开关并处理校准逻辑
             Launcher.check_calibration_logic();
-            //更新全局校准标志位
-            Robot.Flag.Status.is_calibrated=Yawer.is_Yaw_Init()&&Launcher.is_calibrated();
-            /*todo
-            song
-            考虑优化成掩码模式，方便debug查看校准状态
-            或者干脆删掉。
-            */
+            
             //全部校准完毕后，切换到待机状态
-            if (Robot.Flag.Status.is_calibrated) {
-                Robot.Status.current_state = SYS_CALIBRATED;
+            if (Robot.Flag.Status.is_calibrated==MASK_ALL_CALIBRATED) {
+                Robot.Status.current_state = SYS_READY;
             }
             break;
         //校准完毕时，总有一个限位开关被触发，防止误触发限位开关进入error状态
         //因此加一个校准完毕后给角度环到安全位置的状态停留，直到都到达指定位置后再进入待机状态
-        case SYS_CALIBRATED:
+        case SYS_READY:
         {
             if(Launcher.is_deliver_at_target(5)&&Launcher.is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f))
             {
-                Robot.Status.current_state = SYS_STANDBY;
+                Robot.Status.current_state = SYS_AUTOFIRE_SUSPEND;
+                LOG_INFO("System Reseted after calibration");
             }
 
         }
             break;
 
-        case SYS_STANDBY:
+        case SYS_AUTOFIRE_SUSPEND:
             // --- 待机（发射暂停）状态 ---
             // 发射指令检测
             if (Robot.Cmd.autofire_enable&& !Robot.Flag.Status.stop_continus_fire) {
                 Robot.Status.current_state = SYS_AUTO_PREP;
+                LOG_INFO("Auto Fire Enabled");
             }
             if(Launcher.mode_deliver[0]==MODE_SPEED||Launcher.mode_deliver[1]==MODE_SPEED){
                 #if 0
@@ -293,34 +403,39 @@ void LaunchCtrl(void *arg)
             
         case SYS_AUTO_PREP:
             // --- 自动发射准备 ---
-            //Launcher.target_igniter_angle=POS_IGNITER;  // 默认发射力度
-            
+            #if 0
+            Launcher.target_igniter_angle=POS_IGNITER;  // 默认发射力度
+            #else
+            Launcher.target_igniter_angle=Launcher.IgniterMotor.getMotorTotalAngle();
+			#endif
             // 检查是否到位
             if (Launcher.is_igniter_at_target(5)) 
             {  
                 Robot.Status.current_state = SYS_AUTO_FIRE;
+                LOG_INFO("default Igniter ready");
             }
-            
-            //s1不为下时，会重置到待机模式
-            if (!Robot.Cmd.autofire_enable) Robot.Status.current_state = SYS_STANDBY;
             break;
             
         case SYS_AUTO_FIRE:
             Launcher.Run_Firing_Sequence();
             //S1不为下时，会重置到待机模式 (Run_Firing_Sequence 内部也会处理打断复位)
-            if (!Robot.Cmd.autofire_enable) Robot.Status.current_state = SYS_STANDBY;
+            if (!Robot.Cmd.autofire_enable){
+                Robot.Status.current_state = SYS_AUTOFIRE_SUSPEND;
+                LOG_WARN("Auto Fire Aborted");
+            }
+            
             break;
         }
 
         //yaw轴子状态机,包含状态如下
         /*
-            manual_aim:手动瞄准
-            vision_aim:视觉瞄准
-            correct_aim调参板瞄准
-            disable_motor:失能电机
+            YAW_MANUAL_AIM:手动瞄准
+            YAW_VISION_AIM:视觉瞄准
+            YAW_CORRECT_AIM调参板瞄准
+            YAW_DISABLE_MOTOR:失能电机
             yaw_calibrating:校准模式
         */
-        Yawer.yaw_state_machine(Robot.Status.yaw_control_state, DR16_Snap.RX_Norm, DR16_Snap.RY_Norm);
+        Yawer.yaw_state_machine(&Robot.Status.yaw_control_state, DR16_Snap.RX_Norm, DR16_Snap.RY_Norm);
 
 		//计算 PID
         /*
@@ -331,8 +446,8 @@ void LaunchCtrl(void *arg)
 		Launcher.adjust();
 		Yawer.adjust();
 			
-        if (Robot.Status.current_state != SYS_OFFLINE && 
-            Robot.Status.current_state != SYS_CHECKING&&
+        if (Robot.Status.current_state != SYS_DISCONNECTED && 
+            Robot.Status.current_state != SYS_MANUAL_TEST_KEY&&
             Robot.Cmd.sys_enable
         ) 
         {
@@ -348,6 +463,8 @@ void LaunchCtrl(void *arg)
             //舵机测试放在这里，这样只需要失能就可以测试舵机
             if (Debugger.enable_debug_mode==1) {
 				Launcher.key_check();
+				Robot.Flag.Check.limit_sw_ok = (Launcher.check_progress == MASK_ALL_PASSED);
+
             }
             else if(Debugger.enable_debug_mode==2){
                 Launcher.servo_pwm_test_unlock_down();
@@ -355,6 +472,17 @@ void LaunchCtrl(void *arg)
             else if(Debugger.enable_debug_mode==3){
                 Launcher.servo_pwm_test_lock_up();
             }
+        }
+        // 记录主状态切换
+        static System_State_e last_state = SYS_DISCONNECTED;
+        if (Robot.Status.current_state != last_state) 
+        {
+            #if enum_X_Macros_disable
+            LOG_INFO("System State Change: %d -> %d", last_state, Robot.Status.current_state);
+            #else
+            LOG_INFO("System State Change: %s -> %s", System_State_To_Str(last_state), System_State_To_Str(Robot.Status.current_state));
+            #endif
+            last_state = Robot.Status.current_state;
         }
         
         MotorMsgPack(Tx_Buff1, Yawer.YawMotor);
