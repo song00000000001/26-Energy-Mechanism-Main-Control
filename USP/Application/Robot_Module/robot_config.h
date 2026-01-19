@@ -31,9 +31,9 @@ extern "C" {
 #define IGNITER_OFFSET_POS   3   // igniter复位位置
 
 #define POS_BUFFER -20          //缓冲区位置
-#define POS_WAITLOAD -300       //等待装填位置
-#define POS_IGNITER 90         //默认力度,igniter位置
 #define POS_BOTTOM -645         //拉栓位置
+
+#define POS_IGNITER 90         //默认力度,igniter位置
 
 //igniter最小/大位置
 #define IGNITER_MIN_POS 2.0f

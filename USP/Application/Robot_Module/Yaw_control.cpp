@@ -219,6 +219,26 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e *yaw_s
         //进行校准，校准完成后，自动改变校准标志
         calibration();
         mode_YAW = MODE_SPEED; //校准过程中采用速度模式
+        //日志记录校准状态
+        static uint8_t last_yaw_calib_flag = 0;
+        if (last_yaw_calib_flag != Yaw_Init_flag) {
+            LOG_INFO("Yaw Calibration State Change: %d -> %d", last_yaw_calib_flag, Yaw_Init_flag);
+            switch (Yaw_Init_flag)
+            {
+            case 0:
+                LOG_INFO("Yaw Calibration: Moving to Left Limit");
+                break;
+            case 1:
+                LOG_INFO("Yaw Calibration: Left Limit Reached, Moving to Right Limit");
+                break;
+            case 2:
+                LOG_INFO("Yaw Calibration: Right Limit Reached, Calibration Complete");
+                break;
+            default:
+                break;
+            }
+            last_yaw_calib_flag = Yaw_Init_flag;
+        }
         break;
     case YAW_DISABLE_MOTOR:
     default:

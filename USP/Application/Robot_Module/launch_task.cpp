@@ -65,6 +65,8 @@ void LaunchCtrl(void *arg)
         .enable_debug_mode=0,//用于debug中进入debug状态
         .debug_mode_deliver={MODE_SPEED,MODE_SPEED},
         .debug_mode_igniter=MODE_SPEED ,
+        .debug_loader_pos=POS_BOTTOM,
+        .debug_fire_type=0 //调整发射类型，0为连发一二三四，1为单发第一发，2为单发第二发，3为单发第三发。  
     };
     #if CONSERVATIVE_TEST_PARAMS
     //校准速度初始化
@@ -176,6 +178,31 @@ void LaunchCtrl(void *arg)
             LOG_INFO("DR16 Switch Updated: S1=%s -> %s", 
                 Get_SW_Str(last_S1), Get_SW_Str(DR16_Snap.S1));
             last_S1 = DR16_Snap.S1;
+            /*
+            日志增加手动触发失能和暂停时，记录各电机的运动位置，用于判断当时是否出现电机角度脱离软件限位的情况（即撞了限位开关。）以及卡死时电机位置。
+            还要记录限位开关状态，辅助确认是否撞击。
+            */
+            if(DR16_Snap.S1==SW_UP){
+                LOG_ERROR("System Disabled by User!");
+                LOG_ERROR("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
+                    Yawer.YawMotor.getMotorAngle(), 
+                    Launcher.DeliverMotor[0].getMotorAngle(), 
+                    Launcher.DeliverMotor[1].getMotorAngle(),
+                     Launcher.IgniterMotor.getMotorAngle());
+                LOG_ERROR("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
+                    SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
+            }
+            else if(DR16_Snap.S1==SW_MID){
+                LOG_WARN("Autofire Paused by User!");
+                LOG_WARN("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
+                    Yawer.YawMotor.getMotorAngle(), 
+                    Launcher.DeliverMotor[0].getMotorAngle(), 
+                    Launcher.DeliverMotor[1].getMotorAngle(),
+                     Launcher.IgniterMotor.getMotorAngle());
+                LOG_WARN("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
+                    SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
+            }
+
         }
         if (last_S2 != DR16_Snap.S2) {
             LOG_INFO("DR16 Switch Updated: S2=%s -> %s", 
@@ -252,21 +279,45 @@ void LaunchCtrl(void *arg)
             if (Robot.Flag.Check.limit_sw_ok) {
                 //自检完后,如果没有任何一个限位开关被按下时,才等于1。
                 bool key_released_temp=!(SW_YAW_L_OFF||SW_YAW_R_OFF||SW_DELIVER_L_OFF||SW_DELIVER_R_OFF||SW_IGNITER_OFF);
-                if(key_released_temp){
-                    Robot.Status.current_state = SYS_START_UP;
-                    Launcher.calibration_start_time=main_task_now; //记录校准开始时间
+                if(key_released_temp&&Robot.Cmd.sys_enable){
+                    //上面的条件加入了系统使能判断,一是防止手动按键后突然就开始校准伤人，二是防止限位开关延时导致校准失准。
+                    LOG_INFO("Manual Test Key Passed, Starting Homing Sequence.");
+                    Launcher.servo_pwm_test_lock_up();
+                    Launcher.start_calibration();//注意,这里启动了校准过程,会配置电机为速度环,直到撞到限位开关
+                    Robot.Status.current_state=SYS_HOMING;
                 }
             }
+
+            // 日志记录手动检查进度
+            static uint8_t last_check_progress = 0;
+            if (last_check_progress != Launcher.check_progress) {    
+                // 打印进度变化，显示后5位二进制状态
+                LOG_INFO("Check Progress Updated: [" BIN5_FMT "] -> [" BIN5_FMT "]", 
+                        BIN5_VAL(last_check_progress), BIN5_VAL(Launcher.check_progress));
+
+                // 根据掩码位判断当前是哪个开关被触发（利用刚才更新的那一位）
+                uint8_t triggered_bit = Launcher.check_progress ^ last_check_progress;
+                if (triggered_bit & MASK_DELIVER_L) {
+                    LOG_INFO("Switch Deliver L Checked! Current: [" BIN5_FMT "]", BIN5_VAL(Launcher.check_progress));   
+                }
+                if (triggered_bit & MASK_DELIVER_R) {
+                    LOG_INFO("Switch Deliver R Checked! Current: [" BIN5_FMT "]", BIN5_VAL(Launcher.check_progress));
+                }
+                if (triggered_bit & MASK_IGNITER) {
+                    LOG_INFO("Switch Igniter Checked! Current: [" BIN5_FMT "]", BIN5_VAL(Launcher.check_progress));
+                }
+                if (triggered_bit & MASK_YAW_L) {
+                    LOG_INFO("Switch Yaw L Checked! Current: [" BIN5_FMT "]", BIN5_VAL(Launcher.check_progress));
+                }
+                if (triggered_bit & MASK_YAW_R) {
+                    LOG_INFO("Switch Yaw R Checked! Current: [" BIN5_FMT "]", BIN5_VAL(Launcher.check_progress));
+                }  
+
+                last_check_progress = Launcher.check_progress;
+            }
+
         }
         break;
-        case SYS_START_UP:
-            if(main_task_now-Launcher.calibration_start_time>500){
-                //注意,这里启动了校准过程,会配置电机为速度环,直到撞到限位开关
-				Launcher.servo_pwm_test_lock_up();
-                Launcher.start_calibration();
-                Robot.Status.current_state=SYS_HOMING;
-            }
-            break;
         
         case SYS_HOMING:
             Robot.Status.yaw_control_state = YAW_CALIBRATING;
