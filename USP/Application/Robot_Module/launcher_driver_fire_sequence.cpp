@@ -2,10 +2,33 @@
 #include "robot_config.h"
 #include "global_data.h"
 
-static uint16_t before_fire_delay=300,put_delay=300,after_fire_delay=1000,relapse_delay=100,loader_up_delay=700;
-
-#define down_and_fire_test 1
   
+#if CONSERVATIVE_TEST_PARAMS
+static uint16_t before_fire_delay=1000,put_delay=1000,after_fire_delay=1000,relapse_delay=200,loader_up_delay=1000;
+#else
+static uint16_t before_fire_delay=500,put_delay=300,after_fire_delay=500,relapse_delay=100,loader_up_delay=700;
+#endif
+
+/*debug中的参数debug_fire_type可以实时调整发射类型：
+1为单发第一发，
+2为单发第二发，
+3为单发第三发，
+0或其他为连发一二三四。
+注意，默认设置在launcher_task中设置，目前是0。
+*/
+
+/*
+//todo: 
+song
+视觉瞄准到位触发
+Robot.Cmd.fire_command=true;
+if (Robot.Cmd.fire_command&&is_deliver_at_target(5)) {
+    fire_state = FIRE_PULL_LOAD;
+}
+但是往年经验是不需要等视觉。
+*/
+
+
 /*发射状态机*/
 void Launcher_Driver::Run_Firing_Sequence()
 {
@@ -28,12 +51,20 @@ void Launcher_Driver::Run_Firing_Sequence()
 		case FIRE_IGNITER_DELAY:
 			if ((current_time - state_timer) > before_fire_delay) {
                 state_timer = current_time;
-                #if down_and_fire_test
-                fire_state = FIRE_CALIBRATION_2;
-                #else
-                fire_state = FIRE_CALIBRATION_1;
-                #endif
-                start_deliver_calibration();
+                if(Debugger.debug_fire_type==2)
+                {
+                    fire_state = FIRE_CALIBRATION_2;
+                    start_deliver_calibration();
+                }
+                else if(Debugger.debug_fire_type==3)
+                {
+                    fire_state = FIRE_RELOAD_LIFT_3;
+                }
+                else
+                {
+                    fire_state = FIRE_CALIBRATION_1;
+                    start_deliver_calibration();
+                }
             }
 			break;
 
@@ -89,7 +120,7 @@ void Launcher_Driver::Run_Firing_Sequence()
                 几乎不会出现触发了log但是瞬间单片机暂停打断的情况。
                 放在这里可以实现只触发一次的效果，避免发射状态延时期间重复打印日志。
                 */
-                LOG_INFO("Dart1 Fired! Total Count: %d", Robot.Status.dart_count + 1);
+                LOG_WARN("Dart1 Fired! Total Count: %d", Robot.Status.dart_count + 1);
             }
             break;    
 
@@ -102,8 +133,17 @@ void Launcher_Driver::Run_Firing_Sequence()
                 state_timer= current_time;
                 Robot.Status.dart_count++; // 计数+1
                 servo_igniter_lock;
-                fire_state = FIRE_CALIBRATION_2;
-                start_deliver_calibration();
+                if(Debugger.debug_fire_type==1)
+                {
+                    fire_state = FIRE_IDLE;
+                    Robot.Flag.Status.stop_continus_fire=true;
+                    Robot.Status.current_state = SYS_AUTOFIRE_SUSPEND;
+                }
+                else
+                {
+                    fire_state = FIRE_CALIBRATION_2;
+                    start_deliver_calibration();
+                }
             }
             break;
 
@@ -175,7 +215,7 @@ void Launcher_Driver::Run_Firing_Sequence()
             if ((current_time - state_timer) >1) {
                 state_timer = current_time;
                 fire_state = FIRE_SHOOTING_2;
-                LOG_INFO("Dart2 Fired! Total Count: %d", Robot.Status.dart_count + 1);
+                LOG_WARN("Dart2 Fired! Total Count: %d", Robot.Status.dart_count + 1);
             }
             break;
 
@@ -195,13 +235,16 @@ void Launcher_Driver::Run_Firing_Sequence()
             loader_target_mode=LOAD_STOWED;
             if ((current_time - state_timer) >loader_up_delay) {
                 state_timer = current_time;
-                #if down_and_fire_test
-                fire_state = FIRE_IDLE;
-                Robot.Flag.Status.stop_continus_fire=true;
-                Robot.Status.current_state = SYS_AUTOFIRE_SUSPEND;
-                #else
-                fire_state = FIRE_RELOAD_RELEASE_3;
-                #endif
+                if(Debugger.debug_fire_type==2)
+                {
+                    fire_state = FIRE_IDLE;
+                    Robot.Flag.Status.stop_continus_fire=true;
+                    Robot.Status.current_state = SYS_AUTOFIRE_SUSPEND;
+                }
+                else
+                {
+                    fire_state = FIRE_RELOAD_RELEASE_3;
+                }
             }
             break;
 
@@ -255,6 +298,7 @@ void Launcher_Driver::Run_Firing_Sequence()
             break;
 
         // 缓冲区等待
+        // 升降机下降，装填下一发
         case FIRE_WAIT_UP_3:
             if ((current_time - state_timer) > before_fire_delay) {
                 state_timer = current_time;
@@ -265,12 +309,11 @@ void Launcher_Driver::Run_Firing_Sequence()
         song
         这里可以和上面的缓冲区等待合并
         */
-        // 升降机下降，装填下一发
         case FIRE_RELOAD_LOWER_3:
             if ((current_time - state_timer) >1) {
                 state_timer = current_time;
                 fire_state = FIRE_SHOOTING_3;
-                LOG_INFO("Dart3 Fired! Total Count: %d", Robot.Status.dart_count + 1);
+                LOG_WARN("Dart3 Fired! Total Count: %d", Robot.Status.dart_count + 1);
             }
             break;
         
@@ -281,7 +324,16 @@ void Launcher_Driver::Run_Firing_Sequence()
                 Robot.Status.dart_count++; // 计数+1
                 servo_igniter_lock;
                 state_timer= current_time;
-                fire_state = FIRE_RELOAD_LIFT_4;
+                if(Debugger.debug_fire_type==3)
+                {
+                    fire_state = FIRE_IDLE;
+                    Robot.Flag.Status.stop_continus_fire=true;
+                    Robot.Status.current_state = SYS_AUTOFIRE_SUSPEND;
+                }
+                else
+                {
+                    fire_state = FIRE_RELOAD_LIFT_4;
+                }
             }
             break;
 
@@ -359,7 +411,7 @@ void Launcher_Driver::Run_Firing_Sequence()
             if ((current_time - state_timer) >1) {
                 state_timer = current_time;
                 fire_state = FIRE_SHOOTING_4;
-                LOG_INFO("Dart4 Fired! Total Count: %d", Robot.Status.dart_count + 1);
+                LOG_WARN("Dart4 Fired! Total Count: %d", Robot.Status.dart_count + 1);
             }
             break;
 
@@ -388,9 +440,9 @@ void Launcher_Driver::Run_Firing_Sequence()
     if (fire_state != last_fire_state) 
     {
         #if enum_X_Macros_disable
-        LOG_INFO("Fire State Change: %d -> %d", last_fire_state,fire_state);
+        LOG_WARN("Fire State Change: %d -> %d", last_fire_state,fire_state);
         #else
-        LOG_INFO("Fire State Change: %s -> %s", Fire_State_To_Str(last_fire_state), Fire_State_To_Str(fire_state));
+        LOG_WARN("Fire State Change: %s -> %s", Fire_State_To_Str(last_fire_state), Fire_State_To_Str(fire_state));
         #endif
         last_fire_state = fire_state;
     }

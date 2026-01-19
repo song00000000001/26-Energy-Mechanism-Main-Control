@@ -5,7 +5,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	
+
+//保守测试参数切换宏
+#define CONSERVATIVE_TEST_PARAMS 1
+
 /* ================= 电机 ID 定义 ================= */
 #define ID_YAW                        2     // 云台偏航,can2
 #define ID_DELIVER_L                  1     // 左同步轮,can1
@@ -28,9 +31,9 @@ extern "C" {
 #define IGNITER_OFFSET_POS   3   // igniter复位位置
 
 #define POS_BUFFER -20          //缓冲区位置
-#define POS_WAITLOAD -300       //等待装填位置
-#define POS_IGNITER 10         //默认力度,igniter位置
 #define POS_BOTTOM -645         //拉栓位置
+
+#define POS_IGNITER 90         //默认力度,igniter位置
 
 //igniter最小/大位置
 #define IGNITER_MIN_POS 2.0f
