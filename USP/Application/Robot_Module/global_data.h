@@ -127,6 +127,7 @@ typedef struct {
         bool stop_continus_fire;    // 停止连发标志位
         bool tool_panel_connected; //调参板连接状态
         bool vision_connected; //视觉连接状态
+        bool emergency_override; //紧急预案,当发射暂停时,LY手动接管滑块电机角度环位置控制。
     } Status;
 } Robot_Monitor_t;
 
@@ -153,7 +154,7 @@ typedef struct {
     //电机状态
     Control_Mode_e debug_mode_deliver[2]; // 左右滑块的独立模式
     Control_Mode_e debug_mode_igniter;    // 丝杆模式
-    int16_t debug_loader_pos; //调试滑块位置
+    float debug_loader_pos; //调试滑块位置
     uint8_t debug_fire_type; //调整发射类型，0为连发一二三四，1为单发第一发，2为单发第二发，3为单发第三发。
 
     bool is_loader_simulating;    // 模拟标志位

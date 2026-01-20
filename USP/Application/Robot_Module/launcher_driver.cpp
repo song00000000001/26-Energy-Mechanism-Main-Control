@@ -353,3 +353,8 @@ void Launcher_Driver::servo_loader12_down_f(){
     servo_loader_down1;// 装填舵机1下降
     servo_loader_down2;// 装填舵机2下降
 }
+
+void Launcher_Driver::emergency_override_control(float target_angle){
+    target_deliver_angle+=target_angle * 0.02f;
+    target_deliver_angle=std_lib::constrain(target_deliver_angle,POS_BOTTOM,POS_DELIVER_MAX);
+}

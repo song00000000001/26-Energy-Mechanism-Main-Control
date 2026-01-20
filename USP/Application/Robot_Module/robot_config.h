@@ -27,13 +27,13 @@ extern "C" {
 
 /* 常量定义 */
 
-#define DELIVER_OFFSET_POS   -5  // deliver碰到开关后设置的初始坐标
-#define IGNITER_OFFSET_POS   3   // igniter复位位置
+#define DELIVER_OFFSET_POS   -5.0f  // deliver碰到开关后设置的初始坐标
+#define IGNITER_OFFSET_POS   3.0f   // igniter复位位置
 
-#define POS_BUFFER -20          //缓冲区位置
-#define POS_BOTTOM -650         //拉栓位置
+#define POS_BUFFER -20.0f          //缓冲区位置
+#define POS_BOTTOM -650.0f         //拉栓位置
 
-#define POS_IGNITER 90         //默认力度,igniter位置
+#define POS_IGNITER 90.0f         //默认力度,igniter位置
 
 //igniter最小/大位置
 #define IGNITER_MIN_POS 2.0f

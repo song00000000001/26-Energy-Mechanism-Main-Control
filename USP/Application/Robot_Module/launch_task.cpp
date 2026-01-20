@@ -162,60 +162,6 @@ void LaunchCtrl(void *arg)
             xSemaphoreGive(DR16_mutex);
         }
 
-        // 记录遥控器指令变化
-        /*todo
-        song
-        可能会影响性能,需要测试。
-        也可以只在状态变化时打印。
-        */
-		#if 0	
-        static DR16_Snapshot_t last_DR16_Snap = DR16_Snap;
-        if(memcmp(&last_DR16_Snap, &DR16_Snap, sizeof(DR16_Snapshot_t)) != 0) {
-            LOG_INFO("DR16 Updated: S1=%d, S2=%d, LX=%.2f, LY=%.2f, RX=%.2f, RY=%.2f", 
-                DR16_Snap.S1, DR16_Snap.S2, DR16_Snap.LX_Norm, DR16_Snap.LY_Norm, DR16_Snap.RX_Norm, DR16_Snap.RY_Norm);
-            memcpy(&last_DR16_Snap, &DR16_Snap, sizeof(DR16_Snapshot_t));
-        }
-		#else
-        //由于上面打印信息太多,改为只打印开关变化
-		static uint8_t last_S1 = DR16_Snap.S1;
-        static uint8_t last_S2 = DR16_Snap.S2;
-        if (last_S1 != DR16_Snap.S1) {
-            LOG_INFO("DR16 Switch Updated: S1=%s -> %s", 
-                Get_SW_Str(last_S1), Get_SW_Str(DR16_Snap.S1));
-            last_S1 = DR16_Snap.S1;
-            /*
-            日志增加手动触发失能和暂停时，记录各电机的运动位置，用于判断当时是否出现电机角度脱离软件限位的情况（即撞了限位开关。）以及卡死时电机位置。
-            还要记录限位开关状态，辅助确认是否撞击。
-            */
-            if(DR16_Snap.S1==SW_UP){
-                LOG_ERROR("System Disabled by User!");
-                LOG_ERROR("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
-                    Yawer.YawMotor.getMotorAngle(), 
-                    Launcher.DeliverMotor[0].getMotorAngle(), 
-                    Launcher.DeliverMotor[1].getMotorAngle(),
-                     Launcher.IgniterMotor.getMotorAngle());
-                LOG_ERROR("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
-                    SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
-            }
-            else if(DR16_Snap.S1==SW_MID){
-                LOG_WARN("Autofire Paused by User!");
-                LOG_WARN("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
-                    Yawer.YawMotor.getMotorAngle(), 
-                    Launcher.DeliverMotor[0].getMotorAngle(), 
-                    Launcher.DeliverMotor[1].getMotorAngle(),
-                     Launcher.IgniterMotor.getMotorAngle());
-                LOG_WARN("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
-                    SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
-            }
-
-        }
-        if (last_S2 != DR16_Snap.S2) {
-            LOG_INFO("DR16 Switch Updated: S2=%s -> %s", 
-                Get_SW_Str(last_S2), Get_SW_Str(DR16_Snap.S2));
-            last_S2 = DR16_Snap.S2;
-        }
-		#endif
-
         // 处理遥控器连接状态及模式切换
         if (DR16_Snap.Status != DR16_ESTABLISHED) {
             Robot.Flag.Status.rc_connected = false;
@@ -246,13 +192,14 @@ void LaunchCtrl(void *arg)
             //为了防止抢占校准状态,增加校准状态判断
             if(Robot.Status.current_state!=SYS_HOMING&&Yawer.is_Yaw_Init()){
                 if(DR16_Snap.S2==SW_UP){
-                    
+                    Robot.Status.yaw_control_state=YAW_MANUAL_AIM;
                 }
                 else if(DR16_Snap.S2==SW_MID){
                     
                 }
                 else{
-                    Robot.Status.yaw_control_state=YAW_MANUAL_AIM;
+                    //激活紧急预案
+                    Robot.Flag.Status.emergency_override=true;
                 }
             }
     
@@ -404,6 +351,34 @@ void LaunchCtrl(void *arg)
             }
 			//else
                 //Launcher.target_deliver_angle=(POS_BUFFER);
+            // 紧急预案,当发射暂停时,LY手动接管滑块电机角度环位置控制。
+            if(DR16_Snap.S2==SW_DOWN){
+                Robot.Flag.Status.emergency_override=true;
+            }
+            else{
+                Robot.Flag.Status.emergency_override=false;
+            }
+            if(Robot.Flag.Status.emergency_override){
+                Launcher.emergency_override_control(DR16_Snap.RY_Norm);
+            }
+            //日志记录紧急预案状态变化
+            static bool last_emergency_override = false;
+            if (last_emergency_override != Robot.Flag.Status.emergency_override) {
+                LOG_INFO("Emergency Override State Changed: %s -> %s", 
+                    last_emergency_override ? "ENABLED" : "DISABLED",
+                    Robot.Flag.Status.emergency_override ? "ENABLED" : "DISABLED");
+                last_emergency_override = Robot.Flag.Status.emergency_override;
+                if(Robot.Flag.Status.emergency_override){
+                    LOG_WARN("Emergency Override Activated: Manual Control of Deliver Motor Engaged.");
+                    Launcher.target_deliver_angle=Launcher.DeliverMotor[0].getMotorTotalAngle(); //激活时保持当前位置
+                    //锁止扳机
+                    Launcher.servo_igniter_lock_f();
+                    //Launcher.target_deliver_angle=POS_BOTTOM; //激活时立即把滑块拉下去。但如果反应速度和遥控控制速度足够快，也可以不加，免得增加变量。
+                }
+                else{
+                    LOG_WARN("Emergency Override Deactivated: Returning to Automatic Control of Deliver Motor.");
+                }
+            }
             break;
             
         case SYS_AUTO_PREP:
@@ -489,6 +464,48 @@ void LaunchCtrl(void *arg)
             #endif
             last_state = Robot.Status.current_state;
         }
+
+        
+        // 记录遥控器指令变化
+        //只打印拨杆开关变化
+		static uint8_t last_S1 = DR16_Snap.S1;
+        static uint8_t last_S2 = DR16_Snap.S2;
+        if (last_S1 != DR16_Snap.S1) {
+            LOG_INFO("DR16 Switch Updated: S1=%s -> %s", 
+                Get_SW_Str(last_S1), Get_SW_Str(DR16_Snap.S1));
+            last_S1 = DR16_Snap.S1;
+            /*
+            日志增加手动触发失能和暂停时，记录各电机的运动位置，用于判断当时是否出现电机角度脱离软件限位的情况（即撞了限位开关。）以及卡死时电机位置。
+            还要记录限位开关状态，辅助确认是否撞击。
+            */
+            if(DR16_Snap.S1==SW_UP){
+                LOG_ERROR("System Disabled by User!");
+                LOG_ERROR("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
+                    Yawer.YawMotor.getMotorAngle(), 
+                    Launcher.DeliverMotor[0].getMotorAngle(), 
+                    Launcher.DeliverMotor[1].getMotorAngle(),
+                     Launcher.IgniterMotor.getMotorAngle());
+                LOG_ERROR("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
+                    SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
+            }
+            else if(DR16_Snap.S1==SW_MID){
+                LOG_WARN("Autofire Paused by User!");
+                LOG_WARN("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
+                    Yawer.YawMotor.getMotorAngle(), 
+                    Launcher.DeliverMotor[0].getMotorAngle(), 
+                    Launcher.DeliverMotor[1].getMotorAngle(),
+                     Launcher.IgniterMotor.getMotorAngle());
+                LOG_WARN("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
+                    SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
+            }
+
+        }
+        if (last_S2 != DR16_Snap.S2) {
+            LOG_INFO("DR16 Switch Updated: S2=%s -> %s", 
+                Get_SW_Str(last_S2), Get_SW_Str(DR16_Snap.S2));
+            last_S2 = DR16_Snap.S2;
+        }
+
 
         MotorMsgPack(Tx_Buff1, Yawer.YawMotor);
         xQueueSend(CAN2_TxPort, &Tx_Buff1.Id1ff, 0);
