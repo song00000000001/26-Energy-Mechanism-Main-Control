@@ -61,10 +61,10 @@ void Launcher_Driver::adjust()
         if(mode_deliver[i]==MODE_ANGLE){
             // 串级PID: 位置环 -> 速度环
             float target_with_sync = target_deliver_angle + sync_comp[i];
-            target_with_sync=std_lib::constrain(target_with_sync,POS_DELIVER_MIN,POS_DELIVER_MAX);
+            //target_with_sync=std_lib::constrain(target_with_sync,POS_DELIVER_MIN,POS_DELIVER_MAX);
             pid_deliver_pos[i].Target = target_with_sync;
             //这里加入限幅保护
-            pid_deliver_pos[i].Target=std_lib::constrain(pid_deliver_pos[i].Target,POS_DELIVER_MIN,POS_DELIVER_MAX);
+            //pid_deliver_pos[i].Target=std_lib::constrain(pid_deliver_pos[i].Target,POS_DELIVER_MIN,POS_DELIVER_MAX);
             pid_deliver_pos[i].Current = DeliverMotor[i].getMotorTotalAngle();
             pid_deliver_pos[i].Adjust();
             //速度环的输入为角度环输出
@@ -83,6 +83,7 @@ void Launcher_Driver::adjust()
             pid_deliver_pos[i].clean_intergral();
         }
     }
+
     if(mode_igniter==MODE_ANGLE){
         // 串级PID: 位置环 -> 速度环
         target_igniter_angle=std_lib::constrain(target_igniter_angle,IGNITER_MIN_POS,IGNITER_MAX_POS);
@@ -355,6 +356,6 @@ void Launcher_Driver::servo_loader12_down_f(){
 }
 
 void Launcher_Driver::emergency_override_control(float target_angle){
-    target_deliver_angle+=target_angle * 0.02f;
+    target_deliver_angle+=target_angle * 0.1f;
     target_deliver_angle=std_lib::constrain(target_deliver_angle,POS_BOTTOM,POS_DELIVER_MAX);
 }

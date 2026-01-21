@@ -163,6 +163,8 @@ typedef struct {
     float dual_loader_mechanical_error_correction; //双滑块机械装配误差校准修正
 	float deliver_sync_threshold; //滑块同步误差阈值
     bool initial_calibration_flag; //初始化校准标志位，用于跳过遥控失联校准流程。
+
+    float emegency_deliver_ctrl_speed;
 } Debug_Data_t;
 
 // 校准速度结构体

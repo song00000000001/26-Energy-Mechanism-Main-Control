@@ -29,7 +29,7 @@ extern "C" {
 
 #define DELIVER_OFFSET_POS   -5.0f  // deliver碰到开关后设置的初始坐标
 #define IGNITER_OFFSET_POS   3.0f   // igniter复位位置
-
+														                                        
 #define POS_BUFFER -20.0f          //缓冲区位置
 #define POS_BOTTOM -650.0f         //拉栓位置
 
@@ -39,7 +39,7 @@ extern "C" {
 #define IGNITER_MIN_POS 2.0f
 #define IGNITER_MAX_POS 200.0f
 //deliver最小/大位置
-#define POS_DELIVER_MIN -655.0f
+#define POS_DELIVER_MIN -650.0f
 #define POS_DELIVER_MAX -5.0f
 
 //以下用到了c语言函数,需要加extern "C"修饰
