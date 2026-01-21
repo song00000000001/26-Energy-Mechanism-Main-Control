@@ -61,30 +61,19 @@ void Launcher_Driver::adjust()
     for (int i = 0; i < 2; i++) {
         //按需执行角度环
         if(mode_deliver[i]==MODE_ANGLE){
-            #if 0
-            // 串级PID: 位置环 -> 速度环
-            float target_with_sync = target_deliver_angle + sync_comp[i];
-            //target_with_sync=std_lib::constrain(target_with_sync,POS_DELIVER_MIN,POS_DELIVER_MAX);
-            pid_deliver_pos[i].Target = target_with_sync;
-            //这里加入限幅保护
-            //pid_deliver_pos[i].Target=std_lib::constrain(pid_deliver_pos[i].Target,POS_DELIVER_MIN,POS_DELIVER_MAX);
-            pid_deliver_pos[i].Current = DeliverMotor[i].getMotorTotalAngle();
-            pid_deliver_pos[i].Adjust();
-            //速度环的输入为角度环输出
-            pid_deliver_spd[i].Target = pid_deliver_pos[i].Out;
-            //速度环
-            pid_deliver_spd[i].Current = DeliverMotor[i].getMotorSpeed();
-            pid_deliver_spd[i].Adjust();
-            #else
-            //修改同步pid,输出为速度环,防止位置环饱和
             pid_deliver_pos[i].Target=std_lib::constrain(target_deliver_angle,POS_DELIVER_MIN,POS_DELIVER_MAX);
             pid_deliver_pos[i].Current = DeliverMotor[i].getMotorTotalAngle();
             pid_deliver_pos[i].Adjust();
             //速度环的输入为角度环输出加同步补偿
-            //同步输出可能造成饱和,增加削峰处理
+            //同步输出可能造成饱和,增加峰值调整处理
+            //在for循环中，有一个输出触发限幅就会触发调整处理。
             if(fabs(pid_deliver_pos[i].Out + sync_comp[i])>8000)
                 deliver_speed_peek[i]=true;
             if(i==1){
+                //在左电机都完成pid计算后检查峰值标志位：
+                //好像找到bug了，这里的削峰实际只会减右边的，实际上应该减左边的，右边是慢的一方，而理论上应该检查两边的才对。
+                //因为目前左边的速度环在处理前就计算完了，不受到同步削峰处理影响。
+                //速度环计算应该放在i=1的这次运行同时设置0和1的情况才对。
                 if(deliver_speed_peek[0]||deliver_speed_peek[1]){
                     //有一个饱和则进行削峰
                     if(fabs(pid_deliver_pos[0].Out + sync_comp[0])>fabs(pid_deliver_pos[1].Out + sync_comp[1])){
@@ -102,12 +91,12 @@ void Launcher_Driver::adjust()
                     pid_deliver_spd[0].Target = pid_deliver_pos[0].Out + sync_comp[0];
                     pid_deliver_spd[1].Target = pid_deliver_pos[1].Out + sync_comp[1];
                 }
-                
+                //速度环
+                pid_deliver_spd[0].Current = DeliverMotor[0].getMotorSpeed();
+                pid_deliver_spd[1].Current = DeliverMotor[1].getMotorSpeed();
+                pid_deliver_spd[0].Adjust();
+                pid_deliver_spd[1].Adjust();
             }
-            //速度环
-            pid_deliver_spd[i].Current = DeliverMotor[i].getMotorSpeed();
-            pid_deliver_spd[i].Adjust();
-            #endif
         }
         else if(mode_deliver[i]==MODE_SPEED){
             pid_deliver_spd[i].Current = DeliverMotor[i].getMotorSpeed();
@@ -115,6 +104,10 @@ void Launcher_Driver::adjust()
         }
         else{
             DeliverMotor[i].setMotorCurrentOut(0);
+            pid_deliver_pos[i].Target=pid_deliver_pos[i].Current;
+            pid_deliver_pos[i].Out=0;
+            pid_deliver_spd[i].Target=0;
+            pid_deliver_spd[i].Out=0;
             pid_deliver_spd[i].clean_intergral();
             pid_deliver_pos[i].clean_intergral();
         }
@@ -140,6 +133,10 @@ void Launcher_Driver::adjust()
     }
     else{
         IgniterMotor.setMotorCurrentOut(0);
+        pid_igniter_pos.Target=pid_igniter_pos.Current;
+        pid_igniter_pos.Out=0;
+        pid_igniter_spd.Target=0;
+        pid_igniter_spd.Out=0;
         pid_igniter_pos.clean_intergral();
         pid_igniter_spd.clean_intergral();
     }
