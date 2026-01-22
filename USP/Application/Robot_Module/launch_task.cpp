@@ -70,9 +70,12 @@ void LaunchCtrl(void *arg)
         .is_loader_simulating=false,
         .simulated_loader_pos=-650.0f,
         .four_dart_four_params_enable=false,//四发四参功能启用标志位，默认禁用，调试中启用。
-        .dual_loader_mechanical_error_correction=3.0,//双滑块机械装配误差校准修正,目前靠0号,即发射方向左滑块减2.2mm(向下)解决。
-        .deliver_sync_threshold=0.5 //滑块同步误差阈值
+        .dual_loader_mechanical_error_correction=0.0,//双滑块机械装配误差校准修正,目前靠0号,即发射方向左滑块减2.2mm(向下)解决。
+        .deliver_sync_threshold=0.5, //滑块同步误差阈值
+        .initial_calibration_flag=false, //初始化校准标志位，用于跳过遥控失联校准流程。
+        .emegency_deliver_ctrl_speed=3
     };
+	
     #if CONSERVATIVE_TEST_PARAMS
     //校准速度初始化
     calibration_speed={
@@ -81,20 +84,22 @@ void LaunchCtrl(void *arg)
     .igniter_calibration_speed=-600
     };
     // PID 参数初始化
-    Launcher.pid_deliver_sync.SetPIDParam(-1.0f, 0.0f, 0.0f, 8000, 10000);
+    Launcher.pid_deliver_sync.SetPIDParam(-500.0f, 0.0f, 0.0f, 0, 8000);
     
+	//速度环输出限幅14000,curzuida最大7900,输出限幅改为16380,cur最大8200.
+    //电机极限速度-9257,给8000限幅裕度充足,给9000就基本跑在极限附近.
     for(int i=0; i<2; i++) {
-        Launcher.pid_deliver_spd[i].SetPIDParam(20.0f, 2.0f, 0.0f, 8000, 14000);
-        Launcher.pid_deliver_pos[i].SetPIDParam(800.f, 0.0, 0.0, 1000, 6000);
+        Launcher.pid_deliver_spd[i].SetPIDParam(10.0f, 1.0f, 0.0f, 2000, 16380);
+        Launcher.pid_deliver_pos[i].SetPIDParam(800.f, 0.0f, 0.0f, 1000, 8000);
     }
     
-    Launcher.pid_igniter_spd.SetPIDParam(15.0, 0.0, 0.0, 3000, 8000);
-    Launcher.pid_igniter_pos.SetPIDParam(3000.0, 0.0, 0.0, 3000, 4000);
+    Launcher.pid_igniter_spd.SetPIDParam(15.0f, 0.0f, 0.0f, 3000, 12000);
+    Launcher.pid_igniter_pos.SetPIDParam(3000.0f, 0.0f, 0.0f, 3000, 6000);
 
-    Yawer.PID_Yaw_Angle.SetPIDParam(15, 0, 0, 0, 200);
+    Yawer.PID_Yaw_Angle.SetPIDParam(35, 0, 0, 0, 300);
     Yawer.PID_Yaw_Angle.I_SeparThresh = 8;
     Yawer.PID_Yaw_Angle.DeadZone = 0.01f;
-    Yawer.PID_Yaw_Speed.SetPIDParam(20, 0, 0, 0, 12000);
+    Yawer.PID_Yaw_Speed.SetPIDParam(35, 0, 0, 0, 12000);
     #else
 	//校准速度初始化
     calibration_speed={
@@ -103,7 +108,7 @@ void LaunchCtrl(void *arg)
     .igniter_calibration_speed=-1200
     };
     // PID 参数初始化
-    Launcher.pid_deliver_sync.SetPIDParam(-0.8f, 0.0f, 0.0f, 8000, 16000);
+    Launcher.pid_deliver_sync.SetPIDParam(-0.5f, 0.0f, 0.0f, 8000, 16000);
     
     for(int i=0; i<2; i++) {
         Launcher.pid_deliver_spd[i].SetPIDParam(20.0f, 2.0f, 0.0f, 8000, 16384);
@@ -113,10 +118,10 @@ void LaunchCtrl(void *arg)
     Launcher.pid_igniter_spd.SetPIDParam(15.0, 0.0, 0.0, 3000, 12000);
     Launcher.pid_igniter_pos.SetPIDParam(3000.0, 0.0, 0.0, 3000, 6000);
 
-    Yawer.PID_Yaw_Angle.SetPIDParam(15, 0, 0, 0, 300);
+    Yawer.PID_Yaw_Angle.SetPIDParam(35, 0, 0, 0, 300);
     Yawer.PID_Yaw_Angle.I_SeparThresh = 8;
     Yawer.PID_Yaw_Angle.DeadZone = 0.01f;
-    Yawer.PID_Yaw_Speed.SetPIDParam(20, 0, 0, 0, 18000);
+    Yawer.PID_Yaw_Speed.SetPIDParam(35, 0, 0, 0, 12000);
 	#endif
     
     // 任务频率控制
@@ -162,60 +167,6 @@ void LaunchCtrl(void *arg)
             xSemaphoreGive(DR16_mutex);
         }
 
-        // 记录遥控器指令变化
-        /*todo
-        song
-        可能会影响性能,需要测试。
-        也可以只在状态变化时打印。
-        */
-		#if 0	
-        static DR16_Snapshot_t last_DR16_Snap = DR16_Snap;
-        if(memcmp(&last_DR16_Snap, &DR16_Snap, sizeof(DR16_Snapshot_t)) != 0) {
-            LOG_INFO("DR16 Updated: S1=%d, S2=%d, LX=%.2f, LY=%.2f, RX=%.2f, RY=%.2f", 
-                DR16_Snap.S1, DR16_Snap.S2, DR16_Snap.LX_Norm, DR16_Snap.LY_Norm, DR16_Snap.RX_Norm, DR16_Snap.RY_Norm);
-            memcpy(&last_DR16_Snap, &DR16_Snap, sizeof(DR16_Snapshot_t));
-        }
-		#else
-        //由于上面打印信息太多,改为只打印开关变化
-		static uint8_t last_S1 = DR16_Snap.S1;
-        static uint8_t last_S2 = DR16_Snap.S2;
-        if (last_S1 != DR16_Snap.S1) {
-            LOG_INFO("DR16 Switch Updated: S1=%s -> %s", 
-                Get_SW_Str(last_S1), Get_SW_Str(DR16_Snap.S1));
-            last_S1 = DR16_Snap.S1;
-            /*
-            日志增加手动触发失能和暂停时，记录各电机的运动位置，用于判断当时是否出现电机角度脱离软件限位的情况（即撞了限位开关。）以及卡死时电机位置。
-            还要记录限位开关状态，辅助确认是否撞击。
-            */
-            if(DR16_Snap.S1==SW_UP){
-                LOG_ERROR("System Disabled by User!");
-                LOG_ERROR("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
-                    Yawer.YawMotor.getMotorAngle(), 
-                    Launcher.DeliverMotor[0].getMotorAngle(), 
-                    Launcher.DeliverMotor[1].getMotorAngle(),
-                     Launcher.IgniterMotor.getMotorAngle());
-                LOG_ERROR("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
-                    SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
-            }
-            else if(DR16_Snap.S1==SW_MID){
-                LOG_WARN("Autofire Paused by User!");
-                LOG_WARN("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
-                    Yawer.YawMotor.getMotorAngle(), 
-                    Launcher.DeliverMotor[0].getMotorAngle(), 
-                    Launcher.DeliverMotor[1].getMotorAngle(),
-                     Launcher.IgniterMotor.getMotorAngle());
-                LOG_WARN("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
-                    SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
-            }
-
-        }
-        if (last_S2 != DR16_Snap.S2) {
-            LOG_INFO("DR16 Switch Updated: S2=%s -> %s", 
-                Get_SW_Str(last_S2), Get_SW_Str(DR16_Snap.S2));
-            last_S2 = DR16_Snap.S2;
-        }
-		#endif
-
         // 处理遥控器连接状态及模式切换
         if (DR16_Snap.Status != DR16_ESTABLISHED) {
             Robot.Flag.Status.rc_connected = false;
@@ -245,14 +196,12 @@ void LaunchCtrl(void *arg)
             //s2
             //为了防止抢占校准状态,增加校准状态判断
             if(Robot.Status.current_state!=SYS_HOMING&&Yawer.is_Yaw_Init()){
-                if(DR16_Snap.S2==SW_UP){
-                    
-                }
-                else if(DR16_Snap.S2==SW_MID){
-                    
+                // 紧急预案,当发射暂停时,LY手动接管滑块电机角度环位置控制。
+                if(DR16_Snap.S2==SW_DOWN){
+                    Robot.Flag.Status.emergency_override=true;
                 }
                 else{
-                    Robot.Status.yaw_control_state=YAW_MANUAL_AIM;
+                    Robot.Flag.Status.emergency_override=false;
                 }
             }
     
@@ -264,7 +213,15 @@ void LaunchCtrl(void *arg)
         {
             // 恢复条件：遥控器重连
             if (Robot.Flag.Status.rc_connected) {
-                Robot.Status.current_state = SYS_MANUAL_TEST_KEY;
+                //由于没有校准完就断开连接会导致校准流程被跳过,造成校准失败,这里加入igniter和yaw的校准条件判断
+                if(!Debugger.initial_calibration_flag){//||(!Launcher.is_igniter_calibrated()||(!Yawer.is_Yaw_Init()))){
+                    Robot.Status.current_state = SYS_MANUAL_TEST_KEY;
+                    LOG_INFO("RC Connected, Transition to MANUAL_TEST_KEY State.");
+                }
+                else{
+                    Robot.Status.current_state = SYS_AUTOFIRE_SUSPEND;
+                    LOG_INFO("RC Connected, Transition to AUTOFIRE_SUSPEND State.");
+                }
             }
         }
         break;
@@ -370,6 +327,8 @@ void LaunchCtrl(void *arg)
             //全部校准完毕后，切换到待机状态
             if (Robot.Flag.Status.is_calibrated==MASK_ALL_CALIBRATED) {
                 Robot.Status.current_state = SYS_READY;
+                //放在这个位置才能保证第一次校准不被打断
+                Debugger.initial_calibration_flag=true; //设置初始校准标志位为真,防止重复进入校准。
             }
             break;
         //校准完毕时，总有一个限位开关被触发，防止误触发限位开关进入error状态
@@ -404,6 +363,36 @@ void LaunchCtrl(void *arg)
             }
 			//else
                 //Launcher.target_deliver_angle=(POS_BUFFER);
+            
+            //防止失能时预输入了导致意外控制.
+            if(Robot.Flag.Status.emergency_override&&Robot.Cmd.sys_enable){
+                Launcher.emergency_override_control(DR16_Snap.RY_Norm*Debugger.emegency_deliver_ctrl_speed);
+            }
+            //日志记录紧急预案状态变化
+            static bool last_emergency_override = false;
+            if (last_emergency_override != Robot.Flag.Status.emergency_override) {
+                last_emergency_override = Robot.Flag.Status.emergency_override;
+                if(Robot.Flag.Status.emergency_override){
+                    //记录激活紧急预案
+                    LOG_ERROR("Emergency Override Activated: Manual Control of Deliver Motor Engaged.deliver");
+                    //同时记录滑块和行程电机位置
+                    LOG_ERROR("Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
+                    Launcher.DeliverMotor[0].getMotorAngle(), 
+                    Launcher.DeliverMotor[1].getMotorAngle(),
+                    Launcher.IgniterMotor.getMotorAngle());
+                    //激活时保持当前位置
+                    Launcher.target_deliver_angle=Launcher.DeliverMotor[0].getMotorTotalAngle(); 
+                    //锁止扳机
+                    Launcher.servo_igniter_lock_f();
+                    //激活时立即把滑块拉下去。但如果反应速度和遥控控制速度足够快，也可以不加，免得增加变量。
+                    //Launcher.target_deliver_angle=POS_BOTTOM; 
+                    //立即复位igniter,减小蓄力行程,降低危险。
+                    Launcher.target_igniter_angle=IGNITER_OFFSET_POS; 
+                }
+                else{
+                    LOG_WARN("Emergency Override Deactivated: Returning to Automatic Control of Deliver Motor.");
+                }
+            }
             break;
             
         case SYS_AUTO_PREP:
@@ -489,7 +478,49 @@ void LaunchCtrl(void *arg)
             #endif
             last_state = Robot.Status.current_state;
         }
+
         
+        // 记录遥控器指令变化
+        //只打印拨杆开关变化
+		static uint8_t last_S1 = DR16_Snap.S1;
+        static uint8_t last_S2 = DR16_Snap.S2;
+        if (last_S1 != DR16_Snap.S1) {
+            LOG_INFO("DR16 Switch Updated: S1=%s -> %s", 
+                Get_SW_Str(last_S1), Get_SW_Str(DR16_Snap.S1));
+            last_S1 = DR16_Snap.S1;
+            /*
+            日志增加手动触发失能和暂停时，记录各电机的运动位置，用于判断当时是否出现电机角度脱离软件限位的情况（即撞了限位开关。）以及卡死时电机位置。
+            还要记录限位开关状态，辅助确认是否撞击。
+            */
+            if(DR16_Snap.S1==SW_UP){
+                LOG_ERROR("System Disabled by User!");
+                LOG_ERROR("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
+                    Yawer.YawMotor.getMotorAngle(), 
+                    Launcher.DeliverMotor[0].getMotorAngle(), 
+                    Launcher.DeliverMotor[1].getMotorAngle(),
+                     Launcher.IgniterMotor.getMotorAngle());
+                LOG_ERROR("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
+                    SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
+            }
+            else if(DR16_Snap.S1==SW_MID){
+                LOG_WARN("Autofire Paused by User!");
+                LOG_WARN("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
+                    Yawer.YawMotor.getMotorAngle(), 
+                    Launcher.DeliverMotor[0].getMotorAngle(), 
+                    Launcher.DeliverMotor[1].getMotorAngle(),
+                     Launcher.IgniterMotor.getMotorAngle());
+                LOG_WARN("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
+                    SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
+            }
+
+        }
+        if (last_S2 != DR16_Snap.S2) {
+            LOG_INFO("DR16 Switch Updated: S2=%s -> %s", 
+                Get_SW_Str(last_S2), Get_SW_Str(DR16_Snap.S2));
+            last_S2 = DR16_Snap.S2;
+        }
+
+
         MotorMsgPack(Tx_Buff1, Yawer.YawMotor);
         xQueueSend(CAN2_TxPort, &Tx_Buff1.Id1ff, 0);
         //R=0，L=1

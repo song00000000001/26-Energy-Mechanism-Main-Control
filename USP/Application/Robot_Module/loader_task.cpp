@@ -21,8 +21,8 @@ typedef struct {
 } loader_servo_params_t;
 
 loader_servo_params_t loader_servo_params={
-    20, //预加载位置偏移量
-    10, //平行装填位置偏移量
+    25, //预加载位置偏移量
+    13, //平行装填位置偏移量
     5   //顶端位置偏移量
 };
 
@@ -89,6 +89,18 @@ void Loader_Ctrl(void *arg)
             LOG_INFO("Loader target mode changed: %s -> %s", Loader_Target_Mode_To_Str(last_loader_mode), Loader_Target_Mode_To_Str(Launcher.loader_target_mode));
             #endif
             last_loader_mode = Launcher.loader_target_mode;
+        }
+
+                
+        //记录舵机参数变化
+        static servo_ccr_debug last_servo_ccr = servo_ccr;
+        if (memcmp(&last_servo_ccr, &servo_ccr, sizeof(servo_ccr_debug)) != 0) {
+            LOG_WARN("Servo CCR Updated: igniter_unlock=%d, lock=%d;loader1_up=%d, down=%d;loader2_up=%d,down=%d;transf_lock=%d, unlock=%d",
+                servo_ccr.igniter_ccr_unlock, servo_ccr.igniter_ccr_lock,
+                servo_ccr.loader1_ccr_up, servo_ccr.loader1_ccr_down,
+                servo_ccr.loader2_ccr_up, servo_ccr.loader2_ccr_down,
+                servo_ccr.transfomer_ccr_lock, servo_ccr.transfomer_ccr_unlock);
+            memcpy(&last_servo_ccr, &servo_ccr, sizeof(servo_ccr_debug));
         }
 
         // 更新硬件
