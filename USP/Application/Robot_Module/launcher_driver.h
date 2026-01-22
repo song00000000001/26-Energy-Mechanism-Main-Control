@@ -235,6 +235,9 @@ public:
     void servo_transfomer_unlock_f();
     void servo_loader12_up_f();
     void servo_loader12_down_f();
+
+    //紧急预案,当发射暂停时,LY手动接管滑块电机角度环位置控制。
+    void emergency_override_control(float target_angle);
 };
 
 #endif

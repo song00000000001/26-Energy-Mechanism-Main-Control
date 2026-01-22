@@ -108,31 +108,42 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e *yaw_s
     如果视觉连上了，就优先用视觉，否则检查调参板，最后才是遥控器，如果遥控也没连上，就失能。
     */
     //由于没校准就触发以下状态会造成bug，先加个校准完成的判断
-    if(!is_Yaw_Init())
-    {
-        *yaw_state = YAW_CALIBRATING;
-    }
-    else{
-        if(Robot.Flag.Status.vision_connected)//视觉连接
+    if(Robot.Flag.Status.rc_connected){
+        if(!is_Yaw_Init())
         {
-            *yaw_state = YAW_VISION_AIM;
+            *yaw_state = YAW_CALIBRATING;
         }
-        else if(Robot.Flag.Status.tool_panel_connected)//调参板连接
-        {
-            *yaw_state = YAW_CORRECT_AIM;
+        else{
+            if(Robot.Flag.Status.vision_connected)//视觉连接
+            {
+                *yaw_state = YAW_VISION_AIM;
+            }
+            else if(Robot.Flag.Status.tool_panel_connected)//调参板连接
+            {
+                *yaw_state = YAW_CORRECT_AIM;
+            }
+            else
+                *yaw_state=YAW_MANUAL_AIM;
         }
     }
+    else
+        *yaw_state=YAW_DISABLE_MOTOR;
+    
     switch (*yaw_state)
     {
     case YAW_MANUAL_AIM:
         // 手动微调逻辑
-        Launcher.target_igniter_angle-=RC_Y * 0.02f;
-        //这里直接用角度（实际上是距离）限幅，因为丝杆和滑块电机可以得到简单的线性映射关系，抽象电机库可以直接配置映射参数。
-        Launcher.target_igniter_angle=std_lib::constrain(Launcher.target_igniter_angle, IGNITER_MIN_POS, IGNITER_MAX_POS);
-        yaw_target -= RC_X * 0.02f;
-        //这里的限幅和其他电机不同,用的是镖架整体朝向的角度值,在update里进行三角函数转换后还会对电机编码器角度再限幅一次。
-        yaw_target = std_lib::constrain(yaw_target, -10.2f, 10.2f);
-        update(yaw_target);
+        //由于摇杆复用,在紧急预案时需要ban掉手动控制igniter
+        if(!Robot.Flag.Status.emergency_override){
+            Launcher.target_igniter_angle-=RC_Y * 0.02f;
+            //这里直接用角度（实际上是距离）限幅，因为丝杆和滑块电机可以得到简单的线性映射关系，抽象电机库可以直接配置映射参数。
+            Launcher.target_igniter_angle=std_lib::constrain(Launcher.target_igniter_angle, IGNITER_MIN_POS, IGNITER_MAX_POS);
+            yaw_target -= RC_X * 0.02f;
+            //这里的限幅和其他电机不同,用的是镖架整体朝向的角度值,在update里进行三角函数转换后还会对电机编码器角度再限幅一次。
+            yaw_target = std_lib::constrain(yaw_target, -10.2f, 10.2f);
+            update(yaw_target);
+        }
+        
         break;
     case YAW_CORRECT_AIM:
     {
