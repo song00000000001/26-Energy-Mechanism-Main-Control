@@ -95,7 +95,7 @@ void LaunchCtrl(void *arg)
     
     Launcher.pid_igniter_spd.SetPIDParam(15.0f, 0.0f, 0.0f, 3000, 12000);
     Launcher.pid_igniter_pos.SetPIDParam(3000.0f, 0.0f, 0.0f, 3000, 6000);
-
+    
     Yawer.PID_Yaw_Angle.SetPIDParam(35, 0, 0, 0, 300);
     Yawer.PID_Yaw_Angle.I_SeparThresh = 8;
     Yawer.PID_Yaw_Angle.DeadZone = 0.01f;
