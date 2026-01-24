@@ -137,6 +137,39 @@ void Launcher_Driver::adjust()
     else if(mode_igniter==MODE_SPEED){
         pid_igniter_spd.Current = IgniterMotor.getMotorSpeed();
         pid_igniter_spd.Adjust();
+        /*todo
+        song
+        每次撞爆限位开关都是速度环后面没有接校准，索性把校准逻辑放这里了
+        然后也考虑上校准完成后误触发限位开关的情况，就算校准完成了再触发也重新校准一次。
+        但是这样会导致校准完成后误触发限位开关会反复校准，这样稳定性极其依赖于限位开关的可靠性。
+        所以还是先这样吧。
+        */
+        #if 0
+        if (!is_igniter_homed) {
+            if (SW_IGNITER_OFF) {
+                LOG_INFO("Igniter Motor Homing Triggered (Switch Hit)");
+                pid_igniter_pos.clean_intergral();
+                pid_igniter_spd.clean_intergral();
+                IgniterMotor.baseAngle -= IgniterMotor.getMotorTotalAngle();
+                mode_igniter = MODE_ANGLE;
+                //pid_igniter_pos.Target=IGNITER_OFFSET_POS;
+                target_igniter_angle = IGNITER_OFFSET_POS;
+                is_igniter_homed = true;
+            }
+        }
+        else{
+            if (SW_IGNITER_OFF) {
+                LOG_ERROR("Igniter Motor Homing Triggered (Switch Hit) when calibrated");
+                pid_igniter_pos.clean_intergral();
+                pid_igniter_spd.clean_intergral();
+                IgniterMotor.baseAngle -= IgniterMotor.getMotorTotalAngle();
+                mode_igniter = MODE_ANGLE;
+                //pid_igniter_pos.Target=IGNITER_OFFSET_POS;
+                target_igniter_angle = IGNITER_OFFSET_POS;
+                is_igniter_homed = true;
+            }
+        }
+        #endif
     }
     else{
         IgniterMotor.setMotorCurrentOut(0);
@@ -147,29 +180,8 @@ void Launcher_Driver::adjust()
         pid_igniter_pos.clean_intergral();
         pid_igniter_spd.clean_intergral();
     }
-    //校准后,限位开关意外触发记录
-    #if 0
-    //由于限位开关延迟问题，容易误触发，这里先注释掉
-    if(is_calibrated()){
-        if(SW_DELIVER_L_OFF) {
-            LOG_WARN("Left Deliver Limit Switch Triggered when calibrated");
-        }
-        if(SW_DELIVER_R_OFF){
-            LOG_WARN("Right Deliver Limit Switch Triggered when calibrated");
-        }
-        if(SW_IGNITER_OFF){
-            LOG_WARN("Left Deliver Limit Switch Triggered when calibrated");
-        }
-    }     
-    #endif
 }
-/*todo
-song
-在can接收那里写一个电机失联判断
-    if (DeliverMotor[0].)) {
-        LOG_ERROR("Deliver Motor 0 Connection LOST!");
-    }    
-*/
+
 void Launcher_Driver::start_calibration()
 {
     LOG_INFO("Launcher Calibration Started");
@@ -201,12 +213,10 @@ void Launcher_Driver::check_calibration_logic()
             pid_deliver_pos[0].clean_intergral();
 			pid_deliver_spd[0].clean_intergral();
             // 1. 消除编码器累积误差 (归零)
-			DeliverMotor[0].baseAngle -= (DeliverMotor[0].getMotorTotalAngle()+Debugger.dual_loader_mechanical_error_correction);
-			//DeliverMotor[0].baseAngle -= Debugger.dual_loader_mechanical_error_correction; //双滑块机械装配误差校准修正
+			DeliverMotor[0].baseAngle -= (DeliverMotor[0].getMotorTotalAngle()+Debugger.dual_loader_mechanical_error_correction);//双滑块机械装配误差修正
             // 2. 切换到位置模式
             mode_deliver[0] = MODE_ANGLE;
             // 3. 设定当前位置为回缓冲区
-            //pid_deliver_pos[0].Target=POS_BUFFER;
             target_deliver_angle=DELIVER_OFFSET_POS;
             // 4. 标记为已归零            
             is_deliver_homed[0] = true;
@@ -220,7 +230,6 @@ void Launcher_Driver::check_calibration_logic()
 			pid_deliver_spd[1].clean_intergral();
             DeliverMotor[1].baseAngle -= DeliverMotor[1].getMotorTotalAngle();
             mode_deliver[1] = MODE_ANGLE;
-            //pid_deliver_pos[1].Target=POS_BUFFER;
             target_deliver_angle=DELIVER_OFFSET_POS;  
             is_deliver_homed[1] = true;
         }
@@ -234,7 +243,6 @@ void Launcher_Driver::check_calibration_logic()
             pid_igniter_spd.clean_intergral();
             IgniterMotor.baseAngle -= IgniterMotor.getMotorTotalAngle();
             mode_igniter = MODE_ANGLE;
-            //pid_igniter_pos.Target=IGNITER_OFFSET_POS;
             target_igniter_angle = IGNITER_OFFSET_POS;
             is_igniter_homed = true;
         }
