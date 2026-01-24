@@ -399,3 +399,110 @@ void Launcher_Driver::emergency_override_control(float target_angle){
     target_deliver_angle+=target_angle * 0.1f;
     target_deliver_angle=std_lib::constrain(target_deliver_angle,POS_BOTTOM,POS_DELIVER_MAX);
 }
+
+//自动终止发射状态机，需要无缝衔接发射流程
+void Launcher_Driver::Abort_Firing_Sequence(){
+    static uint32_t state_timer = 0;
+    uint32_t current_time = xTaskGetTickCount();
+
+    switch (fire_state)
+    {
+        //发射结束状态
+        case FIRE_IDLE:
+            Robot.Status.dart_count=0;
+            Robot.Flag.Status.stop_continus_fire=true;
+            Robot.Status.current_state = SYS_AUTOFIRE_SUSPEND;
+            break;
+        
+        //滑块下拉到扳机前的发射状态，此时中断自动发射只需要直接切换状态机到FIRE_IDLE即可
+        case FIRE_PULL_DOWN_1:
+        case FIRE_WAIT_BOTTOM_1:
+        case FIRE_PULL_DOWN_2:
+        case FIRE_WAIT_BOTTOM_2:
+        case FIRE_RELOAD_LIFT_3:
+        case FIRE_RELOAD_RELEASE_3:
+        case FIRE_PULL_DOWN_3:
+        case FIRE_WAIT_BOTTOM_3:
+        case FIRE_RELOAD_LIFT_4:
+        case FIRE_RELOAD_RELEASE_4:
+        case FIRE_PULL_DOWN_4:
+        case FIRE_WAIT_BOTTOM_4:
+            loader_target_mode=LOAD_STOWED;//确保升降机在收起位置
+            servo_transfomer_lock;// 锁止卡镖舵机
+            servo_igniter_unlock; // 解锁扳机舵机，因为这里不希望上膛成功
+            //但是扳机动作需要时间，这里加一个简单的非阻塞延时
+            state_timer=current_time;
+            LOG_ERROR("Firing Sequence Aborted during Pull Down Phase");
+            fire_state=FIRE_ABORT_WAIT;
+            break;
+        
+        case FIRE_ABORT_WAIT:
+            if ((current_time - state_timer) > 300) {
+                //滑块回缓冲区
+                target_deliver_angle=(POS_BUFFER);
+                if(Launcher.is_deliver_at_target(5))
+                {
+                    //滑块到位后，重置状态机
+                    fire_state = FIRE_IDLE;
+                    LOG_ERROR("Firing Sequence Aborted Completed");
+                }
+            }
+            break;
+
+        //滑块在校准状态中，完成校准状态，然后重置状态机
+        case FIRE_CALIBRATION_1:
+        case FIRE_CALIBRATION_2:
+        case FIRE_CALIBRATION_3:
+        case FIRE_CALIBRATION_4:
+            //滑块继续完成校准并自动回到offset位置
+            check_calibration_logic();
+            if(is_calibrated()&&is_deliver_sync_ok(Debugger.deliver_sync_threshold)){
+                //滑块到位后，重置状态机
+                fire_state = FIRE_IDLE;
+                LOG_INFO("Firing Sequence Aborted then Calibrate Completed");
+            }
+            break;
+        
+        //滑块已经下拉卡上扳机了，发射中断需要重新下拉，然后释放扳机，让滑块回缓冲区
+        case FIRE_RETURN_UP_1:
+        case FIRE_WAIT_UP_1:
+        case FIRE_WAIT_AIM_1:
+        case FIRE_RETURN_UP_2:
+        case FIRE_WAIT_UP_2:
+        case FIRE_WAIT_AIM_2:
+        case FIRE_RETURN_UP_3:
+        case FIRE_WAIT_UP_3:
+        case FIRE_WAIT_AIM_3:
+        case FIRE_RETURN_UP_4:
+        case FIRE_WAIT_UP_4:
+        case FIRE_WAIT_AIM_4:
+            //滑块拉到底
+            target_deliver_angle=(POS_BOTTOM);
+            if(Launcher.is_deliver_at_target(5))
+            {
+                state_timer= current_time;
+                servo_igniter_unlock; // 解锁扳机舵机，因为这里不希望上膛成功
+                fire_state = FIRE_ABORT_WAIT;
+                LOG_ERROR("Firing Sequence Aborted during locked Phase");
+            }
+            break;
+
+        //已经进发射状态了，那没招了，打完得了。
+        case FIRE_SHOOTING_1:
+        case FIRE_SHOOTING_2:
+        case FIRE_SHOOTING_3:
+        case FIRE_SHOOTING_4:
+            state_timer= current_time;
+            //直接等发射完成
+            servo_igniter_unlock; // 解锁扳机舵机，发射
+            Robot.Status.dart_count++; // 计数+1
+            fire_state=FIRE_ABORT_WAIT;
+            LOG_ERROR("Firing Sequence Aborted during Shooting Phase");
+            break;
+
+        default:
+            fire_state = FIRE_IDLE;
+            LOG_ERROR("Firing Sequence Aborted due to Unknown State");
+            break;
+    }
+}

@@ -39,11 +39,12 @@ void Launcher_Driver::Run_Firing_Sequence()
         last_debug_fire_type=Debugger.debug_fire_type;
         //考虑切换后重置状态机，但是可能会影响正在发射的流程，所以还是不重置了。
     }    
+
     switch (fire_state)
     {
         case FIRE_IDLE:
             //确保滑块在缓冲区
-            //target_deliver_angle=(POS_BUFFER);
+            target_deliver_angle=(POS_BUFFER);
             servo_igniter_lock; // 锁止扳机舵机
 			servo_transfomer_lock;// 锁止卡镖舵机
             loader_target_mode=LOAD_STOWED;//确保升降机在收起位置
@@ -273,9 +274,7 @@ void Launcher_Driver::Run_Firing_Sequence()
 
         // 升降机上升，准备装填第三发
         case FIRE_RELOAD_LIFT_3:
-            
-		
-		loader_target_mode=LOAD_STOWED;
+		    loader_target_mode=LOAD_STOWED;
             if ((current_time - state_timer) > fire_sequence_delay_params.loader_up_delay) {
                 state_timer = current_time;
                 if(Debugger.debug_fire_type==2)
@@ -497,6 +496,12 @@ void Launcher_Driver::Run_Firing_Sequence()
             }
             break;    
 
+        /*一般来说,在这里这个状态是不会出现的,
+        但是有可能出现终止发射后进了等待，然后又取消的终止发射的情况。
+        此时大概率是终止发射后解锁了扳机，滑台在滑块上，或者发射完滑块在缓冲区。
+        所以直接回到闲置状态，确保滑块在缓冲区，扳机锁止，升降机收起。
+        */
+        case FIRE_ABORT_WAIT:    
         default:
             fire_state = FIRE_IDLE;
             break;

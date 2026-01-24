@@ -127,7 +127,8 @@ typedef struct {
         bool stop_continus_fire;    // 停止连发标志位
         bool tool_panel_connected; //调参板连接状态
         bool vision_connected; //视觉连接状态
-        bool emergency_override; //紧急预案,当发射暂停时,LY手动接管滑块电机角度环位置控制。
+        bool emergency_override; //紧急预案,改为自动触发发射暂停,并且切换RY手动接管滑块电机角度环位置控制。
+        bool safely_abort_fire; //安全中止发射标志位
     } Status;
 } Robot_Monitor_t;
 

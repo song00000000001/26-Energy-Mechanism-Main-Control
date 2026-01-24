@@ -93,7 +93,8 @@ typedef enum {
     X(FIRE_RETURN_UP_4)        \
     X(FIRE_WAIT_AIM_4)         \
     X(FIRE_WAIT_UP_4)          \
-    X(FIRE_SHOOTING_4)
+    X(FIRE_SHOOTING_4)         \
+    X(FIRE_ABORT_WAIT)
 // 自动生成枚举定义
 enum Fire_State_e {
     #define AS_ENUM(name) name,
@@ -217,6 +218,7 @@ public:
     void out_all_motor_speed();
     // 发射子状态机
     void Run_Firing_Sequence();
+    void Abort_Firing_Sequence();
 
     //舵机PWM测试
     void servo_pwm_test_lock_up();
