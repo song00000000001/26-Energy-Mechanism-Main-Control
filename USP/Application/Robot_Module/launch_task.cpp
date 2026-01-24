@@ -198,20 +198,20 @@ void LaunchCtrl(void *arg)
             //注意Robot.Flag.Status.stop_continus_fire在下面被赋值false，以实现紧急预案下，打断自动发射。
             if(Robot.Status.current_state!=SYS_HOMING&&Yawer.is_Yaw_Init()){
                 if(DR16_Snap.S2==SW_MID){
-                    // 紧急预案,改为自动触发发射暂停,并且切换RY手动接管滑块电机角度环位置控制。
+                    //紧急预案,改为强制触发发射暂停,并且切换RY手动接管滑块电机角度环位置控制。
                     Robot.Flag.Status.emergency_override=true;
-                    Robot.Flag.Status.safely_abort_fire=false;
                     Robot.Cmd.autofire_enable=false;
                 }
                 else if(DR16_Snap.S2==SW_DOWN){
-                    //安全中止发射，用于自动完成安全释放动作，并且重置自动发射状态。
+                    //紧急预案,改为强制触发发射暂停,并且切换RY手动接管滑块电机角度环位置控制。
                     Robot.Flag.Status.emergency_override=false;
-                    Robot.Flag.Status.safely_abort_fire=true;
                     Robot.Cmd.autofire_enable=false;
+                    //安全中止发射，用于自动完成安全释放动作，并且重置自动发射状态。
+                    //增加自锁机制，只有完成后才能解除。
+                    Robot.Flag.Status.safely_abort_fire=true;
                 }
                 else{
                     Robot.Flag.Status.emergency_override=false;
-                    Robot.Flag.Status.safely_abort_fire=false;
                 }
             }
     
@@ -545,8 +545,6 @@ void LaunchCtrl(void *arg)
             if(Robot.Flag.Status.safely_abort_fire){
                 //记录激活安全中止发射
                 LOG_ERROR("Safely Abort Fire Activated: Automatic Safe Release Sequence Engaged.");
-                //复位发射状态
-                //Robot.Flag.Status.emergency_override=false;
                 //安全复位动作,回缓冲位置
                 Launcher.target_igniter_angle=IGNITER_OFFSET_POS; 
             }

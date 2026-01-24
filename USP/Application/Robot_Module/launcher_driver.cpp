@@ -419,7 +419,8 @@ void Launcher_Driver::Abort_Firing_Sequence(){
         case FIRE_IDLE:
             Robot.Status.dart_count=0;
             Robot.Flag.Status.stop_continus_fire=true;
-            Robot.Status.current_state = SYS_AUTOFIRE_SUSPEND;
+            //Robot.Status.current_state = SYS_AUTOFIRE_SUSPEND;
+            Robot.Flag.Status.safely_abort_fire=false;
             break;
         
         //滑块下拉到扳机前的发射状态，此时中断自动发射只需要直接切换状态机到FIRE_IDLE即可
