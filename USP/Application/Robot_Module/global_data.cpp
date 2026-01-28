@@ -100,9 +100,9 @@ fire_sequence_delay_params_t fire_sequence_delay_params={
 };
 #else
 fire_sequence_delay_params_t fire_sequence_delay_params={
-    300,    //put_delay
+    800,    //put_delay
     500,    //before_fire_delay
-    500,    //after_fire_delay
+    800,    //after_fire_delay
     300,    //relapse_delay
     700,     //loader_up_delay
     500,     //wait_for_aim_delay

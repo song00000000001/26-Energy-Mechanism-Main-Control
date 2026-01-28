@@ -62,7 +62,7 @@ void LaunchCtrl(void *arg)
  
     // Debug 初始化,用于控制电机状态
     Debugger={
-        .enable_debug_mode=0,//用于debug中进入debug状态
+        .enable_debug_mode=6,//用于debug中进入debug状态
         .debug_mode_deliver={MODE_SPEED,MODE_SPEED},
         .debug_mode_igniter=MODE_SPEED ,
         .debug_loader_pos=POS_BOTTOM,
@@ -90,7 +90,9 @@ void LaunchCtrl(void *arg)
 	//速度环输出限幅14000,curzuida最大7900,输出限幅改为16380,cur最大8200.
     //电机极限速度-9257,给8000限幅裕度充足,给9000就基本跑在极限附近.
     for(int i=0; i<2; i++) {
-        Launcher.pid_deliver_spd[i].SetPIDParam(8.0f, 1.0f, 0.0f, 2000, 8380);
+        Launcher.pid_deliver_spd[i].SetPIDParam(8.0f, 1.0f, 0.0f, 2000, 8
+	
+	380);
         Launcher.pid_deliver_pos[i].SetPIDParam(800.f, 0.0f, 0.0f, 1000, 1000);
     }
     
