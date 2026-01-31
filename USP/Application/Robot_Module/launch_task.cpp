@@ -556,7 +556,10 @@ void LaunchCtrl(void *arg)
         //R=0，L=1
         MotorMsgPack(Tx_Buff, Launcher.DeliverMotor[1], Launcher.DeliverMotor[0], Launcher.IgniterMotor);
 		xQueueSend(CAN1_TxPort, &Tx_Buff.Id200, 0);
-
+        //记录任务剩余栈空间
+        #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        Stack_Remain.LaunchCtrl_stack_remain = uxTaskGetStackHighWaterMark(NULL);
+        #endif
     }
 }
 

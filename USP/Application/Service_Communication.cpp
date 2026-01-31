@@ -439,6 +439,10 @@ void Task_LogTransmit(void *arg){
             if(SW_YAW_R_OFF)LOG_ERROR("Right Yaw Limit Switch Triggered");
         }
         #endif
+
+        #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        Stack_Remain.Log_Transmit_stack_remain = uxTaskGetStackHighWaterMark(NULL);
+        #endif
     }
 }
 

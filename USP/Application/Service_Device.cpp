@@ -97,9 +97,20 @@ void Vision_Task(void *arg)
 	UART_pack.address = (uint8_t *)&vision_send_pack;
 	UART_pack.len = sizeof(vision_send_pack);
 
+    /*
+    //测试栈溢出
+    uint8_t buf[4906];
+	(void)buf; //防止警告
+    for(int i = 4095; i >= 0; i--)
+	{
+		buf[i] = 0x55;
+		vTaskDelay(1);
+	}
+    */
+
 	for (;;)
 	{
-		vTaskDelayUntil(&xLastWakeTime_t, 1);
+		vTaskDelayUntil(&xLastWakeTime_t, 10); // 100Hz 频率发送
 		vision_send_pack.mode = 3;
 		#if 0
 		if (DR16.GetStatus() == DR16_ESTABLISHED && DR16.GetS1() == SW_DOWN) // 左拨杆拨到下，进入视觉模式
@@ -117,7 +128,10 @@ void Vision_Task(void *arg)
 		}
 		#endif
 		//	 SRML_UART_Transmit_DMA(&UART_pack);
-		vTaskDelay(1);
+
+        #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        Stack_Remain.Vision_Task_stack_remain = uxTaskGetStackHighWaterMark(NULL);
+        #endif
 	}
 }
 #if USE_SRML_DR16
@@ -151,6 +165,9 @@ void tskDR16(void *arg)
         DR16.Check_Link(xTaskGetTickCount());
         xSemaphoreGive(DR16_mutex);
 
+        #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        Stack_Remain.DR16_stack_remain = uxTaskGetStackHighWaterMark(NULL);
+        #endif
 	}
 }
 #endif
@@ -174,6 +191,10 @@ void Rx_Referee(void *arg)
 		{
 			Referee.unPackDataFromRF((uint8_t *)referee_pack->address, referee_pack->len);
 		}
+
+        #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        Stack_Remain.Rx_Referee_stack_remain = uxTaskGetStackHighWaterMark(NULL);
+        #endif
 	}
 }
 #endif

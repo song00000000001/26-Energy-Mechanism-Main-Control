@@ -109,3 +109,7 @@ fire_sequence_delay_params_t fire_sequence_delay_params={
     4000    //deliver_pulldown_timeout
 };
 #endif
+
+stack_remain_t Stack_Remain={
+    0,0,0,0,0,0,0,0
+};

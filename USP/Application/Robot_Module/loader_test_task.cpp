@@ -196,5 +196,8 @@ void Task_load_test_ctrl(void *arg)
             }
         }
         vTaskDelay(pdMS_TO_TICKS(10)); 
+        #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        Stack_Remain.Task_load_test_ctrl_stack_remain = uxTaskGetStackHighWaterMark(NULL);
+        #endif
     }
 }
