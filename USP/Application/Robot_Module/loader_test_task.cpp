@@ -245,7 +245,7 @@ int Step_Control_With_Feedback(float input, JoystickTrigger_t *state, int *targe
             }
             
             // 打印日志方便调试
-            ROBOT_LOG("CTRL", "Variable updated: %d (Beep: %d)", *target, Debugger.buzzer_beep_count);
+            LOG_INFO("CTRL Variable updated: %d (Beep: %d)", *target, Debugger.buzzer_beep_count);
         }
     }
 

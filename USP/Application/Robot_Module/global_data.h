@@ -156,7 +156,7 @@ typedef struct {
     Control_Mode_e debug_mode_deliver[2]; // 左右滑块的独立模式
     Control_Mode_e debug_mode_igniter;    // 丝杆模式
     float debug_loader_pos; //调试滑块位置
-    uint8_t debug_fire_type; //调整发射类型，0为连发一二三四，1为单发第一发，2为单发第二发，3为单发第三发。
+    int debug_fire_type; //调整发射类型，0为连发一二三四，1为单发第一发，2为单发第二发，3为单发第三发。
 
     bool is_loader_simulating;    // 模拟标志位
     float simulated_loader_pos; // 模拟滑块位置

@@ -62,7 +62,7 @@ void LaunchCtrl(void *arg)
  
     // Debug 初始化,用于控制电机状态
     Debugger={
-        .enable_debug_mode=1,//用于debug中进入debug状态
+        .enable_debug_mode=0,//用于debug中进入debug状态
         .debug_mode_deliver={MODE_SPEED,MODE_SPEED},
         .debug_mode_igniter=MODE_SPEED ,
         .debug_loader_pos=POS_BOTTOM,
@@ -215,10 +215,7 @@ void LaunchCtrl(void *arg)
                     Robot.Flag.Status.emergency_override=false;
                 }
             }
-            int fire_type_temp =0;
-            Step_Control_With_Feedback(DR16_Snap.LY_Norm, &Joystick_LY_Trigger, &fire_type_temp, 1, 4);//使用输入的方式更安全,防止越界,但是也可以利用返回值进行加减。
-            Debugger.debug_fire_type=fire_type_temp;
-            Debugger.buzzer_beep_count=Debugger.debug_fire_type;//根据发射类型调整蜂鸣器鸣叫次数。
+            Step_Control_With_Feedback(DR16_Snap.LY_Norm, &Joystick_LY_Trigger, &Debugger.debug_fire_type, 1, 4);//使用输入的方式更安全,防止越界,但是也可以利用返回值进行加减。
         }
         
         switch (Robot.Status.current_state)
