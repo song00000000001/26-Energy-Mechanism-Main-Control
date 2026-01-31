@@ -521,3 +521,10 @@ void Task_protocal_status_monitor(void *arg){
 }
 #endif
 /************************ COPYRIGHT(C) SCUT-ROBOTLAB **************************/
+
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
+    // 报错、停机或记录日志
+    LOG_ERROR("Stack Overflow in task: %s", pcTaskName);
+    OpenLog.Send();
+    while(1); 
+}
