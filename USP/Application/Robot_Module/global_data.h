@@ -228,6 +228,7 @@ typedef struct
     uint16_t deliver_pulldown_timeout;
 }fire_sequence_delay_params_t;
 
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
 //定义栈剩余空间记录结构体
 typedef struct 
 {
@@ -245,6 +246,8 @@ typedef struct
     //uint16_t protocol_status_monitor_stack_remain;
 
 }stack_remain_t;
+extern stack_remain_t Stack_Remain;
+#endif
 
 extern protocol_status_t Protocol_Status[4]; //4个电机的通信状态
 extern Launcher_Driver Launcher; 
@@ -262,7 +265,7 @@ extern VisionSendData_t vision_send_pack;
 extern servo_ccr_debug servo_ccr;
 extern openlog_classdef<16> OpenLog;
 extern fire_sequence_delay_params_t fire_sequence_delay_params;
-extern stack_remain_t Stack_Remain;
+
 /*
 1. 写入内容到当前缓冲
 2. 提交当前缓冲，让后台任务去发送

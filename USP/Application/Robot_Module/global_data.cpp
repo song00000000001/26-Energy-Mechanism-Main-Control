@@ -110,6 +110,8 @@ fire_sequence_delay_params_t fire_sequence_delay_params={
 };
 #endif
 
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
 stack_remain_t Stack_Remain={
     0,0,0,0,0,0,0,0
 };
+#endif
