@@ -441,7 +441,7 @@ void Task_LogTransmit(void *arg){
         #endif
 
         #ifdef INCLUDE_uxTaskGetStackHighWaterMark
-        Stack_Remain.Log_Transmit_stack_remain = uxTaskGetStackHighWaterMark(NULL);
+        Stack_Remain.log_stack_remain = uxTaskGetStackHighWaterMark(NULL);
         #endif
     }
 }
