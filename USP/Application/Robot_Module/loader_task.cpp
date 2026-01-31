@@ -112,5 +112,9 @@ void Loader_Ctrl(void *arg)
         __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, target_ccr2);
         #endif
         vTaskDelay(pdMS_TO_TICKS(10)); // 100Hz 更新率足够平滑
+
+        #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        Stack_Remain.Loader_Ctrl_stack_remain = uxTaskGetStackHighWaterMark(NULL);
+        #endif
     }
 }

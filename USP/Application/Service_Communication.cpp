@@ -418,9 +418,16 @@ void User_VirtualComRecCpltCallback(uint8_t* Recv_Data, uint16_t ReceiveLen)
 
 void Task_LogTransmit(void *arg){
 
+    TickType_t xLastWakeTime_t;
+	xLastWakeTime_t = xTaskGetTickCount();
+
+    // 定义一个足够大的缓冲区，每个任务大约需要 40 字节，目前有 12 个任务
+    static char taskInfoBuffer[512];
+    static uint8_t counter[2] = {0};
+
     for (;;)
     {
-        vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelayUntil(&xLastWakeTime_t, 50); // 20Hz 频率发送
 
         //如果有待发送的数据包，则发送并返回0，否则返回1。这样写会造成发送过快。
         //while (OpenLog.Send() == 0);
@@ -438,6 +445,80 @@ void Task_LogTransmit(void *arg){
             if(SW_YAW_L_OFF)LOG_ERROR("Left Yaw Limit Switch Triggered");
             if(SW_YAW_R_OFF)LOG_ERROR("Right Yaw Limit Switch Triggered");
         }
+        #endif
+
+        if(Debugger.enable_debug_mode==7)
+        {
+            counter[1]++;
+            if(counter[1]>20*2)//50ms*20*2=2s
+            {
+                counter[1]=0;
+                //考虑使用osThreadList或者uxTaskGetSystemState打印更详细的任务状态和栈使用情况
+                // 1. 获取任务统计信息
+                // 注意：vTaskList 会关闭中断较长时间，不要在对实时性要求极高的任务中高频调用
+                vTaskList(taskInfoBuffer);
+
+                // 2.现有的 Log 系统发送
+                LOG_INFO("\r\nTask List Status\r\nName          State  Priority  Stack   Num\r\n%s\r\n", taskInfoBuffer);
+            }
+        }
+
+        #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        //记录最小栈剩余，如果当前栈剩余小于记录的最小值，则更新最小值，并且发送日志
+        static stack_remain_t last_stack_remain={
+            0xFFFF,0xFFFF,0xFFFF,0xFFFF,
+            0xFFFF,0xFFFF,0xFFFF,0xFFFF
+        };
+        counter[0]++;
+        if(counter[0]>20*10)//50ms*20*10=10s
+        {
+            counter[0]=0;
+            bool is_stack_remain_changed = false;
+            if (Stack_Remain.LaunchCtrl_stack_remain < last_stack_remain.LaunchCtrl_stack_remain){
+                last_stack_remain.LaunchCtrl_stack_remain = Stack_Remain.LaunchCtrl_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.Vision_Task_stack_remain < last_stack_remain.Vision_Task_stack_remain){
+                last_stack_remain.Vision_Task_stack_remain = Stack_Remain.Vision_Task_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.Loader_Ctrl_stack_remain < last_stack_remain.Loader_Ctrl_stack_remain){
+                last_stack_remain.Loader_Ctrl_stack_remain = Stack_Remain.Loader_Ctrl_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.Task_load_test_ctrl_stack_remain < last_stack_remain.Task_load_test_ctrl_stack_remain){
+                last_stack_remain.Task_load_test_ctrl_stack_remain = Stack_Remain.Task_load_test_ctrl_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.DR16_stack_remain < last_stack_remain.DR16_stack_remain){
+                last_stack_remain.DR16_stack_remain = Stack_Remain.DR16_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.Rx_Referee_stack_remain < last_stack_remain.Rx_Referee_stack_remain){
+                last_stack_remain.Rx_Referee_stack_remain = Stack_Remain.Rx_Referee_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.log_stack_remain < last_stack_remain.log_stack_remain){
+                last_stack_remain.log_stack_remain = Stack_Remain.log_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.debug_send_stack_remain < last_stack_remain.debug_send_stack_remain){
+                last_stack_remain.debug_send_stack_remain = Stack_Remain.debug_send_stack_remain;
+                is_stack_remain_changed = true;
+            } 
+            if(is_stack_remain_changed){
+                LOG_INFO("Stack Remain:\r\nLaunchCtrl=%d,\r\nVision_Task=%d,\r\nLoader_Ctrl=%d,\r\nload_test_ctrl=%d,\r\nDR16=%d,\r\nRx_Referee=%d,\r\nlog=%d,\r\ndebug_send=%d",
+                    Stack_Remain.LaunchCtrl_stack_remain,Stack_Remain.Vision_Task_stack_remain,Stack_Remain.Loader_Ctrl_stack_remain,
+                    Stack_Remain.Task_load_test_ctrl_stack_remain,Stack_Remain.DR16_stack_remain,Stack_Remain.Rx_Referee_stack_remain,
+                    Stack_Remain.log_stack_remain,Stack_Remain.debug_send_stack_remain);
+                is_stack_remain_changed = false;
+            }
+           
+        }
+        #endif
+
+        #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        Stack_Remain.log_stack_remain = uxTaskGetStackHighWaterMark(NULL);
         #endif
     }
 }
@@ -517,7 +598,11 @@ void Task_protocal_status_monitor(void *arg){
         }
         
         vTaskDelay(pdMS_TO_TICKS(100)); 
+        #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        //Stack_Remain.protocol_status_monitor_stack_remain = uxTaskGetStackHighWaterMark(NULL);
+        #endif
     }
 }
 #endif
 /************************ COPYRIGHT(C) SCUT-ROBOTLAB **************************/
+

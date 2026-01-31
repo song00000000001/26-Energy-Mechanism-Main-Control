@@ -467,7 +467,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         case FIRE_WAIT_UP_4:
             if ((current_time - state_timer) > fire_sequence_delay_params.before_fire_delay) {
                 state_timer = current_time;
-                fire_state = FIRE_WAIT_AIM_4; // 完成发射，回到闲置状态
+                fire_state = FIRE_WAIT_AIM_4; 
             }
             break;
 

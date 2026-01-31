@@ -156,7 +156,7 @@ typedef struct {
     Control_Mode_e debug_mode_deliver[2]; // 左右滑块的独立模式
     Control_Mode_e debug_mode_igniter;    // 丝杆模式
     float debug_loader_pos; //调试滑块位置
-    uint8_t debug_fire_type; //调整发射类型，0为连发一二三四，1为单发第一发，2为单发第二发，3为单发第三发。
+    int debug_fire_type; //调整发射类型，0为连发一二三四，1为单发第一发，2为单发第二发，3为单发第三发。
 
     bool is_loader_simulating;    // 模拟标志位
     float simulated_loader_pos; // 模拟滑块位置
@@ -166,6 +166,7 @@ typedef struct {
     bool initial_calibration_flag; //初始化校准标志位，用于跳过遥控失联校准流程。
     float emegency_deliver_ctrl_speed;
     float deliver_speed_limit; //滑块速度环限幅
+    uint8_t buzzer_beep_count; //蜂鸣器鸣叫次数
 } Debug_Data_t;
 
 // 校准速度结构体
@@ -228,6 +229,34 @@ typedef struct
     uint16_t deliver_pulldown_timeout;
 }fire_sequence_delay_params_t;
 
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
+//定义栈剩余空间记录结构体
+typedef struct 
+{
+    uint16_t LaunchCtrl_stack_remain;
+    uint16_t Vision_Task_stack_remain;
+    uint16_t Loader_Ctrl_stack_remain;
+    uint16_t Task_load_test_ctrl_stack_remain;
+
+    uint16_t DR16_stack_remain;
+    uint16_t Rx_Referee_stack_remain;
+
+    uint16_t log_stack_remain;
+    uint16_t debug_send_stack_remain;
+
+    //uint16_t protocol_status_monitor_stack_remain;
+
+}stack_remain_t;
+extern stack_remain_t Stack_Remain;
+#endif
+
+/**
+ * @brief 摇杆触发器状态记录
+ */
+typedef struct {
+    bool last_pushed_pos; // 上一次是否推向正向(>0.8)
+    bool last_pushed_neg; // 上一次是否推向负向(<-0.8)
+} JoystickTrigger_t;
 
 extern protocol_status_t Protocol_Status[4]; //4个电机的通信状态
 extern Launcher_Driver Launcher; 
@@ -245,6 +274,8 @@ extern VisionSendData_t vision_send_pack;
 extern servo_ccr_debug servo_ccr;
 extern openlog_classdef<16> OpenLog;
 extern fire_sequence_delay_params_t fire_sequence_delay_params;
+extern JoystickTrigger_t Joystick_LX_Trigger;
+extern JoystickTrigger_t Joystick_LY_Trigger;
 
 /*
 1. 写入内容到当前缓冲
@@ -282,6 +313,9 @@ extern fire_sequence_delay_params_t fire_sequence_delay_params;
     ((val) & 0x04 ? '1' : '0'), \
     ((val) & 0x02 ? '1' : '0'), \
     ((val) & 0x01 ? '1' : '0')
+
+// 摇杆带触发器的阶梯控制函数
+int Step_Control_With_Feedback(float input, JoystickTrigger_t *state, int *target, int min_val, int max_val);
 
 #ifdef __cplusplus
 }

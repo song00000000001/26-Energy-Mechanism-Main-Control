@@ -40,7 +40,7 @@
 #include <string.h>
 #include <stdarg.h>
 /* Private define ------------------------------------------------------------*/
-#define OP_MAX_BUFFSIZE 256
+#define OP_MAX_BUFFSIZE 512
 /* Exported types ------------------------------------------------------------*/
 using op_user_transmit = uint32_t (*)(uint8_t *buff, uint16_t len);
 

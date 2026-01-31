@@ -7,7 +7,7 @@ extern "C" {
 #endif
 
 //保守测试参数切换宏
-#define CONSERVATIVE_TEST_PARAMS 1
+#define CONSERVATIVE_TEST_PARAMS 0
 
 /* ================= 电机 ID 定义 ================= */
 #define ID_YAW                        2     // 云台偏航,can2
@@ -31,7 +31,7 @@ extern "C" {
 #define IGNITER_OFFSET_POS   3.0f   // igniter复位位置
 														                                        
 #define POS_BUFFER -20.0f          //缓冲区位置
-#define POS_BOTTOM -650.0f         //拉栓位置
+#define POS_BOTTOM -647.0f         //拉栓位置
 																 
 #define POS_IGNITER 90.0f         //默认力度,igniter位置
 
@@ -39,7 +39,7 @@ extern "C" {
 #define IGNITER_MIN_POS 2.0f
 #define IGNITER_MAX_POS 200.0f
 //deliver最小/大位置
-#define POS_DELIVER_MIN -650.0f
+#define POS_DELIVER_MIN -647.0f
 #define POS_DELIVER_MAX -5.0f
 
 //以下用到了c语言函数,需要加extern "C"修饰
@@ -80,6 +80,10 @@ yaw_L:PA7
 
 #define SW_YAW_R_OFF (HAL_GPIO_ReadPin(SW_YAW_R_GPIO_Port, SW_YAW_R_Pin))==GPIO_PIN_RESET
 #define SW_YAW_L_OFF (HAL_GPIO_ReadPin(SW_YAW_L_GPIO_Port, SW_YAW_L_Pin))==GPIO_PIN_RESET
+
+//蜂鸣器宏
+#define BEEP_ON HAL_GPIO_WritePin(GPIOA,GPIO_PIN_4,GPIO_PIN_SET) //蜂鸣器引脚PA4
+#define BEEP_OFF HAL_GPIO_WritePin(GPIOA,GPIO_PIN_4,GPIO_PIN_RESET) //蜂鸣器引脚PA4
 
 // 舵机宏
 //PA8

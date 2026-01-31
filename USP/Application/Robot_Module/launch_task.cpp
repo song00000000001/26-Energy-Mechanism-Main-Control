@@ -62,11 +62,11 @@ void LaunchCtrl(void *arg)
  
     // Debug 初始化,用于控制电机状态
     Debugger={
-        .enable_debug_mode=6,//用于debug中进入debug状态
+        .enable_debug_mode=0,//用于debug中进入debug状态
         .debug_mode_deliver={MODE_SPEED,MODE_SPEED},
         .debug_mode_igniter=MODE_SPEED ,
         .debug_loader_pos=POS_BOTTOM,
-        .debug_fire_type=3, //调整发射类型，0为连发一二三四，1为单发第一发，2为单发第二发，3为单发第三发。  
+        .debug_fire_type=3, //调整发射类型，4为连发一二三四，1为单发第一发，2为单发第二发，3为单发第三发。  (其实0和45678...都是四连发)
         .is_loader_simulating=false,
         .simulated_loader_pos=-650.0f,
         .four_dart_four_params_enable=false,//四发四参功能启用标志位，默认禁用，调试中启用。
@@ -105,7 +105,7 @@ void LaunchCtrl(void *arg)
 	//校准速度初始化
     calibration_speed={
 	.yaw_calibration_speed=-600,
-	.deliver_calibration_speed=1200,
+	.deliver_calibration_speed=2400,
     .igniter_calibration_speed=-1200
     };
     // PID 参数初始化
@@ -215,7 +215,7 @@ void LaunchCtrl(void *arg)
                     Robot.Flag.Status.emergency_override=false;
                 }
             }
-    
+            Step_Control_With_Feedback(DR16_Snap.LY_Norm, &Joystick_LY_Trigger, &Debugger.debug_fire_type, 1, 4);//使用输入的方式更安全,防止越界,但是也可以利用返回值进行加减。
         }
         
         switch (Robot.Status.current_state)
@@ -556,7 +556,10 @@ void LaunchCtrl(void *arg)
         //R=0，L=1
         MotorMsgPack(Tx_Buff, Launcher.DeliverMotor[1], Launcher.DeliverMotor[0], Launcher.IgniterMotor);
 		xQueueSend(CAN1_TxPort, &Tx_Buff.Id200, 0);
-
+        //记录任务剩余栈空间
+        #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        Stack_Remain.LaunchCtrl_stack_remain = uxTaskGetStackHighWaterMark(NULL);
+        #endif
     }
 }
 
