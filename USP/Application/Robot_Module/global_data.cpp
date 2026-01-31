@@ -100,7 +100,7 @@ fire_sequence_delay_params_t fire_sequence_delay_params={
 };
 #else
 fire_sequence_delay_params_t fire_sequence_delay_params={
-    800,    //put_delay
+    1000,    //put_delay
     500,    //before_fire_delay
     800,    //after_fire_delay
     300,    //relapse_delay

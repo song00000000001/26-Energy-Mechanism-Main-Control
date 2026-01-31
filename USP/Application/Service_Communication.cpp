@@ -469,45 +469,51 @@ void Task_LogTransmit(void *arg){
             0xFFFF,0xFFFF,0xFFFF,0xFFFF,
             0xFFFF,0xFFFF,0xFFFF,0xFFFF
         };
-        bool is_stack_remain_changed = false;
-        if (Stack_Remain.LaunchCtrl_stack_remain < last_stack_remain.LaunchCtrl_stack_remain){
-            last_stack_remain.LaunchCtrl_stack_remain = Stack_Remain.LaunchCtrl_stack_remain;
-            is_stack_remain_changed = true;
-        }
-        if (Stack_Remain.Vision_Task_stack_remain < last_stack_remain.Vision_Task_stack_remain){
-            last_stack_remain.Vision_Task_stack_remain = Stack_Remain.Vision_Task_stack_remain;
-            is_stack_remain_changed = true;
-        }
-        if (Stack_Remain.Loader_Ctrl_stack_remain < last_stack_remain.Loader_Ctrl_stack_remain){
-            last_stack_remain.Loader_Ctrl_stack_remain = Stack_Remain.Loader_Ctrl_stack_remain;
-            is_stack_remain_changed = true;
-        }
-        if (Stack_Remain.Task_load_test_ctrl_stack_remain < last_stack_remain.Task_load_test_ctrl_stack_remain){
-            last_stack_remain.Task_load_test_ctrl_stack_remain = Stack_Remain.Task_load_test_ctrl_stack_remain;
-            is_stack_remain_changed = true;
-        }
-        if (Stack_Remain.DR16_stack_remain < last_stack_remain.DR16_stack_remain){
-            last_stack_remain.DR16_stack_remain = Stack_Remain.DR16_stack_remain;
-            is_stack_remain_changed = true;
-        }
-        if (Stack_Remain.Rx_Referee_stack_remain < last_stack_remain.Rx_Referee_stack_remain){
-            last_stack_remain.Rx_Referee_stack_remain = Stack_Remain.Rx_Referee_stack_remain;
-            is_stack_remain_changed = true;
-        }
-        if (Stack_Remain.log_stack_remain < last_stack_remain.log_stack_remain){
-            last_stack_remain.log_stack_remain = Stack_Remain.log_stack_remain;
-            is_stack_remain_changed = true;
-        }
-        if (Stack_Remain.debug_send_stack_remain < last_stack_remain.debug_send_stack_remain){
-            last_stack_remain.debug_send_stack_remain = Stack_Remain.debug_send_stack_remain;
-            is_stack_remain_changed = true;
-        } 
-        if(is_stack_remain_changed){
-            LOG_INFO("Stack Remain:\r\nLaunchCtrl=%d,\r\nVision_Task=%d,\r\nLoader_Ctrl=%d,\r\nload_test_ctrl=%d,\r\nDR16=%d,\r\nRx_Referee=%d,\r\nlog=%d,\r\ndebug_send=%d",
-                Stack_Remain.LaunchCtrl_stack_remain,Stack_Remain.Vision_Task_stack_remain,Stack_Remain.Loader_Ctrl_stack_remain,
-                Stack_Remain.Task_load_test_ctrl_stack_remain,Stack_Remain.DR16_stack_remain,Stack_Remain.Rx_Referee_stack_remain,
-                Stack_Remain.log_stack_remain,Stack_Remain.debug_send_stack_remain);
-            is_stack_remain_changed = false;
+        counter[0]++;
+        if(counter[0]>20*10)//50ms*20*10=10s
+        {
+            counter[0]=0;
+            bool is_stack_remain_changed = false;
+            if (Stack_Remain.LaunchCtrl_stack_remain < last_stack_remain.LaunchCtrl_stack_remain){
+                last_stack_remain.LaunchCtrl_stack_remain = Stack_Remain.LaunchCtrl_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.Vision_Task_stack_remain < last_stack_remain.Vision_Task_stack_remain){
+                last_stack_remain.Vision_Task_stack_remain = Stack_Remain.Vision_Task_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.Loader_Ctrl_stack_remain < last_stack_remain.Loader_Ctrl_stack_remain){
+                last_stack_remain.Loader_Ctrl_stack_remain = Stack_Remain.Loader_Ctrl_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.Task_load_test_ctrl_stack_remain < last_stack_remain.Task_load_test_ctrl_stack_remain){
+                last_stack_remain.Task_load_test_ctrl_stack_remain = Stack_Remain.Task_load_test_ctrl_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.DR16_stack_remain < last_stack_remain.DR16_stack_remain){
+                last_stack_remain.DR16_stack_remain = Stack_Remain.DR16_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.Rx_Referee_stack_remain < last_stack_remain.Rx_Referee_stack_remain){
+                last_stack_remain.Rx_Referee_stack_remain = Stack_Remain.Rx_Referee_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.log_stack_remain < last_stack_remain.log_stack_remain){
+                last_stack_remain.log_stack_remain = Stack_Remain.log_stack_remain;
+                is_stack_remain_changed = true;
+            }
+            if (Stack_Remain.debug_send_stack_remain < last_stack_remain.debug_send_stack_remain){
+                last_stack_remain.debug_send_stack_remain = Stack_Remain.debug_send_stack_remain;
+                is_stack_remain_changed = true;
+            } 
+            if(is_stack_remain_changed){
+                LOG_INFO("Stack Remain:\r\nLaunchCtrl=%d,\r\nVision_Task=%d,\r\nLoader_Ctrl=%d,\r\nload_test_ctrl=%d,\r\nDR16=%d,\r\nRx_Referee=%d,\r\nlog=%d,\r\ndebug_send=%d",
+                    Stack_Remain.LaunchCtrl_stack_remain,Stack_Remain.Vision_Task_stack_remain,Stack_Remain.Loader_Ctrl_stack_remain,
+                    Stack_Remain.Task_load_test_ctrl_stack_remain,Stack_Remain.DR16_stack_remain,Stack_Remain.Rx_Referee_stack_remain,
+                    Stack_Remain.log_stack_remain,Stack_Remain.debug_send_stack_remain);
+                is_stack_remain_changed = false;
+            }
+           
         }
         #endif
 

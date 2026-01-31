@@ -105,7 +105,7 @@ void LaunchCtrl(void *arg)
 	//校准速度初始化
     calibration_speed={
 	.yaw_calibration_speed=-600,
-	.deliver_calibration_speed=1200,
+	.deliver_calibration_speed=2400,
     .igniter_calibration_speed=-1200
     };
     // PID 参数初始化
