@@ -93,52 +93,6 @@ void Service_Devices_Init(void)
 #endif
 }
 
-
- 
-/*
-**************************************************************************************
-*	函 数 名: StackOverflowTest
-*	功能说明: 任务栈溢出测试
-*	形    参: 无
-*	返 回 值: 无
-**************************************************************************************
-*/
-static void StackOverflowTest(void)
-{
-	int16_t i;
-	uint8_t buf[4906];
-	
-	(void)buf; /* 防止警告 */
-	
-	/*
-	  1. 为了能够模拟任务栈溢出，并触发任务栈溢出函数，这里强烈建议使用数组的时候逆着赋值。
-	     因为对于M3和M4内核的MCU，堆栈生长方向是向下生长的满栈。即高地址是buf[2047], 低地址
-	     是buf[0]。如果任务栈溢出了，也是从高地址buf[2047]到buf[0]的某个地址开始溢出。
-	        因此，如果用户直接修改的是buf[0]开始的数据且这些溢出部分的数据比较重要，会直接导致
-	     进入到硬件异常。
-	  2. 栈溢出检测是在任务切换的时候执行的，我们这里加个延迟函数，防止修改了重要的数据导致直接
-	     进入硬件异常。
-	  3. 任务vTaskTaskUserIF的栈空间大小是2048字节，在此任务的入口已经申请了栈空间大小
-		 ------uint8_t ucKeyCode;
-	     ------uint8_t pcWriteBuffer[500];
-	     这里再申请如下这么大的栈空间
-	     -------int16_t i;
-		 -------uint8_t buf[2048];
-	     必定溢出。
-	*/
-    /*todo
-    song
-    为什么实测无法触发栈溢出钩子函数？每次都是直接硬件异常？
-    */
-	for(i = 4095; i >= 0; i--)
-	{
-		buf[i] = 0x55;
-		Stack_Remain.Vision_Task_stack_remain = uxTaskGetStackHighWaterMark(NULL);
-		//vTaskDelay(1);
-	}
-}
-
-
 /**
  * @brief 电视通信任务
  * @parma None
@@ -158,27 +112,36 @@ void Vision_Task(void *arg)
 		vTaskDelayUntil(&xLastWakeTime_t, 100); // 10Hz 频率发送
 		vision_send_pack.mode = 3;
 
-        // if(Debugger.enable_debug_mode==7)
-        // {
-        //    StackOverflowTest();
-        // }
-
-		#if 0
-		if (DR16.GetStatus() == DR16_ESTABLISHED && DR16.GetS1() == SW_DOWN) // 左拨杆拨到下，进入视觉模式
+		#if 1
+		if (DR16.GetStatus() == DR16_ESTABLISHED)
 		{
-			vision_send_pack.tracker_bit = 1;
+            /*
 			vision_send_pack.calibration_state = (DR16.GetS2() == SW_DOWN); // 右拨杆拨到下，开始标定
+            vision_send_pack.tracker_bit = 1;
+            vision_send_pack.base_yaw = 0;
+            vision_send_pack.current_yaw = Yawer.getMotorAngle();\
+            vision_send_pack.mode = 4; //视觉模式
+            SRML_UART_Transmit_DMA(&UART_pack);
+            */
 		}
 		else
 		{
-			vision_send_pack.calibration_state = 0;
+			//vision_send_pack.calibration_state = 0;
+            Robot.Flag.Status.vision_connected = false;//虽然其他地方做了判断，这里再保险一下
 		}
 		if (xTaskGetTickCount() - vision_last_recv_time > 150)
 		{
-			vision_recv_pack.target_mode = 0;
+			//vision_recv_pack.target_mode = 0;
+            Robot.Flag.Status.vision_connected = false;
 		}
+        else{
+            //vision_recv_pack.target_mode = 1;//视觉连接上
+            //vision_send_pack.tracker_bit = 1; 
+            Robot.Flag.Status.vision_connected = true;
+        }
+        
 		#endif
-		//	 SRML_UART_Transmit_DMA(&UART_pack);
+			 
 
         #ifdef INCLUDE_uxTaskGetStackHighWaterMark
         Stack_Remain.Vision_Task_stack_remain = uxTaskGetStackHighWaterMark(NULL);

@@ -3,6 +3,18 @@
 #include "global_data.h"
 #include "robot_config.h"
 
+//视觉debug参数,设置yaw轴扫描幅度和速度,还有视觉微调速度,用结构体封装
+typedef struct {
+    float yaw_scan_range[2]; //扫描幅度,单位度,数组[最小值,最大值],默认{-5.0f,5.0f}
+    float yaw_scan_speed; //扫描速度,单位
+    float yaw_vision_fine_tune_speed; //视觉微调速度,单位
+} VisionDebugParams_t;
+
+VisionDebugParams_t vision_debug_params = {
+    .yaw_scan_range = {-5.0f, 5.0f}, //扫描幅度
+    .yaw_scan_speed = 0.006f, //扫描速度
+    .yaw_vision_fine_tune_speed = 0.0005f //视觉微调速度
+};
 
 Missle_YawController_Classdef::Missle_YawController_Classdef(uint8_t _ID_YAW)
 : YawMotor(_ID_YAW)
@@ -197,26 +209,26 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e *yaw_s
         */
         if(vision_recv_pack.target_mode==0)//若视觉未识别到引导灯，则先自行扫描
         {
-            int8_t direction_temp=1;
-            if(yaw_target>=3)
+            static int8_t direction_temp=1;
+            if(yaw_target>=vision_debug_params.yaw_scan_range[1])
             {
                 direction_temp=-1;
             }
-            else if(yaw_target<=-3)
+            else if(yaw_target<=vision_debug_params.yaw_scan_range[0])
             {
                 direction_temp=1;
             }
-            yaw_target+=0.012f*direction_temp;
+            yaw_target+=vision_debug_params.yaw_scan_speed*direction_temp;
         }
         else//识别到目标则微调
         {
             if (vision_recv_pack.ros == 1)
             {
-                yaw_target += 0.0003;
+                yaw_target += vision_debug_params.yaw_vision_fine_tune_speed;
             }
             if (vision_recv_pack.ros == 2)
             {
-                yaw_target -= 0.0003;
+                yaw_target -= vision_debug_params.yaw_vision_fine_tune_speed;
             }
             if (vision_recv_pack.ros == 0)
             {
