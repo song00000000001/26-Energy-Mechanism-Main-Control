@@ -29,7 +29,7 @@ void Service_Debug_Init(void)
 #endif
 
 #if USE_SRML_VOFA_MONITOR
-	xTaskCreate(Task_VofaMonitor, "tskVofaMonitor", Small_Stack_Size + Tiny_Stack_Size, NULL, PriorityRealtime, &VofaMonitor_Handle);
+	xTaskCreate(Task_VofaMonitor, "tskVofaMonitor", Small_Stack_Size + Tiny_Stack_Size, NULL, PriorityAboveNormal, &VofaMonitor_Handle);
 #endif
 
 #if USE_SRML_ASUWAVE_MONITOR

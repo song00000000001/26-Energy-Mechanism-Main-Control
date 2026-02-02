@@ -71,10 +71,10 @@ openlog_classdef<16> OpenLog(OpenLog_Transmit);
 void Service_Communication_Init(void)
 {
 #if USE_SRML_CAN
-  xTaskCreate(Task_CAN1Transmit, "Com.CAN1 TxPort", Small_Stack_Size, NULL, PriorityRealtime, &CAN1SendPort_Handle);
-  xTaskCreate(Task_CAN2Transmit, "Com.CAN2 TxPort", Small_Stack_Size, NULL, PriorityRealtime, &CAN2SendPort_Handle);
-  xTaskCreate(Task_CAN1Receive, "Com.CAN1 RxPort", Small_Stack_Size, NULL, PriorityRealtime, &CAN1ReceivePort_Handle);
-  xTaskCreate(Task_CAN2Receive, "Com.CAN2 RxPort", Small_Stack_Size, NULL, PriorityRealtime, &CAN2ReceivePort_Handle);
+  xTaskCreate(Task_CAN1Transmit, "Com.CAN1 TxPort", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityRealtime, &CAN1SendPort_Handle);
+  xTaskCreate(Task_CAN2Transmit, "Com.CAN2 TxPort", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityRealtime, &CAN2SendPort_Handle);
+  xTaskCreate(Task_CAN1Receive, "Com.CAN1 RxPort", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityRealtime, &CAN1ReceivePort_Handle);
+  xTaskCreate(Task_CAN2Receive, "Com.CAN2 RxPort", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityRealtime, &CAN2ReceivePort_Handle);
 # endif
   /* USART Management */
 #if USE_SRML_UART
