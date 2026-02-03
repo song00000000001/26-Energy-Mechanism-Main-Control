@@ -142,16 +142,21 @@ void Launcher_Driver::Run_Firing_Sequence()
                 这样可以兼顾安全和瞄准。
             */  
             #if aim_wait_test
-            aim_reached_or_timeout = (is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f))
+            aim_reached_or_timeout = (is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f)&&vision_recv_pack.ros==4)
             ||((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay);
             if (aim_reached_or_timeout) 
-            {
+            {                
                 state_timer = current_time;
                 fire_state = FIRE_SHOOTING_1;
                 aim_reached_or_timeout = false;
                 if(((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay))
                 {
                     LOG_ERROR("Dart1 Aim Wait Timeout! Forcing Fire.");
+                }
+                else if(vision_recv_pack.ros==4)
+                {
+                    LOG_INFO("Dart1 Aim Reached Normally.");
+                    Debugger.buzzer_beep_count=1; //目标稳定鸣叫
                 }
                 LOG_INFO("Dart1 Fired! Total Count: %d", Robot.Status.dart_count);
                 LOG_INFO("Dart1 Yaw Target: %.2f, Igniter Goal: %.2f", Yawer.yaw_target, target_igniter_angle);
@@ -246,7 +251,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         // 等待瞄准完成，增加超时逻辑，非必要等待
         case FIRE_WAIT_AIM_2:
             #if aim_wait_test
-            aim_reached_or_timeout = (is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f))
+            aim_reached_or_timeout = (is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f)&&vision_recv_pack.ros==4)
             ||((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay);
             if (aim_reached_or_timeout) 
             {
@@ -256,6 +261,11 @@ void Launcher_Driver::Run_Firing_Sequence()
                 if(((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay))
                 {
                     LOG_ERROR("Dart2 Aim Wait Timeout! Forcing Fire.");
+                }
+                else if(vision_recv_pack.ros==4)
+                {
+                    LOG_INFO("Dart2 Aim Reached Normally.");
+                    Debugger.buzzer_beep_count=1; //目标稳定鸣叫
                 }
                 LOG_INFO("Dart2 Fired! Total Count: %d", Robot.Status.dart_count);
                 LOG_INFO("Dart2 Yaw Target: %.2f, Igniter Goal: %.2f", Yawer.yaw_target, target_igniter_angle);
@@ -365,7 +375,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         // 等待瞄准完成，增加超时逻辑，非必要等待
         case FIRE_WAIT_AIM_3:
             #if aim_wait_test
-            aim_reached_or_timeout = (is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f))
+            aim_reached_or_timeout = (is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f)&&vision_recv_pack.ros==4)
             ||((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay);
             if (aim_reached_or_timeout) {
                 state_timer = current_time;
@@ -374,6 +384,11 @@ void Launcher_Driver::Run_Firing_Sequence()
                 if(((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay))
                 {
                     LOG_ERROR("Dart3 Aim Wait Timeout! Forcing Fire.");
+                }
+                else if(vision_recv_pack.ros==4)
+                {
+                    LOG_INFO("Dart3 Aim Reached Normally.");
+                    Debugger.buzzer_beep_count=1; //目标稳定鸣叫
                 }
                 LOG_INFO("Dart3 Fired! Total Count: %d", Robot.Status.dart_count);
                 LOG_INFO("Dart3 Yaw Target: %.2f, Igniter Goal: %.2f", Yawer.yaw_target, target_igniter_angle);
@@ -481,7 +496,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         // 等待瞄准完成，增加超时逻辑，非必要等待      
         case FIRE_WAIT_AIM_4:
             #if aim_wait_test
-            aim_reached_or_timeout = (is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f))
+            aim_reached_or_timeout = (is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f)&&vision_recv_pack.ros==4)
             ||((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay);
             if (aim_reached_or_timeout) 
             {
@@ -491,6 +506,11 @@ void Launcher_Driver::Run_Firing_Sequence()
                 if(((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay))
                 {
                     LOG_ERROR("Dart4 Aim Wait Timeout! Forcing Fire.");
+                }
+                else if(vision_recv_pack.ros==4)
+                {
+                    LOG_INFO("Dart4 Aim Reached Normally.");
+                    Debugger.buzzer_beep_count=1; //目标稳定鸣叫
                 }
                 LOG_INFO("Dart4 Fired! Total Count: %d", Robot.Status.dart_count);
                 LOG_INFO("Dart4 Yaw Target: %.2f, Igniter Goal: %.2f", Yawer.yaw_target, target_igniter_angle);

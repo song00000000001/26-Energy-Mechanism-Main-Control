@@ -254,7 +254,6 @@ void Missle_YawController_Classdef::yaw_state_machine(yaw_control_state_e *yaw_s
                             if(vision_recv_pack.ros==4)    //目标稳定
                             {
                                 LOG_INFO("Vision Yaw Target Stable: %.2f", yaw_target);
-                                Debugger.buzzer_beep_count=4; //目标稳定鸣叫
                             }
                             last_vision_ros = vision_recv_pack.ros;
                         }
