@@ -49,6 +49,13 @@ extern "C" {
 #define YAW_MANUAL_SPEED 0.02f //手动控制时的yaw轴速度设定值
 #define IGNITER_MANUAL_SPEED 0.04f //手动控制时的igniter轴速度设定值
 
+#define YAW_VISION_PID_OUTPUT_SCALE 1000 //视觉pid输出缩放因子
+
+//到位阈值
+#define IGNITER_ARRIVE_THRESHOLD 5.0f
+#define DELIVER_ARRIVE_THRESHOLD 5.0f
+#define YAW_ARRIVE_THRESHOLD 5.0f  
+#define YAW_VISION_STABLE_THRESHOLD 0.05f //视觉瞄准稳定阈值
 //以下用到了c语言函数,需要加extern "C"修饰
 #ifdef __cplusplus
 extern "C"{

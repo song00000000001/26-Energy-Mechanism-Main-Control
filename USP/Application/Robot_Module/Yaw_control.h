@@ -53,7 +53,7 @@ public:
     // yaw轴初始化标志，0未初始化，1初始化中，2初始化完成
     uint8_t Yaw_Init_flag = 0;
     // pid对象
-    myPID PID_Yaw_Angle ,PID_Yaw_Speed;
+    myPID PID_Yaw_Angle ,PID_Yaw_Speed ,PID_Yaw_Vision;
     //电机模式
     Control_Mode_e mode_YAW;
     //yaw_target
@@ -85,7 +85,7 @@ public:
     void yaw_state_machine(yaw_control_state_e *yaw_state,float RC_X,float RC_Y);
     // 判断yaw轴是否到达目标角度
     bool isMotorAngleReached(float threshold);
-        
+    bool is_Yaw_pid_Vision_stable(float threshold);
     // 判断yaw轴是否初始化完成
     inline bool is_Yaw_Init() { return (Yaw_Init_flag == 2); }
     //校准细化

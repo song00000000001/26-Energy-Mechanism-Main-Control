@@ -95,8 +95,8 @@ void packDecoder(uint8_t * _addr,uint8_t len)
       return;
     DartsData[ParamChangePack.param_indx].Ignitergoal[Outpost] =ParamChangePack.outpost_launch;
     DartsData[ParamChangePack.param_indx].Ignitergoal[Base] =ParamChangePack.base_launch;
-    DartsData[ParamChangePack.param_indx].YawCorrectionAngle[Outpost] = ParamChangePack.outpost_yaw;
-    DartsData[ParamChangePack.param_indx].YawCorrectionAngle[Base] = ParamChangePack.base_yaw;
+    DartsData[ParamChangePack.param_indx].YawCorrectionAngle[Outpost] = ParamChangePack.outpost_yaw/10;//这里考虑做一个转换，输出是角度，输入是25m外的修正距离，单位cm。但是可能影响性能？
+    DartsData[ParamChangePack.param_indx].YawCorrectionAngle[Base] = ParamChangePack.base_yaw/10;
 
     /*todo
     song
