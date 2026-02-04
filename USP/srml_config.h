@@ -83,8 +83,8 @@
 #define USE_SRML_BMX055                   0   // 九轴IMU
 #define USE_SRML_BMI088                   0   // BMI088
 // Others
-#define USE_SRML_DR16                     1
-#define USE_SRML_FS_I6X                   0
+#define USE_SRML_DR16                     0
+#define USE_SRML_FS_I6X                   1
 #define USE_SRML_REFEREE                  0
 // Unusual Devices
 #define USE_SRML_FATFS                    0

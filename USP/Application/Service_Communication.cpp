@@ -11,7 +11,7 @@
   |EXAMPLE_Port       CAN1               CAN                CUSTOM            0
   |CAN2_Port          CAN2               CAN                Custom            1
   |EBUG_Port         USART1             Custom              Custom            2
-  |USART2_Port       USART2              DBUS               DJI-DR16          3
+  |USART2_Port       USART2              DBUS               FS_I6X          3
   *
 **/
 /* Includes ------------------------------------------------------------------*/
@@ -25,7 +25,7 @@
 /* Private variables ---------------------------------------------------------*/
 /*uart list
 U1: vision
-U2: DR16
+U2: FS_I6X
 U3: tool panal
 U4: debug
 U5: LOG
@@ -341,17 +341,17 @@ uint32_t User_UART_RxCpltCallback(uint8_t *Recv_Data, uint16_t ReceiveLen)
   return 0;
 }
 
-#if USE_SRML_DR16
-uint32_t DR16_RxCpltCallback(uint8_t *Recv_Data, uint16_t ReceiveLen)
+#if USE_SRML_FS_I6X
+uint32_t FS_I6X_RxCpltCallback(uint8_t *Recv_Data, uint16_t ReceiveLen)
 {
   USART_COB Usart_RxCOB;
   BaseType_t xHigherPriorityTaskWoken;
   // Send To UART Receive Queue
-  if (DR16_QueueHandle != NULL && ReceiveLen>=25)
+  if (FS_I6X_QueueHandle != NULL && ReceiveLen>=25)
   {
     Usart_RxCOB.len = ReceiveLen;
     Usart_RxCOB.address = Recv_Data;
-    xQueueSendFromISR(DR16_QueueHandle, &Usart_RxCOB, &xHigherPriorityTaskWoken);
+    xQueueSendFromISR(FS_I6X_QueueHandle, &Usart_RxCOB, &xHigherPriorityTaskWoken);
   }
   return 0;
 }
@@ -490,8 +490,8 @@ void Task_LogTransmit(void *arg){
                 last_stack_remain.Task_load_test_ctrl_stack_remain = Stack_Remain.Task_load_test_ctrl_stack_remain;
                 is_stack_remain_changed = true;
             }
-            if (Stack_Remain.DR16_stack_remain < last_stack_remain.DR16_stack_remain){
-                last_stack_remain.DR16_stack_remain = Stack_Remain.DR16_stack_remain;
+            if (Stack_Remain.FS_I6X_stack_remain < last_stack_remain.FS_I6X_stack_remain){
+                last_stack_remain.FS_I6X_stack_remain = Stack_Remain.FS_I6X_stack_remain;
                 is_stack_remain_changed = true;
             }
             if (Stack_Remain.Rx_Referee_stack_remain < last_stack_remain.Rx_Referee_stack_remain){
@@ -507,9 +507,9 @@ void Task_LogTransmit(void *arg){
                 is_stack_remain_changed = true;
             } 
             if(is_stack_remain_changed){
-                LOG_INFO("Stack Remain:\r\nLaunchCtrl=%d,\r\nVision_Task=%d,\r\nLoader_Ctrl=%d,\r\nload_test_ctrl=%d,\r\nDR16=%d,\r\nRx_Referee=%d,\r\nlog=%d,\r\ndebug_send=%d",
+                LOG_INFO("Stack Remain:\r\nLaunchCtrl=%d,\r\nVision_Task=%d,\r\nLoader_Ctrl=%d,\r\nload_test_ctrl=%d,\r\nFS_I6X=%d,\r\nRx_Referee=%d,\r\nlog=%d,\r\ndebug_send=%d",
                     Stack_Remain.LaunchCtrl_stack_remain,Stack_Remain.Vision_Task_stack_remain,Stack_Remain.Loader_Ctrl_stack_remain,
-                    Stack_Remain.Task_load_test_ctrl_stack_remain,Stack_Remain.DR16_stack_remain,Stack_Remain.Rx_Referee_stack_remain,
+                    Stack_Remain.Task_load_test_ctrl_stack_remain,Stack_Remain.FS_I6X_stack_remain,Stack_Remain.Rx_Referee_stack_remain,
                     Stack_Remain.log_stack_remain,Stack_Remain.debug_send_stack_remain);
                 is_stack_remain_changed = false;
             }

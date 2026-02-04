@@ -35,7 +35,7 @@ calibration_speed_t calibration_speed;
 //调试数据结构体实例化
 Debug_Data_t Debugger;
 //遥控器数据快照
-DR16_Snapshot_t DR16_Snap; 
+FS_I6X_Snapshot_t FS_I6X_Snap; 
 
 /*舵机调参记录
 撒放舵机从松开到锁定

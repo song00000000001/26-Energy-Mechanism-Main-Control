@@ -18,14 +18,14 @@ QueueHandle_t CAN1_TxPort;  //	can1 发送队列
 QueueHandle_t CAN1_RxPort;  //	can1 接收队列
 QueueHandle_t CAN2_TxPort;  //	can2 发送队列
 QueueHandle_t CAN2_RxPort;  //	can2 接收队列
-#if USE_SRML_DR16
-QueueHandle_t DR16_QueueHandle; //	dr16（串口） 接收队列
+#if USE_SRML_FS_I6X
+QueueHandle_t FS_I6X_QueueHandle; //	FS_I6X（串口） 接收队列
 #endif
 /* Semaphores */
 
 /* Mutexes */
-#if USE_SRML_DR16
-SemaphoreHandle_t DR16_mutex; //	dr16互斥量
+#if USE_SRML_FS_I6X
+SemaphoreHandle_t FS_I6X_mutex; //	FS_I6X互斥量
 #endif
 
 //openlog互斥量
@@ -42,8 +42,8 @@ uint8_t VirtualCom_Rx_Buff[VIRTUALCOM_RX_BUFFER_SIZE];
 __CCM mpu_rec_s mpu_receive; // mpu6050数据
 #endif
 
-#if USE_SRML_DR16
-__CCM FS_I6X_Classdef DR16; // 遥控器DR16类
+#if USE_SRML_FS_I6X
+__CCM FS_I6X_Classdef FS_I6X; // 遥控器FS_I6X类
 #endif
 
 #if USE_SRML_FS_I6X

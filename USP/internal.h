@@ -62,13 +62,13 @@ extern QueueHandle_t CAN1_RxPort;
 extern QueueHandle_t CAN2_TxPort;
 extern QueueHandle_t CAN2_RxPort;
 extern QueueHandle_t Param_RxPort;
-#if USE_SRML_DR16
-extern QueueHandle_t DR16_QueueHandle;
+#if USE_SRML_FS_I6X
+extern QueueHandle_t FS_I6X_QueueHandle;
 #endif
 /* Semaphores */
 /* mutex */
-#if USE_SRML_DR16
-extern SemaphoreHandle_t DR16_mutex;
+#if USE_SRML_FS_I6X
+extern SemaphoreHandle_t FS_I6X_mutex;
 #endif
 extern SemaphoreHandle_t OpenLog_mutex;
 /* Mutexes */
@@ -90,8 +90,8 @@ extern mpu_rec_s mpu_receive; //mpu6050传感器
 //extern MahonyFilterClassdef BMI088_AHRS;
 #endif
 
-#if  USE_SRML_DR16
-extern FS_I6X_Classdef DR16;		//遥控器DR16类
+#if  USE_SRML_FS_I6X
+extern FS_I6X_Classdef FS_I6X;		//遥控器FS_I6X类
 #endif
 
 #if USE_SRML_FS_I6X
@@ -127,8 +127,8 @@ extern User_Uart_Callback UART6_RxCpltCallback;
 uint32_t Param_RxCpltCallback(uint8_t *Recv_Data, uint16_t ReceiveLen);
 uint32_t Referee_recv_Callback(uint8_t *Recv_Data, uint16_t ReceiveLen);
 
-#if USE_SRML_DR16
-uint32_t DR16_RxCpltCallback(uint8_t *Recv_Data, uint16_t ReceiveLen);
+#if USE_SRML_FS_I6X
+uint32_t FS_I6X_RxCpltCallback(uint8_t *Recv_Data, uint16_t ReceiveLen);
 #endif
 
 #if USE_SRML_FS_I6X
@@ -147,7 +147,7 @@ void User_VirtualComRecCpltCallback(uint8_t *Recv_Data, uint16_t ReceiveLen);
 //void tskLoaderMotor(void *arg);
 void LaunchCtrl(void *arg);
 void Loader_Ctrl(void *arg);
-void tskDR16(void *arg);
+void tskFS_I6X(void *arg);
 //void Yaw_Task(void *arg);
 //void turn1(float angle);
 

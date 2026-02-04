@@ -36,7 +36,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-TaskHandle_t DR16_Handle;
+TaskHandle_t FS_I6X_Handle;
 TaskHandle_t Rx_Referee_Handle;
 TaskHandle_t LaunchCtrl_Handle;
 TaskHandle_t Loader_Ctrl_Handle;
@@ -46,7 +46,7 @@ TaskHandle_t protocol_status_monitor_Handle;
 TaskHandle_t load_test_ctrl_Handle;
 //TaskHandle_t Yaw_Task_Handle;
 /* Private function declarations ---------------------------------------------*/
-void tskDR16(void *arg);
+void tskFS_I6X(void *arg);
 void Rx_Referee(void *arg);
 void Vision_Task(void *arg);
 void Task_LogTransmit(void *arg);
@@ -62,8 +62,8 @@ void Task_load_test_ctrl(void *arg);
 /*todo
 song
 据分析，主任务优先级需要加大，防止控制周期抖动，但是主任务负担太重了，我比较担心会卡死。所以优先级还是保持吧。
-后续优化的话，可以把一些实时性要求高的逻辑和电机控制放到另外的任务中，比如dr16失联检测等。
-然后通过无外设情况下的栈分析，任务dr16和两个can发送的剩余栈分别只有71，56，71字节，有点少，后续可以适当增大这些任务的栈空间。
+后续优化的话，可以把一些实时性要求高的逻辑和电机控制放到另外的任务中，比如FS_I6X失联检测等。
+然后通过无外设情况下的栈分析，任务FS_I6X和两个can发送的剩余栈分别只有71，56，71字节，有点少，后续可以适当增大这些任务的栈空间。
 
 */
 void Service_Devices_Init(void)
@@ -72,14 +72,14 @@ void Service_Devices_Init(void)
 	/*todo
 	song
 	增大任务优先级
-	将dr16失联等实时性要求高的逻辑放到另一个任务中，防止主控制任务意外卡死(使用互斥锁或者vtaskdelay等阻塞函数)
+	将FS_I6X失联等实时性要求高的逻辑放到另一个任务中，防止主控制任务意外卡死(使用互斥锁或者vtaskdelay等阻塞函数)
 	*/
 	xTaskCreate(Vision_Task, "App.Vision_Task", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityHigh, &Vision_Task_Handle);
 	xTaskCreate(Loader_Ctrl, "App.Loader_Ctrl", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityAboveNormal, &Loader_Ctrl_Handle);
     xTaskCreate(Task_load_test_ctrl, "App.load_test_ctrl", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityNormal, &load_test_ctrl_Handle);
 
-#if USE_SRML_DR16
-	xTaskCreate(tskDR16, "App.DR16", Small_Stack_Size+Tiny_Stack_Size, NULL, PrioritySuperHigh, &DR16_Handle);
+#if USE_SRML_FS_I6X
+	xTaskCreate(tskFS_I6X, "App.FS_I6X", Small_Stack_Size+Tiny_Stack_Size, NULL, PrioritySuperHigh, &FS_I6X_Handle);
 #endif
 
 
@@ -129,39 +129,41 @@ void Vision_Task(void *arg)
         #endif
 	}
 }
-#if USE_SRML_DR16
+#if USE_SRML_FS_I6X
 /**
- *	@brief	Dr16 data receive task
+ *	@brief	FS_I6X data receive task
  */
-void tskDR16(void *arg)
+void tskFS_I6X(void *arg)
 {
 	/* Cache for Task */
 	USART_COB Rx_Package;
 	/* Pre-Load for task */
-	DR16.Check_Link(xTaskGetTickCount());
+	FS_I6X.Check_Link(xTaskGetTickCount());
 	/* Infinite loop */
 	for (;;)
 	{
 		// 1. 等待数据（不要拿锁！）
         // 减少等待时间，20ms，这样Check_Link检查频率更高，反应更快,
-        //dr16数据更新频率70hz,所以最快不要小于15ms即可。
+        //FS_I6X数据更新频率70hz,所以最快不要小于15ms即可。
         // Check_Link是在超时后才运行
-        if (xQueueReceive(DR16_QueueHandle, &Rx_Package, 20) == pdPASS)
+        if (xQueueReceive(FS_I6X_QueueHandle, &Rx_Package, 20) == pdPASS)
         {
             // 2. 收到数据，拿锁进行解析和更新
-            xSemaphoreTake(DR16_mutex, portMAX_DELAY);
-            DR16.DataCapture((DR16_DataPack_Typedef *)Rx_Package.address);
-            xSemaphoreGive(DR16_mutex);
+            //xSemaphoreTake(FS_I6X_mutex, portMAX_DELAY);
+            FS_I6X.DataCapture((SBUS_DataPack_Typedef*)Rx_Package.address);
+            FS_I6X.DataProcess();
+            FS_I6X.Check_Link(xTaskGetTickCount());
+            //xSemaphoreGive(FS_I6X_mutex);
         }
-
-        // 3. 无论有没有收到数据，都要检查是否超时
-        // 这里需要拿锁，因为 Check_Link 可能会修改 Status，而其他任务可能会读取 Status
-        xSemaphoreTake(DR16_mutex, portMAX_DELAY);
-        DR16.Check_Link(xTaskGetTickCount());
-        xSemaphoreGive(DR16_mutex);
-
+        else{
+            // 3. 无论有没有收到数据，都要检查是否超时
+            // 这里需要拿锁，因为 Check_Link 可能会修改 Status，而其他任务可能会读取 Status
+            //xSemaphoreTake(FS_I6X_mutex, portMAX_DELAY);
+            FS_I6X.Check_Link(xTaskGetTickCount());
+            //xSemaphoreGive(FS_I6X_mutex); 
+        }
         #ifdef INCLUDE_uxTaskGetStackHighWaterMark
-        Stack_Remain.DR16_stack_remain = uxTaskGetStackHighWaterMark(NULL);
+        Stack_Remain.FS_I6X_stack_remain = uxTaskGetStackHighWaterMark(NULL);
         #endif
 	}
 }

@@ -159,26 +159,26 @@ void LaunchCtrl(void *arg)
         主任务不能被阻塞。
         */
         // 尝试拿锁，参数为 0 表示：拿不到立刻返回，不等待，不阻塞
-        if (xSemaphoreTake(DR16_mutex, 0) == pdTRUE)
-        {
+        //if (xSemaphoreTake(FS_I6X_mutex, 0) == pdTRUE)
+        //{
             // 1. 拿到了锁：更新快照
-            DR16_Snap.Status = DR16.GetStatus();
-            DR16_Snap.LX_Norm = DR16.Get_LX_Norm();
-            DR16_Snap.LY_Norm = DR16.Get_LY_Norm();
-            DR16_Snap.RX_Norm = DR16.Get_RX_Norm();
-            DR16_Snap.RY_Norm = DR16.Get_RY_Norm();
-            DR16_Snap.S1 = DR16.Get_SWA();
-            DR16_Snap.S2 = DR16.Get_SWB();
-            DR16_Snap.S3 = DR16.Get_SWC();
-            DR16_Snap.S4 = DR16.Get_SWD();
-            DR16_Snap.VRA_Norm = DR16.Get_VRA_Norm();
-            DR16_Snap.VRB_Norm = DR16.Get_VRB_Norm();
+            FS_I6X_Snap.Status = FS_I6X.GetStatus();
+            FS_I6X_Snap.LX_Norm = FS_I6X.Get_LX_Norm();
+            FS_I6X_Snap.LY_Norm = FS_I6X.Get_LY_Norm();
+            FS_I6X_Snap.RX_Norm = FS_I6X.Get_RX_Norm();
+            FS_I6X_Snap.RY_Norm = FS_I6X.Get_RY_Norm();
+            FS_I6X_Snap.S1 = FS_I6X.Get_SWA();
+            FS_I6X_Snap.S2 = FS_I6X.Get_SWB();
+            FS_I6X_Snap.S3 = FS_I6X.Get_SWC();
+            FS_I6X_Snap.S4 = FS_I6X.Get_SWD();
+            FS_I6X_Snap.VRA_Norm = FS_I6X.Get_VRA_Norm();
+            FS_I6X_Snap.VRB_Norm = FS_I6X.Get_VRB_Norm();
             // 2. 释放锁
-            xSemaphoreGive(DR16_mutex);
-        }
+        //    xSemaphoreGive(FS_I6X_mutex);
+        //}
 
         // 处理遥控器连接状态及模式切换
-        if (DR16_Snap.Status != DR16_ESTABLISHED) {
+        if (FS_I6X_Snap.Status != ESTABLISHED) {
             Robot.Flag.Status.rc_connected = false;
             Robot.Status.current_state = SYS_DISCONNECTED;
         }
@@ -186,19 +186,19 @@ void LaunchCtrl(void *arg)
             Robot.Flag.Status.rc_connected = true;
             // 处理遥控器开关逻辑
             // 手动失能开关 S1向上
-            if(DR16_Snap.S1==SW_UP){
+            if(FS_I6X_Snap.S1==SW_UP){
                 Robot.Cmd.sys_enable=false;
             }
             else{
                 Robot.Cmd.sys_enable=true;
             }
             //自动发射模式,跳过自检 S1向下
-            if(DR16_Snap.S1==SW_DOWN){
+            if(FS_I6X_Snap.S1==SW_DOWN){
                 Robot.Cmd.skip_check=true;
                 Robot.Cmd.autofire_enable=true;
             }
             //s1中则是自动发射关闭,会卡在待机状态,并且不会跳过自检
-            if(DR16_Snap.S1==SW_MID){
+            if(FS_I6X_Snap.S1==SW_MID){
                 Robot.Cmd.autofire_enable=false;
                 Robot.Cmd.skip_check=false;
                 Robot.Flag.Status.stop_continus_fire=false;
@@ -207,12 +207,12 @@ void LaunchCtrl(void *arg)
             //为了防止抢占校准状态,增加校准状态判断
             //注意Robot.Flag.Status.stop_continus_fire在下面被赋值false，以实现紧急预案下，打断自动发射。
             if(Robot.Status.current_state!=SYS_HOMING&&Yawer.is_Yaw_Init()){
-                if(DR16_Snap.S2==SW_MID){
+                if(FS_I6X_Snap.S2==SW_MID){
                     //紧急预案,改为强制触发发射暂停,并且切换RY手动接管滑块电机角度环位置控制。
                     Robot.Flag.Status.emergency_override=true;
                     Robot.Cmd.autofire_enable=false;
                 }
-                else if(DR16_Snap.S2==SW_DOWN){
+                else if(FS_I6X_Snap.S2==SW_DOWN){
                     //紧急预案,改为强制触发发射暂停,并且切换RY手动接管滑块电机角度环位置控制。
                     Robot.Flag.Status.emergency_override=false;
                     Robot.Cmd.autofire_enable=false;
@@ -224,8 +224,8 @@ void LaunchCtrl(void *arg)
                     Robot.Flag.Status.emergency_override=false;
                 }
             }
-            Step_Control_With_Feedback(DR16_Snap.LY_Norm, &Joystick_LY_Trigger, &Debugger.debug_fire_type, 1, 4);//使用输入的方式更安全,防止越界,但是也可以利用返回值进行加减。
-            Step_Control_With_Feedback(DR16_Snap.LX_Norm, &Joystick_LX_Trigger, &Debugger.debug_vision_enable, 1, 2 );//视觉使能调试开关
+            Step_Control_With_Feedback(FS_I6X_Snap.LY_Norm, &Joystick_LY_Trigger, &Debugger.debug_fire_type, 1, 4);//使用输入的方式更安全,防止越界,但是也可以利用返回值进行加减。
+            Step_Control_With_Feedback(FS_I6X_Snap.LX_Norm, &Joystick_LX_Trigger, &Debugger.debug_vision_enable, 1, 2 );//视觉使能调试开关
         }
         
         switch (Robot.Status.current_state)
@@ -388,7 +388,7 @@ void LaunchCtrl(void *arg)
             //防止失能时预输入了导致意外控制.
             if(Robot.Cmd.sys_enable){
                 if(Robot.Flag.Status.emergency_override){
-                    Launcher.emergency_override_control(DR16_Snap.RY_Norm*Debugger.emegency_deliver_ctrl_speed);
+                    Launcher.emergency_override_control(FS_I6X_Snap.RY_Norm*Debugger.emegency_deliver_ctrl_speed);
                 }
                 else if(Robot.Flag.Status.safely_abort_fire){
                     Launcher.Abort_Firing_Sequence();
@@ -430,7 +430,7 @@ void LaunchCtrl(void *arg)
             YAW_DISABLE_MOTOR:失能电机
             yaw_calibrating:校准模式
         */
-        Yawer.yaw_state_machine(&Robot.Status.yaw_control_state, DR16_Snap.RX_Norm, DR16_Snap.RY_Norm);
+        Yawer.yaw_state_machine(&Robot.Status.yaw_control_state, FS_I6X_Snap.RX_Norm, FS_I6X_Snap.RY_Norm);
 
 		//计算 PID
         /*
@@ -483,17 +483,17 @@ void LaunchCtrl(void *arg)
         
         // 记录遥控器指令变化
         //只打印拨杆开关变化
-		static uint8_t last_S1 = DR16_Snap.S1;
-        static uint8_t last_S2 = DR16_Snap.S2;
-        if (last_S1 != DR16_Snap.S1) {
-            LOG_INFO("DR16 Switch Updated: S1=%s -> %s", 
-                Get_SW_Str(last_S1), Get_SW_Str(DR16_Snap.S1));
-            last_S1 = DR16_Snap.S1;
+		static uint8_t last_S1 = FS_I6X_Snap.S1;
+        static uint8_t last_S2 = FS_I6X_Snap.S2;
+        if (last_S1 != FS_I6X_Snap.S1) {
+            LOG_INFO("FS_I6X Switch Updated: S1=%s -> %s", 
+                Get_SW_Str(last_S1), Get_SW_Str(FS_I6X_Snap.S1));
+            last_S1 = FS_I6X_Snap.S1;
             /*
             日志增加手动触发失能和暂停时，记录各电机的运动位置，用于判断当时是否出现电机角度脱离软件限位的情况（即撞了限位开关。）以及卡死时电机位置。
             还要记录限位开关状态，辅助确认是否撞击。
             */
-            if(DR16_Snap.S1==SW_UP){
+            if(FS_I6X_Snap.S1==SW_UP){
                 LOG_ERROR("System Disabled by User!");
                 LOG_ERROR("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
                     Yawer.YawMotor.getMotorAngle(), 
@@ -503,7 +503,7 @@ void LaunchCtrl(void *arg)
                 LOG_ERROR("Limit Switch States: Yaw_L:%d,Yaw_R:%d,Deliver_L:%d,Deliver_R:%d,Igniter:%d", 
                     SW_YAW_L_OFF,SW_YAW_R_OFF,SW_DELIVER_L_OFF,SW_DELIVER_R_OFF,SW_IGNITER_OFF);
             }
-            else if(DR16_Snap.S1==SW_MID){
+            else if(FS_I6X_Snap.S1==SW_MID){
                 LOG_WARN("Autofire Paused by User!");
                 LOG_WARN("Yaw Motor Angle: %.2f,Deliver L Motor Angle: %.2f,Deliver R Motor Angle: %.2f,Igniter Motor Angle: %.2f", 
                     Yawer.YawMotor.getMotorAngle(), 
@@ -515,10 +515,10 @@ void LaunchCtrl(void *arg)
             }
 
         }
-        if (last_S2 != DR16_Snap.S2) {
-            LOG_INFO("DR16 Switch Updated: S2=%s -> %s", 
-                Get_SW_Str(last_S2), Get_SW_Str(DR16_Snap.S2));
-            last_S2 = DR16_Snap.S2;
+        if (last_S2 != FS_I6X_Snap.S2) {
+            LOG_INFO("FS_I6X Switch Updated: S2=%s -> %s", 
+                Get_SW_Str(last_S2), Get_SW_Str(FS_I6X_Snap.S2));
+            last_S2 = FS_I6X_Snap.S2;
         }
 
         //日志记录紧急预案状态变化

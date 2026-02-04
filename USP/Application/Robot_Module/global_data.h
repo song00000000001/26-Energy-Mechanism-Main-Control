@@ -34,8 +34,8 @@ extern "C" {
     };
 #pragma pack()
 
-//dr16快照结构体
-struct DR16_Snapshot_t {
+//FS_I6X快照结构体
+struct FS_I6X_Snapshot_t {
     LinkageStatus_Typedef Status;
     SW_Status_Typedef S1;
     SW_Status_Typedef S2;
@@ -243,7 +243,7 @@ typedef struct
     uint16_t Loader_Ctrl_stack_remain;
     uint16_t Task_load_test_ctrl_stack_remain;
 
-    uint16_t DR16_stack_remain;
+    uint16_t FS_I6X_stack_remain;
     uint16_t Rx_Referee_stack_remain;
 
     uint16_t log_stack_remain;
@@ -272,7 +272,7 @@ extern calibration_speed_t calibration_speed;
 extern DartDataStructdef DartsData[];   
 extern DartAimEnumdef HitTarget;       
 extern uint8_t DartDataSlot[];          
-extern DR16_Snapshot_t DR16_Snap; 
+extern FS_I6X_Snapshot_t FS_I6X_Snap; 
 extern uint32_t vision_last_recv_time ; 
 extern VisionRecvData_t vision_recv_pack;
 extern VisionSendData_t vision_send_pack;

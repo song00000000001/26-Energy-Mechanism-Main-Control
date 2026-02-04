@@ -59,18 +59,18 @@ void Task_load_test_ctrl(void *arg)
         }
         // -----------------------------
 
-        float ry_val = abs(DR16_Snap.RY_Norm);
+        float ry_val = abs(FS_I6X_Snap.RY_Norm);
 
         // --- 1. 触发逻辑判断 ---
         // 仅在测试未进行(test_step == 0)时响应触发
-        if (test_step == 0 && ry_val > 0.5f && DR16_Snap.S1==SW_UP) 
+        if (test_step == 0 && ry_val > 0.5f && FS_I6X_Snap.S1==SW_UP) 
         {
-            if (DR16_Snap.S2 == SW_MID) {
+            if (FS_I6X_Snap.S2 == SW_MID) {
                 test_step = 1;      // 流程 A：单独模拟测试
                 test_timer = now;
                 LOG_INFO("Manual Loader Test Start (Individual Sim)");
             } 
-            else if (DR16_Snap.S2 == SW_DOWN) {
+            else if (FS_I6X_Snap.S2 == SW_DOWN) {
                 test_step = 11;     // 流程 B：卡镖 + 模拟测试
                 test_timer = now;
                 LOG_INFO("Manual Loader Test Start (Release + Sim)");
