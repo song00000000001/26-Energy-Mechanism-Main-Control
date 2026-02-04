@@ -315,6 +315,19 @@ extern JoystickTrigger_t Joystick_LY_Trigger;
     ((val) & 0x02 ? '1' : '0'), \
     ((val) & 0x01 ? '1' : '0')
 
+/**
+ * @brief 变量变化检测宏，类内使用要注意
+ * 
+ */
+//需要测试，不清楚是否可行
+#define __IS_CHG(var) ({ \
+   volatile static decltype(var) last = {}; \
+   bool _judge_result_ = (var != last ? true : false); \
+   last = var; \
+   _judge_result_; \
+})
+
+
 // 摇杆带触发器的阶梯控制函数
 int Step_Control_With_Feedback(float input, JoystickTrigger_t *state, int *target, int min_val, int max_val);
 

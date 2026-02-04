@@ -16,7 +16,7 @@
 song
 视觉瞄准到位触发
 Robot.Cmd.fire_command=true;
-if (Robot.Cmd.fire_command&&is_deliver_at_target(5)) {
+if (Robot.Cmd.fire_command&&is_deliver_at_target(DELIVER_ARRIVE_THRESHOLD)) {
     fire_state = FIRE_PULL_LOAD;
 }
 但是往年经验是不需要等视觉。
@@ -49,7 +49,7 @@ void Launcher_Driver::Run_Firing_Sequence()
 			servo_transfomer_lock;// 锁止卡镖舵机
             loader_target_mode=LOAD_STOWED;//确保升降机在收起位置
             //这里后续会修改行程电机位置，故加入检查条件
-            if (Launcher.is_igniter_at_target(5)) {
+            if (Launcher.is_igniter_at_target(IGNITER_ARRIVE_THRESHOLD)) {
 				state_timer = current_time;
                 //根据debug_fire_type选择发射类型
                 if(Debugger.debug_fire_type==2)
@@ -94,7 +94,7 @@ void Launcher_Driver::Run_Firing_Sequence()
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_BOTTOM_1;
             }
-            if (is_deliver_at_target(5)&&target_deliver_angle==POS_BOTTOM) {//双重保险，确保不是因为目标位置被改了才误判到位
+            if (is_deliver_at_target(DELIVER_ARRIVE_THRESHOLD)&&target_deliver_angle==POS_BOTTOM) {//双重保险，确保不是因为目标位置被改了才误判到位
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_BOTTOM_1;
             }
@@ -111,7 +111,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         // 滑块回缓冲区
         case FIRE_RETURN_UP_1:
             target_deliver_angle=(POS_BUFFER);
-            if (is_deliver_at_target(5)&&target_deliver_angle==POS_BUFFER) {//双重保险，确保不是因为目标位置被改了才误判到位
+            if (is_deliver_at_target(DELIVER_ARRIVE_THRESHOLD)&&target_deliver_angle==POS_BUFFER) {//双重保险，确保不是因为目标位置被改了才误判到位
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_UP_1;
             }
@@ -142,16 +142,21 @@ void Launcher_Driver::Run_Firing_Sequence()
                 这样可以兼顾安全和瞄准。
             */  
             #if aim_wait_test
-            aim_reached_or_timeout = (is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f))
+            aim_reached_or_timeout = (is_igniter_at_target(IGNITER_ARRIVE_THRESHOLD)&&Yawer.isMotorAngleReached(YAW_ARRIVE_THRESHOLD)&& Yawer.is_Yaw_pid_Vision_stable(YAW_VISION_STABLE_THRESHOLD))
             ||((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay);
             if (aim_reached_or_timeout) 
-            {
+            {                
                 state_timer = current_time;
                 fire_state = FIRE_SHOOTING_1;
                 aim_reached_or_timeout = false;
                 if(((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay))
                 {
                     LOG_ERROR("Dart1 Aim Wait Timeout! Forcing Fire.");
+                }
+                else if(Yawer.is_Yaw_pid_Vision_stable(YAW_VISION_STABLE_THRESHOLD))
+                {
+                    LOG_INFO("Dart1 Aim Reached Normally.");
+                    Debugger.buzzer_beep_count=1; //目标稳定鸣叫
                 }
                 LOG_INFO("Dart1 Fired! Total Count: %d", Robot.Status.dart_count);
                 LOG_INFO("Dart1 Yaw Target: %.2f, Igniter Goal: %.2f", Yawer.yaw_target, target_igniter_angle);
@@ -211,7 +216,7 @@ void Launcher_Driver::Run_Firing_Sequence()
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_BOTTOM_2;
             }
-            if (is_deliver_at_target(5)&&target_deliver_angle==POS_BOTTOM) {//双重保险，确保不是因为目标位置被改了才误判到位
+            if (is_deliver_at_target(DELIVER_ARRIVE_THRESHOLD)&&target_deliver_angle==POS_BOTTOM) {//双重保险，确保不是因为目标位置被改了才误判到位
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_BOTTOM_2;
                 loader_target_mode=LOAD_PRE_LOAD;
@@ -229,7 +234,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         // 滑块回缓冲区
         case FIRE_RETURN_UP_2:
             target_deliver_angle=(POS_BUFFER);
-            if (is_deliver_at_target(5)&&target_deliver_angle==POS_BUFFER) {//双重保险，确保不是因为目标位置被改了才误判到位
+            if (is_deliver_at_target(DELIVER_ARRIVE_THRESHOLD)&&target_deliver_angle==POS_BUFFER) {//双重保险，确保不是因为目标位置被改了才误判到位
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_UP_2;
                 loader_target_mode=LOAD_ENGAGED;
@@ -246,7 +251,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         // 等待瞄准完成，增加超时逻辑，非必要等待
         case FIRE_WAIT_AIM_2:
             #if aim_wait_test
-            aim_reached_or_timeout = (is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f))
+            aim_reached_or_timeout = (is_igniter_at_target(IGNITER_ARRIVE_THRESHOLD)&&Yawer.isMotorAngleReached(5.0f)&&Yawer.is_Yaw_pid_Vision_stable(YAW_VISION_STABLE_THRESHOLD))
             ||((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay);
             if (aim_reached_or_timeout) 
             {
@@ -256,6 +261,11 @@ void Launcher_Driver::Run_Firing_Sequence()
                 if(((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay))
                 {
                     LOG_ERROR("Dart2 Aim Wait Timeout! Forcing Fire.");
+                }
+                else if(Yawer.is_Yaw_pid_Vision_stable(YAW_VISION_STABLE_THRESHOLD))
+                {
+                    LOG_INFO("Dart2 Aim Reached Normally.");
+                    Debugger.buzzer_beep_count=1; //目标稳定鸣叫
                 }
                 LOG_INFO("Dart2 Fired! Total Count: %d", Robot.Status.dart_count);
                 LOG_INFO("Dart2 Yaw Target: %.2f, Igniter Goal: %.2f", Yawer.yaw_target, target_igniter_angle);
@@ -328,7 +338,7 @@ void Launcher_Driver::Run_Firing_Sequence()
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_BOTTOM_3;
             }
-            if (is_deliver_at_target(5)&&target_deliver_angle==POS_BOTTOM) {//双重保险，确保不是因为目标位置被改了才误判到位
+            if (is_deliver_at_target(DELIVER_ARRIVE_THRESHOLD)&&target_deliver_angle==POS_BOTTOM) {//双重保险，确保不是因为目标位置被改了才误判到位
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_BOTTOM_3;
                 loader_target_mode=LOAD_PRE_LOAD;
@@ -346,7 +356,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         // 滑块回缓冲区
         case FIRE_RETURN_UP_3:
             target_deliver_angle=(POS_BUFFER);
-            if (is_deliver_at_target(5)) {
+            if (is_deliver_at_target(DELIVER_ARRIVE_THRESHOLD)) {
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_UP_3;
                 loader_target_mode=LOAD_ENGAGED;
@@ -365,7 +375,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         // 等待瞄准完成，增加超时逻辑，非必要等待
         case FIRE_WAIT_AIM_3:
             #if aim_wait_test
-            aim_reached_or_timeout = (is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f))
+            aim_reached_or_timeout = (is_igniter_at_target(IGNITER_ARRIVE_THRESHOLD)&&Yawer.isMotorAngleReached(5.0f)&&Yawer.is_Yaw_pid_Vision_stable(YAW_VISION_STABLE_THRESHOLD))
             ||((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay);
             if (aim_reached_or_timeout) {
                 state_timer = current_time;
@@ -374,6 +384,11 @@ void Launcher_Driver::Run_Firing_Sequence()
                 if(((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay))
                 {
                     LOG_ERROR("Dart3 Aim Wait Timeout! Forcing Fire.");
+                }
+                else if(Yawer.is_Yaw_pid_Vision_stable(YAW_VISION_STABLE_THRESHOLD))
+                {
+                    LOG_INFO("Dart3 Aim Reached Normally.");
+                    Debugger.buzzer_beep_count=1; //目标稳定鸣叫
                 }
                 LOG_INFO("Dart3 Fired! Total Count: %d", Robot.Status.dart_count);
                 LOG_INFO("Dart3 Yaw Target: %.2f, Igniter Goal: %.2f", Yawer.yaw_target, target_igniter_angle);
@@ -445,7 +460,7 @@ void Launcher_Driver::Run_Firing_Sequence()
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_BOTTOM_4;
             }
-            if (is_deliver_at_target(5)&&target_deliver_angle==POS_BOTTOM) {//双重保险，确保不是因为目标位置被改了才误判到位
+            if (is_deliver_at_target(DELIVER_ARRIVE_THRESHOLD)&&target_deliver_angle==POS_BOTTOM) {//双重保险，确保不是因为目标位置被改了才误判到位
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_BOTTOM_4;
                 loader_target_mode=LOAD_PRE_LOAD;
@@ -463,7 +478,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         // 滑块回缓冲区
         case FIRE_RETURN_UP_4:
             target_deliver_angle=(POS_BUFFER);
-            if (is_deliver_at_target(5)&&target_deliver_angle==POS_BUFFER) {//双重保险，确保不是因为目标位置被改了才误判到位
+            if (is_deliver_at_target(DELIVER_ARRIVE_THRESHOLD)&&target_deliver_angle==POS_BUFFER) {//双重保险，确保不是因为目标位置被改了才误判到位
                 state_timer = current_time;
                 fire_state = FIRE_WAIT_UP_4;
                 loader_target_mode=LOAD_ENGAGED; // 升降机下降，装填第四发
@@ -481,7 +496,7 @@ void Launcher_Driver::Run_Firing_Sequence()
         // 等待瞄准完成，增加超时逻辑，非必要等待      
         case FIRE_WAIT_AIM_4:
             #if aim_wait_test
-            aim_reached_or_timeout = (is_igniter_at_target(5)&&Yawer.isMotorAngleReached(5.0f))
+            aim_reached_or_timeout = (is_igniter_at_target(IGNITER_ARRIVE_THRESHOLD)&&Yawer.isMotorAngleReached(5.0f)&&Yawer.is_Yaw_pid_Vision_stable(YAW_VISION_STABLE_THRESHOLD))
             ||((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay);
             if (aim_reached_or_timeout) 
             {
@@ -491,6 +506,11 @@ void Launcher_Driver::Run_Firing_Sequence()
                 if(((current_time - state_timer)>fire_sequence_delay_params.wait_for_aim_delay))
                 {
                     LOG_ERROR("Dart4 Aim Wait Timeout! Forcing Fire.");
+                }
+                else if(Yawer.is_Yaw_pid_Vision_stable(YAW_VISION_STABLE_THRESHOLD))
+                {
+                    LOG_INFO("Dart4 Aim Reached Normally.");
+                    Debugger.buzzer_beep_count=1; //目标稳定鸣叫
                 }
                 LOG_INFO("Dart4 Fired! Total Count: %d", Robot.Status.dart_count);
                 LOG_INFO("Dart4 Yaw Target: %.2f, Igniter Goal: %.2f", Yawer.yaw_target, target_igniter_angle);
