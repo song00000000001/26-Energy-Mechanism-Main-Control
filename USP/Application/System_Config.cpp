@@ -120,6 +120,9 @@ void System_Task_Init(void)
 #if USE_SRML_DR16
     DR16_QueueHandle = xQueueCreate(3, sizeof(USART_COB));
 #endif
+#if USE_SRML_FS_I6X
+    FS_I6X_QueueHandle = xQueueCreate(3, sizeof(USART_COB));
+#endif
     /* Semaphore Init */
     /* Mutex Init */
 #if USE_SRML_DR16
