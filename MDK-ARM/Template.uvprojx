@@ -477,27 +477,37 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>USP/Application/drivers</GroupName>
+          <GroupName>USP/drivers</GroupName>
           <Files>
             <File>
               <FileName>motor_ctrl_driver.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\USP\Application\Robot_Module\motor_ctrl_driver.cpp</FilePath>
+              <FilePath>..\USP\Drivers\motor_ctrl_driver.cpp</FilePath>
             </File>
             <File>
               <FileName>motor_ctrl_driver.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\USP\Application\Robot_Module\motor_ctrl_driver.h</FilePath>
+              <FilePath>..\USP\Drivers\motor_ctrl_driver.h</FilePath>
             </File>
             <File>
               <FileName>remote_ctrl_driver.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\USP\Application\Robot_Module\remote_ctrl_driver.cpp</FilePath>
+              <FilePath>..\USP\Drivers\remote_ctrl_driver.cpp</FilePath>
             </File>
             <File>
               <FileName>remote_ctrl_driver.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\USP\Application\Robot_Module\remote_ctrl_driver.h</FilePath>
+              <FilePath>..\USP\Drivers\remote_ctrl_driver.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_ws2812.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\USP\Drivers\bsp_ws2812.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_ws2812.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\USP\Drivers\bsp_ws2812.h</FilePath>
             </File>
           </Files>
         </Group>

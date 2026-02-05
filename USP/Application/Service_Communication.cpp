@@ -32,6 +32,53 @@ U5: LOG
 u5本来是给裁判系统用的，不过裁判系统只用收不发，所以没关系
 */
 
+/*
+串口通信协议说明
+uart5:与上位机通信 波特率115200
+*/
+
+//can通信协议说明
+
+/*
+can1:与电机通信 波特率1Mbps
+电机反馈ID:0x
+电机控制ID:0x
+*/
+
+/*
+can2:与分控通信 波特率1Mbps
+
+分控有5个。分控ID从1-5。
+
+分控反馈ID:0x220+分控ID
+分控控制ID:0x210+分控ID
+
+分控反馈包：
+    CAN_TxMsg.IdType = Can_STDID;
+    CAN_TxMsg.ID = 0x220+sub_ctrl_id; // 分控 ID 作为低字节
+    CAN_TxMsg.DLC = 2;
+    CAN_TxMsg.Data[0] = (g_led_ctrl_mask >> 8) & 0xFF; // 高字节
+    CAN_TxMsg.Data[1] = g_led_ctrl_mask & 0xFF;        // 低字节
+
+分控控制包：
+    分控接收解析代码：
+    ```C
+    // 1. 校验数据包
+    if (CAN_RxMsg.ID ==  0x210+sub_ctrl_id && CAN_RxMsg.DLC == 3) {
+        // 2. 更新全局状态
+        global_color = (light_color_enum)CAN_RxMsg.Data[0];
+        g_active_groups = CAN_RxMsg.Data[1];
+        g_energy_state = CAN_RxMsg.Data[2];
+    }
+    ```
+    CAN_TxMsg.IdType = Can_STDID;
+    CAN_TxMsg.ID = 0x210+sub_ctrl_id; // 分控 ID 作为低字节
+    CAN_TxMsg.DLC = 2;
+    CAN_TxMsg.Data[0] = sub_ctrl_color[sub_ctrl_id]; // 高字节
+    CAN_TxMsg.Data[1] = g_SystemState.BE_Group;        // 低字节
+    CAN_TxMsg.Data[2] = g_SystemState.SysMode;        // 低字节
+*/
+
 #if USE_SRML_CAN
 TaskHandle_t CAN1SendPort_Handle;
 TaskHandle_t CAN2SendPort_Handle;
