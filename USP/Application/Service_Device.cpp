@@ -38,8 +38,8 @@
 
 TaskHandle_t FS_I6X_Handle;
 TaskHandle_t Rx_Referee_Handle;
-TaskHandle_t LaunchCtrl_Handle;
-TaskHandle_t Loader_Ctrl_Handle;
+TaskHandle_t task_state_machine_Handle;
+TaskHandle_t task_motor_ctrl_Handle;
 TaskHandle_t Vision_Task_Handle;
 TaskHandle_t log_Handle;
 TaskHandle_t protocol_status_monitor_Handle;
@@ -77,9 +77,9 @@ void Service_Devices_Init(void)
     4. 上位机通信任务
     5. 遥控器任务
     */
-	xTaskCreate(LaunchCtrl, "App.LaunchCtrl", Large_Stack_Size, NULL, PriorityHigh, &LaunchCtrl_Handle);
+	xTaskCreate(task_state_machine, "App.task_state_machine", Large_Stack_Size, NULL, PriorityHigh, &task_state_machine_Handle);
 	xTaskCreate(Vision_Task, "App.Vision_Task", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityHigh, &Vision_Task_Handle);
-	xTaskCreate(Loader_Ctrl, "App.Loader_Ctrl", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityAboveNormal, &Loader_Ctrl_Handle);
+	xTaskCreate(task_motor_ctrl, "App.task_motor_ctrl", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityAboveNormal, &task_motor_ctrl_Handle);
     xTaskCreate(Task_load_test_ctrl, "App.load_test_ctrl", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityNormal, &load_test_ctrl_Handle);
 
 #if USE_SRML_FS_I6X

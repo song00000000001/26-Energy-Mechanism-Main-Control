@@ -11,9 +11,6 @@
 #define WS2312_0bit 29
 #define WS2312_1bit 50
 
-#define arm_tim1 &htim3
-#define arm_channel_1 TIM_CHANNEL_3
-
 static uint16_t tim_pwm_dma_buff[dma_data_len] = {0};//PWM DMA数据缓存
 static uint8_t Pixel_Buff[WS2312_LED_NUM * 3] = {0};//RGB数据缓存
 

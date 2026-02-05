@@ -1,12 +1,18 @@
 #pragma once
 
 #include "SRML.h"
-#include "robot_types.h"
 
 typedef struct motor_angle_limit_t{
     float lower_limit;
     float upper_limit;
 } motor_angle_limit_t;
+
+// 定义控制模式
+enum Control_Mode_e {
+    MODE_SPEED=0,       // 速度环
+    MODE_ANGLE,      // 角度环
+    MODE_ERROR      // 失能
+} ;
 
 class motor_ctrl_driver
 {
@@ -31,4 +37,15 @@ public:
 
     // 是否到达目标位置
     bool is_motor_at_target();
+    // 获取电机当前信息
+    float get_motor_angle();
+    float get_motor_speed();
+    // 设置电机目标角度
+    void set_motor_target_angle(float angle);
+    // 设置电机角度限幅
+    void set_motor_angle_limit(float lower_limit,float upper_limit);
+    // 设置电机模式
+    void set_motor_mode(Control_Mode_e mode);
+    // 设置电机目标速度
+    void set_motor_target_speed(float speed);
 };

@@ -500,9 +500,9 @@
               <FilePath>..\USP\Drivers\remote_ctrl_driver.h</FilePath>
             </File>
             <File>
-              <FileName>bsp_ws2812.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\USP\Drivers\bsp_ws2812.cpp</FilePath>
+              <FileName>bsp_ws2812.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USP\Drivers\bsp_ws2812.c</FilePath>
             </File>
             <File>
               <FileName>bsp_ws2812.h</FileName>

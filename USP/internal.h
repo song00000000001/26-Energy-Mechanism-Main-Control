@@ -145,8 +145,8 @@ void User_VirtualComRecCpltCallback(uint8_t *Recv_Data, uint16_t ReceiveLen);
 
 //自定义任务函数声明
 //void tskLoaderMotor(void *arg);
-void LaunchCtrl(void *arg);
-void Loader_Ctrl(void *arg);
+void task_state_machine(void *arg);
+void task_motor_ctrl(void *arg);
 void tskFS_I6X(void *arg);
 //void Yaw_Task(void *arg);
 //void turn1(float angle);
