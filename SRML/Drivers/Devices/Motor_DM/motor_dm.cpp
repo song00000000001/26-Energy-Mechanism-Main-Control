@@ -99,16 +99,16 @@ void Motor_DM_classdef::control(float position, float velocity, float kp, float 
 bool Motor_DM_classdef::update(uint32_t _unuse_id, uint8_t data[8])
 {
     UNUSED(_unuse_id);
-    if (this->ID != (data[0] & 0x0F))
-        return false;
+    if ((this->ID) != (data[0] & 0x0F))
+        //return false;
 
     update_angle(data);
 
     state = (data[0]) >> 4;
     int32_t v_int = (data[3] << 4) | (data[4] >> 4);
     int32_t t_int = ((data[4] & 0xF) << 8) | data[5];
-    Rec_Data.velocity = std_lib::uint_to_float(v_int, V_MIN, V_MAX, 12); // (-45.0,45.0)
-    Rec_Data.torque = std_lib::uint_to_float(t_int, T_MIN, T_MAX, 12);   // (-10.0,10.0)
+    //Rec_Data.velocity = std_lib::uint_to_float(v_int, V_MIN, V_MAX, 12); // (-45.0,45.0)
+    //Rec_Data.torque = std_lib::uint_to_float(t_int, T_MIN, T_MAX, 12);   // (-10.0,10.0)
 
     Rec_Data.T_mos = (float)(data[6]);
     Rec_Data.T_rotor = (float)(data[7]);
@@ -120,7 +120,7 @@ void Motor_DM_classdef::update_angle(uint8_t can_rx_data[])
 {
     encoder = (uint16_t)(can_rx_data[1] << 8) | can_rx_data[2];
     uint16_t pos_temp = ((uint16_t)(encoder - encoder_offset)) % (2 << 14);
-    Rec_Data.position = std_lib::uint_to_float(pos_temp, 0, 2 * PI, 14);
+    //Rec_Data.position = std_lib::uint_to_float(pos_temp, 0, 2 * PI, 14);
 
     if (encoder_is_init)
     {

@@ -442,7 +442,8 @@ protected:
     }
     void setRawMotorCurrentOut(float out) override __used_attribute__
     {
-        motor.setTorque(out);
+        //motor.setTorque(out);
+        motor.Out = out; // 仅存储，等待后续 MotorMsgPack 打包发送
     }
 
     float getRawMotorTorque()

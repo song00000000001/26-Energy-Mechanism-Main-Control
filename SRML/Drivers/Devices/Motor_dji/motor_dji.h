@@ -38,6 +38,7 @@
 #include "Middlewares/Algorithm/MultiTurnRecorder/MultiTurnRecorder.h"
 #include "FreeRTOS.h"
 #include "queue.h"
+#include "Drivers/Devices/Motor_DM/motor_dm.h"
 #ifdef __cplusplus
 /* Private macros ------------------------------------------------------------*/
 /* Private type --------------------------------------------------------------*/
@@ -48,6 +49,7 @@ struct Motor_CAN_COB
     CAN_COB Id200 = {Can_STDID, 0x200, 8, {0}};
     CAN_COB Id1ff = {Can_STDID, 0x1ff, 8, {0}};
     CAN_COB Id2ff = {Can_STDID, 0x2ff, 8, {0}};
+    CAN_COB Id3fe = {Can_STDID, 0x3fe, 8, {0}};
 };
 /* Exported variables --------------------------------------------------------*/
 /* Exported function declarations --------------------------------------------*/
@@ -458,5 +460,25 @@ Motor_CAN_COB &motor_dji::MotorMsgPack(Motor_CAN_COB &motor_msg, MotorType &moto
     }
     return motor_msg;
 }
+
+//添加对达妙电机的支持
+template <>
+inline Motor_CAN_COB &motor_dji::MotorMsgPack(Motor_CAN_COB &motor_msg, Motor_DM_classdef &motor)
+{
+    // 电机ID=2，对应一拖四控制帧的第 3,4 字节
+    int16_t constrain_Out = (int16_t)std_lib::constrain(motor.Out, -10000.0f, 10000.0f);
+    /*todo
+    song
+    根据实际量程调整
+    */ 
+    
+    // 映射逻辑：ID 1->Data[0-1], ID 2->Data[2-3], ID 3->Data[4-5], ID 4->Data[6-7]
+    if (motor.ID >= 1 && motor.ID <= 4) {
+        motor_msg.Id200.Data[motor.ID * 2 - 2] = (constrain_Out >> 8) & 0xff;
+        motor_msg.Id200.Data[motor.ID * 2 - 1] = constrain_Out & 0xff;
+    }
+    return motor_msg;
+}
+
 #endif
 /************************ COPYRIGHT(C) SCUT-ROBOTLAB **************************/
