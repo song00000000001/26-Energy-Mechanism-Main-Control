@@ -76,7 +76,7 @@
 #define USE_SRML_MF9025_V2                0   // 瓴控MF9025  
 #define USE_SRML_MOTOR_DM                 1   // 达妙电机
 #define USE_SRML_HT04                     0   // 海泰电机
-#define USE_SRML_CYBER_GEAR               1   // 小米微电机
+#define USE_SRML_CYBER_GEAR               0   // 小米微电机
 // IMU
 #define USE_SRML_MPU6050                  0
 #define USE_SRML_LPMS_BE2                 0   // 阿路比IMU

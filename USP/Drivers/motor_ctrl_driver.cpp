@@ -10,7 +10,7 @@ motor_ctrl_driver::motor_ctrl_driver(uint8_t id):
     mymotor.Polarity = 1;
     //float deliver_ratio = (2 * PI * 18.62f) / (360 * 51);
     //mymotor.angle_unit_convert = deliver_ratio;
-    mymotor.angle_unit_convert = 1;
+    mymotor.angle_unit_convert = 1; // 角度单位转换
     mymotor.speed_unit_convert = 1;
 
     mymotor_mode = MODE_SPEED; 
@@ -67,16 +67,16 @@ void motor_ctrl_driver::motor_output(bool enable){
 // ================= 状态查询 =================
 
 bool motor_ctrl_driver::is_motor_at_target() {
-    float err=abs(mymotor.getMotorTotalAngle() - target_motor_angle);
+    float err=abs(dm_motor_recdata.angle - target_motor_angle);
     return (err < threshold_motor_at_target);
 }
 
 float motor_ctrl_driver::get_motor_angle(){
-    return mymotor.getMotorTotalAngle();
+    return dm_motor_recdata.angle;
 }
 
 float motor_ctrl_driver::get_motor_speed(){
-    return mymotor.getMotorSpeed();
+    return dm_motor_recdata.velocity;
 }
 
 // 设置电机目标角度
@@ -99,3 +99,41 @@ void motor_ctrl_driver::set_motor_target_speed(float speed){
     }
     mymotor_pid_spd.Target = speed;
 }
+
+bool motor_ctrl_driver::update(uint32_t _unuse_id, uint8_t data[8])
+{
+    //if ((ID) != (data[0] & 0x0F))
+        //return false;
+
+    dm_motor_recdata.state = (data[0]) >> 4;
+    encoder = (uint16_t)(data[1] << 8) | data[2];
+	dm_motor_recdata.velocity =(data[3] << 4) | (data[4] >> 4); // (-45.0,45.0)
+    dm_motor_recdata.torque = ((data[4] & 0xF) << 8) | data[5];   // (-10.0,10.0)
+    dm_motor_recdata.T_mos = (float)(data[6]);
+    dm_motor_recdata.T_motor = (float)(data[7]);
+#if 0
+    if (encoder_is_init)
+    {
+        if (encoder - last_encoder > encoder_max / 2)
+            round_cnt--;
+        else if (encoder - last_encoder < -encoder_max / 2)
+            round_cnt++;
+    }
+    else
+    {
+        encoder_offset = encoder;
+        encoder_is_init = true;
+    }
+    last_encoder = encoder;
+    dm_motor_recdata.angle  = round_cnt * encoder_max + encoder - encoder_offset;
+#else
+    if (encoder - last_encoder > encoder_max / 2)
+        round_cnt--;
+    else if (encoder - last_encoder < -encoder_max / 2)
+        round_cnt++;
+    last_encoder = encoder;
+    dm_motor_recdata.angle  = round_cnt * encoder_max + encoder;
+#endif
+    return true;
+}
+

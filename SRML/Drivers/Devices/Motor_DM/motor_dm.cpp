@@ -99,7 +99,7 @@ void Motor_DM_classdef::control(float position, float velocity, float kp, float 
 bool Motor_DM_classdef::update(uint32_t _unuse_id, uint8_t data[8])
 {
     UNUSED(_unuse_id);
-    if ((this->ID) != (data[0] & 0x0F))
+    //if ((this->ID) != (data[0] & 0x0F))
         //return false;
 
     update_angle(data);
@@ -109,7 +109,8 @@ bool Motor_DM_classdef::update(uint32_t _unuse_id, uint8_t data[8])
     int32_t t_int = ((data[4] & 0xF) << 8) | data[5];
     //Rec_Data.velocity = std_lib::uint_to_float(v_int, V_MIN, V_MAX, 12); // (-45.0,45.0)
     //Rec_Data.torque = std_lib::uint_to_float(t_int, T_MIN, T_MAX, 12);   // (-10.0,10.0)
-
+	Rec_Data.velocity =v_int; // (-45.0,45.0)
+    Rec_Data.torque =t_int;   // (-10.0,10.0)
     Rec_Data.T_mos = (float)(data[6]);
     Rec_Data.T_rotor = (float)(data[7]);
 
@@ -137,6 +138,6 @@ void Motor_DM_classdef::update_angle(uint8_t can_rx_data[])
     this->last_encoder = this->encoder;
     int32_t total_encoder = round_cnt * encoder_max + encoder - encoder_offset;
     /* 该电机转四圈编码器才跑满一个65535 */
-    Rec_Data.angle = total_encoder * 360.f * 4.f / 65535.f;
+    Rec_Data.angle = total_encoder;
 }
 #endif

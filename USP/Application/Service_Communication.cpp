@@ -199,7 +199,7 @@ void Task_CAN1Receive(void *arg)
     /* update motor data from CAN1_RxPort */
     if (xQueueReceive(CAN1_RxPort, &CAN_RxCOB, portMAX_DELAY) == pdPASS)
     {
-        if (motor_ctrl.mymotor.update(CAN_RxCOB.ID, CAN_RxCOB.Data))
+        if (motor_ctrl.update(CAN_RxCOB.ID, CAN_RxCOB.Data))
         {
         }
     }

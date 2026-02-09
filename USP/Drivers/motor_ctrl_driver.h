@@ -14,11 +14,26 @@ enum Control_Mode_e {
     MODE_ERROR      // 失能
 } ;
 
+struct dm_motor_recdata_t
+{
+    int16_t angle = 0;   // 角度编码值
+    uint8_t state = 0; // 电机状态  
+    int16_t velocity=0;    // 当前速度
+    int16_t torque = 0;  // 当前力矩
+    uint8_t T_mos = 0;   // 表示驱动上 MOS 的平均温度
+    uint8_t T_motor = 0; // 表示电机内部线圈的平均温度
+};
+
 class motor_ctrl_driver
 {
 private:
 
 public:
+    dm_motor_recdata_t dm_motor_recdata;
+    uint16_t encoder,last_encoder,encoder_offset;
+    bool encoder_is_init;
+    const int32_t encoder_max = 65536; /* 码盘值最大值 */
+    int32_t round_cnt;
     // PID 对象
     myPID mymotor_pid_spd,mymotor_pid_pos;    
 
@@ -49,4 +64,5 @@ public:
     void set_motor_mode(Control_Mode_e mode);
     // 设置电机目标速度
     void set_motor_target_speed(float speed);
+    bool update(uint32_t _unuse_id, uint8_t data[8]);
 };

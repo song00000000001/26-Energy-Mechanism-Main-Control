@@ -21,7 +21,7 @@ void task_motor_ctrl(void *arg)
 
     motor_ctrl.set_motor_mode(MODE_SPEED);
     motor_ctrl.mymotor_pid_spd.SetPIDParam(0.001,0,0,0,10);
-
+    g_SystemState.SysMode=small_energy; //默认小能量机关模式
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime_t, xFrequency);
