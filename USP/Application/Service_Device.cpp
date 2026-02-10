@@ -83,7 +83,7 @@ void Service_Devices_Init(void)
    // xTaskCreate(Task_load_test_ctrl, "App.load_test_ctrl", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityNormal, &load_test_ctrl_Handle);
 
 #if USE_SRML_FS_I6X
-	xTaskCreate(tskFS_I6X, "App.FS_I6X", Small_Stack_Size+Tiny_Stack_Size, NULL, PrioritySuperHigh, &FS_I6X_Handle);
+	//xTaskCreate(tskFS_I6X, "App.FS_I6X", Small_Stack_Size+Tiny_Stack_Size, NULL, PrioritySuperHigh, &FS_I6X_Handle);
 #endif
 }
 

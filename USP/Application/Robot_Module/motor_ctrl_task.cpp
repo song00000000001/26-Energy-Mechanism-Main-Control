@@ -20,7 +20,7 @@ void task_motor_ctrl(void *arg)
     const TickType_t xFrequency = pdMS_TO_TICKS(2);
 
     motor_ctrl.set_motor_mode(MODE_SPEED);
-    motor_ctrl.mymotor_pid_spd.SetPIDParam(0.001,0,0,0,10);
+    motor_ctrl.mymotor_pid_spd.SetPIDParam(0.0,0,0,0,10);
     g_SystemState.SysMode=small_energy; //默认小能量机关模式
     for (;;)
     {
