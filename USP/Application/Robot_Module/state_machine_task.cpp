@@ -54,9 +54,9 @@ void task_state_machine(void *arg)
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
         main_task_now = xTaskGetTickCount();
         
-        if(g_SystemState.target_mode == 0) // 停止/待机
+        if(g_SystemState.target_mode == tar_stop) // 停止/待机
             g_SystemState.SysMode=idle;
-        else if(g_SystemState.target_mode == 1) // 激活
+        else if(g_SystemState.target_mode == tar_start) // 激活
             g_SystemState.SysMode=wait_start;
 
         // 模式判断
@@ -74,14 +74,14 @@ void task_state_machine(void *arg)
             R_light(color_off);
             switch (g_SystemState.target_mode)
             {
-            case 0: // 停止/待机
-                //g_SystemState.SysMode=idle;
+            case tar_stop: // 停止/待机
+                g_SystemState.SysMode=idle;
                 break;
-            case 1: // 激活
-            case 2: // 小能量机关
-            case 3: // 大能量机关
-            case 4: // 连续小能量机关
-            case 5: // 连续大能量机关
+            case tar_start: // 激活
+            case tar_small_energy_signle: // 小能量机关
+            case tar_big_energy_single: // 大能量机关
+            case tar_small_energy_continue: // 连续小能量机关
+            case tar_big_energy_continue: // 连续大能量机关
                 g_SystemState.SysMode=wait_start;
                 break;
             default:
@@ -99,13 +99,11 @@ void task_state_machine(void *arg)
             g_SystemState.SE_Group = 0; // 重置小能量轮数
             g_SystemState.SE_State = SE_GENERATE_TARGET; // 重置小能量状态机
             ResetArmors(); // 熄灭所有装甲板
-            if(g_SystemState.set_color == 0)
+            if(g_SystemState.TargetColor == color_red)
                 R_light(color_red);
-            else if(g_SystemState.set_color == 1)
+            else if(g_SystemState.TargetColor == color_blue)
                 R_light(color_blue);
-
-            vTaskDelay(1000);
-
+            g_SystemState.TargetSpeed = 0.1f; // 初始目标速度
             switch (g_SystemState.target_mode)
             {
             case 0: // 停止/待机
@@ -132,7 +130,7 @@ void task_state_machine(void *arg)
             // 全部点亮
             LightArmors();
             vTaskDelay(2000); 
-            g_SystemState.target_mode = 0; // 结束，回到待机
+            g_SystemState.target_mode = tar_stop; // 结束，回到待机
         }
         else if(g_SystemState.SysMode == small_energy) 
         {
@@ -143,7 +141,6 @@ void task_state_machine(void *arg)
             {
             case SE_GENERATE_TARGET: // 生成目标
                 generateSETarget();
-                updateSEArmorLight();
                 g_SystemState.SE_StateTimer = now;
                 g_SystemState.SE_State = SE_WAIT_HIT; // 切换到等待击打
                 break;
@@ -154,12 +151,10 @@ void task_state_machine(void *arg)
                     ResetArmors(); // 熄灭所有装甲板
                     vTaskDelay(500);
                     g_SystemState.SE_Group = 0; // 重置轮数
-                    if(g_SystemState.target_mode == 4)
-                        g_SystemState.SE_State = SE_GENERATE_TARGET;
-                    else
-                        g_SystemState.target_mode = 1; // 结束，回到待机
+                    g_SystemState.SE_State = SE_GENERATE_TARGET;
                 }
                 
+                g_SystemState.SE_TargetID=g_SystemState.SE_TargetID_GROUP[g_SystemState.SE_Group];
                 // 击打判定
                 if (g_SystemState.CurrentHitID != 0) {
                     uint8_t hitID = g_SystemState.CurrentHitID;
@@ -168,33 +163,32 @@ void task_state_machine(void *arg)
                     if (hitID == g_SystemState.SE_TargetID) {
                         // 击中目标，进入下一轮
                         g_SystemState.SE_Group++; // 轮数加一
-                        if(g_SystemState.SE_Group >= 5) {
+                        if(g_SystemState.SE_Group >= 4) {
                             // 全部通关
-                            if(g_SystemState.target_mode == 4){
-                                lightSuccessFlash(2); // 闪烁提示成功
+                            if(g_SystemState.target_mode == tar_small_energy_continue){
                                 g_SystemState.SE_Group = 0; // 重置轮数
                                 g_SystemState.SE_State = SE_GENERATE_TARGET;
                             }
                             else{
                                 lightSuccessFlash(-4); // 闪烁提示成功
-                                g_SystemState.target_mode = success; // 结束
+                                g_SystemState.SysMode = success; // 结束
                             }
                             break;
                         }
                         SendFanPacket(hitID, FAN_CMD_HIT, g_SystemState.TargetColor, 0);
-                        vTaskDelay(200);
-                        g_SystemState.SE_State = SE_GENERATE_TARGET; 
+                        vTaskDelay(20);
+      
                     } 
                     else {
                         // 打错，重置
                         ResetArmors();
-                        vTaskDelay(500);
+                        vTaskDelay(100);
                         g_SystemState.SE_Group = 0; // 重置轮数
-                        if(g_SystemState.target_mode == 4)
-                            g_SystemState.SE_State = SE_GENERATE_TARGET;
-                        else
-                            g_SystemState.target_mode = 1; // 结束，回到待机
+                        break;
                     }
+                     
+                    updateSEArmorLight();
+                    g_SystemState.SE_StateTimer = now;
                 }
                 break;
 
@@ -231,8 +225,14 @@ void task_state_machine(void *arg)
             case BE_GENERATE_TARGET: // GENERATE_TARGET
                 if (g_SystemState.BE_Group >= 5) {
                     // 全部通关
-                    lightSuccessFlash(-4); // 闪烁提示成功
-                    g_SystemState.SysMode = success; // 结束
+                    if(g_SystemState.target_mode == tar_big_energy_continue){
+                        g_SystemState.BE_Group = 0; // 重置轮数
+                        g_SystemState.BE_State = BE_GENERATE_TARGET;
+                    }
+                    else{
+                        lightSuccessFlash(-4); // 闪烁提示成功
+                        g_SystemState.SysMode = success; // 结束
+                    }
                 } 
                 else {
                     GenerateBETargets();
@@ -246,12 +246,7 @@ void task_state_machine(void *arg)
                 // 超时失败
                 if (now - g_SystemState.BE_StateTimer > 2500) {
                     g_SystemState.BE_Group = 0; // 重置轮数
-                    if(g_SystemState.target_mode == 5){
-                        g_SystemState.BE_State = BE_GENERATE_TARGET;
-                    }
-                    else{
-                        g_SystemState.target_mode = 1; // 结束，回到待机
-                    }
+                    g_SystemState.BE_State = BE_GENERATE_TARGET;
                 }
                 
                 // 击打判定
@@ -267,16 +262,11 @@ void task_state_machine(void *arg)
                         // 进入 Stage 2，重置计时器
                         g_SystemState.BE_StateTimer = now;
                         g_SystemState.BE_State = BE_WAIT_HIT_2; 
-                    } else {
+                    } 
+                    else {
                         // 打错
                         g_SystemState.BE_Group = 0; // 重置轮数
-                        if(g_SystemState.target_mode == 5){
-                            g_SystemState.BE_State = BE_GENERATE_TARGET;
-                        }
-                        else{
-                            g_SystemState.target_mode = 1; // 结束，回到待机
-                        }
-
+                        g_SystemState.BE_State = BE_GENERATE_TARGET;
                     }
                 }
                 break;
@@ -284,8 +274,8 @@ void task_state_machine(void *arg)
             case BE_WAIT_HIT_2: // WAIT_HIT_2 (第二阶段连击：1s)
                 // 超时结束 -> 成功（单杀）
                 if (now - g_SystemState.BE_StateTimer > 1000) {
-                     g_SystemState.BE_Group++; // 晋级
-                     g_SystemState.BE_State = BE_GENERATE_TARGET; 
+                    g_SystemState.BE_Group++; // 晋级
+                    g_SystemState.BE_State = BE_GENERATE_TARGET; 
                 }
                 
                 // 击打判定
@@ -296,19 +286,14 @@ void task_state_machine(void *arg)
                     if (IsTarget(hitID)) {
                         // 击中剩下那个 -> 双杀成功
                         SendFanPacket(hitID, FAN_CMD_HIT, g_SystemState.TargetColor, g_SystemState.BE_Group + 1);
-                        vTaskDelay(200);
+                        vTaskDelay(20);
                         
                         g_SystemState.BE_Group++;
                         g_SystemState.BE_State = BE_GENERATE_TARGET;
                     } else {
                         // 连击阶段打错，也判负
                         g_SystemState.BE_Group = 0; // 重置轮数
-                        if(g_SystemState.target_mode == 5){
-                            g_SystemState.BE_State = BE_GENERATE_TARGET;
-                        }
-                        else{
-                            g_SystemState.target_mode = 1; // 结束，回到待机
-                        }
+                        g_SystemState.BE_State = BE_GENERATE_TARGET;
                     }
                 }
                 break;
@@ -432,11 +417,21 @@ void lightSuccessFlash(int8_t num) {
 
 
 // 小能量机关辅助函数
-// 小能量机关比较简单,只是在5个装甲板中随机选择一个点亮,然后在2.5秒内等待击打
-// 如果击中则继续下一个,如果超时未击中或者打错则重置
+// 小能量机关比较简单,只是在5个装甲板中随机选择一个点亮,然后在2.5秒内等待击打,如果超时未击中或者打错则重置
+// 如果击中则亮起该arm,然后再剩下的中随机选一个,直到完成5轮
 // 1. 生成随机目标
 void generateSETarget() {
-    g_SystemState.SE_TargetID = (rand() % 5) + 1;
+    //参考洗牌算法,生成不重复的1~5的随机序列
+    static uint8_t ids[5] = {1, 2, 3, 4, 5};
+    for (int i = 4; i > 0; i--) {
+        int j = rand() % (i + 1);
+        uint8_t temp = ids[i];
+        ids[i] = ids[j];
+        ids[j] = temp;
+    }
+    for(int i = 0; i < 5; i++){
+        g_SystemState.SE_TargetID_GROUP[i] = ids[i];
+    }
 }
 // 2. 更新装甲板灯光状态
 void updateSEArmorLight() {
@@ -444,7 +439,8 @@ void updateSEArmorLight() {
         if (i == g_SystemState.SE_TargetID) {
             // 是目标：亮起瞄准灯
             SendFanPacket(i, FAN_CMD_SELECT, g_SystemState.TargetColor, 0);
-        } else {
+        } 
+        else {
             // 非目标：熄灭
             SendFanPacket(i, FAN_CMD_RESET, color_off, 0);
         }

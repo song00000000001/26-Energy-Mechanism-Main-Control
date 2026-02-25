@@ -8,19 +8,6 @@
 extern "C" {
 #endif
 
-#pragma pack(1)
-    struct VisionRecvData_t
-    {
-        uint8_t target_mode;
-		uint8_t ros=3;
-        float target_yaw;
-        float pilot_translation;
-        uint8_t end;
-    };
-#pragma pack()
-
-
-
 //调试数据结构体
 typedef struct {
     // 标志位
@@ -51,10 +38,6 @@ extern stack_remain_t Stack_Remain;
     }while(0)
 
 #endif
-
-
-extern uint32_t vision_last_recv_time ; 
-extern VisionRecvData_t vision_recv_pack;
 
 extern motor_ctrl_driver motor_ctrl;//电机控制驱动实例
 
@@ -101,6 +84,15 @@ typedef enum
     sub_arm_right
 }ligntarm_name_enum;
 
+typedef enum{
+    tar_stop = 0,
+    tar_start,
+    tar_small_energy_signle,
+    tar_big_energy_single,
+    tar_small_energy_continue,
+    tar_big_energy_continue
+}EnergyTargetMode_t;
+
 // 命令类型定义
 enum FanCmdType {
     FAN_CMD_RESET = 0x01,       // 复位/熄灭
@@ -111,10 +103,9 @@ enum FanCmdType {
 // 全局状态结构体 - 用于Debug控制和系统状态管理
 typedef struct {
     // --- 控制参数 (Debug可修改) ---
-    uint8_t target_mode;    // 0:停止/待机, 1:激活, 2. 小能量机关, 3:大能量机关 ,4: 连续小能量机关,5: 连续大能量机关
+    EnergyTargetMode_t target_mode;    // 0:停止/待机, 1:激活, 2. 小能量机关, 3:大能量机关 ,4: 连续小能量机关,5: 连续大能量机关
     EnergySystemMode_t  SysMode;       // 0:停止/待机, 1:小能量机关, 2:大能量机关
     light_color_enum  TargetColor;   // 0:Red, 1:Blue
-    uint8_t  set_color; // 当前颜色状态(与反馈保持一致),0:Red, 1:Blue
     float    SmallEnergy_Speed; // 小符固定速度
     float    BigEnergy_A;   // 大符正弦 A
     float    BigEnergy_W;   // 大符正弦 Omega
@@ -127,7 +118,8 @@ typedef struct {
     uint16_t CurrentHitRound;      // 当前击中环数
     
     // --- 小能量机关状态变量  ---
-    uint8_t  SE_TargetID;   // 当前目标ID (1-5)
+    uint8_t  SE_TargetID_GROUP[5];   // 当前目标序列组
+    uint8_t SE_TargetID; // 当前目标ID (1-5)
     uint8_t  SE_Group;      // 当前轮数 (0，1-5)
     SmallEnergyState_t  SE_State;      // 状态机: 0:生成, 1:等待击打, 2:结束
     uint32_t SE_StateTimer; // 状态计时器
@@ -154,6 +146,13 @@ typedef struct {
 
 void FanFeedbackProcess(CAN_COB &CAN_RxMsg);
 
+#pragma pack(1)
+typedef struct {
+    uint8_t ctrl_header;
+    uint8_t ctrl_content;
+} UpperCtrlPacket_t;
+#pragma pack()
+extern UpperCtrlPacket_t upper_ctrl_packet;
 #ifdef __cplusplus
 }
 #endif

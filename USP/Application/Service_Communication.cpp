@@ -287,8 +287,17 @@ void Task_UsartReceive(void *arg)
       switch (Usart_RxCOB.port_num)
       {
       case 1:
-        vision_last_recv_time = xTaskGetTickCount();
-        memcpy(&vision_recv_pack, Usart_RxCOB.address, sizeof(vision_recv_pack));
+        memcpy(&upper_ctrl_packet, Usart_RxCOB.address, sizeof(UpperCtrlPacket_t));
+        if(upper_ctrl_packet.ctrl_header == 0xA5)
+        {
+            // 解析上位机控制包
+            g_SystemState.target_mode = static_cast<EnergyTargetMode_t>(upper_ctrl_packet.ctrl_content);
+        }
+        if(upper_ctrl_packet.ctrl_header == 0x5A)
+        {
+            // 解析上位机控制包
+            g_SystemState.TargetColor = static_cast<light_color_enum>(upper_ctrl_packet.ctrl_content);
+        }
         break;
       case 2:
         break;
