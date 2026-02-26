@@ -306,6 +306,11 @@ void Task_UsartReceive(void *arg)
             // 解析上位机控制包
             g_TargetCtrl.TargetColor = static_cast<light_color_enum>(upper_ctrl_packet.ctrl_content);
         }
+        if(upper_ctrl_packet.ctrl_header == 0xFF)
+        {
+            Debugger.Debug_simulate_hit=true; // 模拟击打事件
+        }
+         break;
         break;
       case 2:
         break;

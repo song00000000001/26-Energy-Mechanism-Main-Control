@@ -34,17 +34,18 @@ void task_state_machine(void *arg)
     srand(adcSeed + xTaskGetTickCount()); 
 
     g_SystemState.SysMode=small_energy; //默认小能量机关模式
-    g_SystemState.BE_Group = 0;
-    g_SystemState.BE_State = BE_GENERATE_TARGET;
+    g_SystemState.BE_StateData.BE_Group = 0;
+    g_SystemState.BE_StateData.BE_State = BE_GENERATE_TARGET;
     g_SystemState.CurrentHitID = 0;
-    g_SystemState.SE_Group = 0; // 小能量轮数
-    g_SystemState.SE_State = SE_GENERATE_TARGET; // 小能量状态机
+    g_SystemState.SE_StateData.SE_Group = 0; // 小能量轮数
+    g_SystemState.SE_StateData.SE_State = SE_GENERATE_TARGET; // 小能量状态机
 
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
         main_task_now = xTaskGetTickCount();
         
+        debug_simulate_hit_f(); // 调试函数，模拟击打事件
         if(g_TargetCtrl.target_mode == tar_stop) // 停止/待机
             g_SystemState.SysMode=idle;
         else if(g_TargetCtrl.target_mode == tar_start) // 激活
@@ -102,7 +103,7 @@ void task_state_machine(void *arg)
         case success:
         {
             // 全部点亮
-            LightArmors();
+            Ctrl_All_Armors(FAN_CMD_HIT, g_TargetCtrl.TargetColor, 5);
             vTaskDelay(2000); 
             g_TargetCtrl.target_mode = tar_stop; // 结束，回到待机
         }
@@ -137,13 +138,31 @@ void R_light(light_color_enum color){
 }
 
 void state_machine_reset(){
-    g_SystemState.BE_Group = 0;
-    g_SystemState.BE_State = BE_GENERATE_TARGET;
-    g_SystemState.BE_Targets[0] = 0;
-    g_SystemState.BE_Targets[1] = 0;
+    g_SystemState.BE_StateData.BE_Group = 0;
+    g_SystemState.BE_StateData.BE_State = BE_GENERATE_TARGET;
+    g_SystemState.BE_StateData.BE_Targets[0] = 0;
+    g_SystemState.BE_StateData.BE_Targets[1] = 0;
     g_SystemState.CurrentHitID = 0;
-    g_SystemState.SE_Group = 0; // 重置小能量轮数
-    g_SystemState.SE_State = SE_GENERATE_TARGET; // 重置小能量状态机
-    ResetArmors(); // 熄灭所有装甲板
+    g_SystemState.SE_StateData.SE_Group = 0; // 重置小能量轮数
+    g_SystemState.SE_StateData.SE_State = SE_GENERATE_TARGET; // 重置小能量状态机
+    Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0); // 熄灭所有装甲板
     R_light(color_off);
+}
+
+void debug_simulate_hit_f() {
+    if (Debugger.Debug_simulate_hit) {
+        Debugger.Debug_simulate_hit = false; // 重置模拟击打标志
+        if(g_SystemState.SysMode == small_energy && g_SystemState.SE_StateData.SE_State == SE_WAIT_HIT) {
+            g_SystemState.CurrentHitID = g_SystemState.SE_StateData.SE_TargetID; // 模拟击中目标
+        }
+        else if(g_SystemState.SysMode == big_energy && (g_SystemState.BE_StateData.BE_State == BE_WAIT_HIT_1 || g_SystemState.BE_StateData.BE_State == BE_WAIT_HIT_2)) {
+            if(g_SystemState.BE_StateData.BE_State == BE_WAIT_HIT_1) {
+                g_SystemState.CurrentHitID = g_SystemState.BE_StateData.BE_Targets[0]; // 模拟击中第一个目标
+            }
+            else {
+                g_SystemState.CurrentHitID = g_SystemState.BE_StateData.BE_Targets[1]; // 模拟击中第二个目标
+            }
+        }
+        g_SystemState.CurrentHitScores = rand() % 10 + 1; // 模拟得分为1-10之间的随机数
+    }
 }

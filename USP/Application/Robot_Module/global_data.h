@@ -17,6 +17,7 @@ typedef enum{
 typedef struct {
     // 标志位
     Debug_Mode_e enable_debug_mode; // 在watch窗口改为true以进入调试模式(配合遥控器)
+    bool Debug_simulate_hit;// 模拟击打（进入调试模式后，在watch窗口改为true以模拟一次击打事件，配合遥控器）
 } Debug_Data_t;
 extern Debug_Data_t Debugger;  
 
@@ -114,25 +115,19 @@ typedef struct {
 }target_ctrl_t;
 extern target_ctrl_t g_TargetCtrl;
 
-// 全局状态结构体 - 用于Debug控制和系统状态管理
-typedef struct {
-    // --- 控制参数 (Debug可修改) ---
-   
-    EnergySystemMode_t  SysMode;       // 0:停止/待机, 1:小能量机关, 2:大能量机关
-    
-    // --- 运行状态 (只读) ---
-    uint8_t  CurrentHitID;  // 当前被击中的ID (反馈)
-    uint8_t  CurrentHitScores; // 当前得分 (根据击打情况计算，供上位机显示)
-    float    TargetSpeed;   // 当前计算目标速度
-    
+//小能量机关状态结构体
+typedef struct{
     // --- 小能量机关状态变量  ---
-    uint8_t  SE_TargetID_GROUP[5];   // 当前目标序列组
+    SmallEnergyState_t  SE_State;      // 状态机: 0:生成, 1:等待击打, 2:结束
     uint8_t  SE_TargetID; // 当前目标ID (1-5)
     uint8_t  SE_Group;      // 当前轮数 (0，1-5)
-    SmallEnergyState_t  SE_State;      // 状态机: 0:生成, 1:等待击打, 2:结束
+    uint8_t  SE_TargetID_GROUP[5];   // 当前目标序列组 
     uint32_t SE_StateTimer; // 状态计时器
     uint8_t  SE_Scores;
+}SmallEnergyStateData_t;
 
+//大能量机关状态结构体
+typedef struct{
     // --- 大能量机关状态变量  ---
     uint8_t  BE_Group;      // 当前轮数 (0，1-5)
     uint8_t  BE_Targets[2]; // 当前两个目标ID (1-5)
@@ -140,6 +135,16 @@ typedef struct {
     uint32_t BE_StateTimer; // 状态计时器
     uint8_t  BE_Scores;
     uint8_t  BE_ActivedArms; // 当前激活的装甲板数量 (1-10)
+}BigEnergyStateData_t;
+
+// 全局状态结构体 - 用于Debug控制和系统状态管理
+typedef struct {
+    EnergySystemMode_t  SysMode;       // 0:停止/待机, 1:小能量机关, 2:大能量机关
+    SmallEnergyStateData_t SE_StateData; // 小能量机关状态数据
+    BigEnergyStateData_t BE_StateData; // 大能量机关状态数据
+    uint8_t  CurrentHitID;  // 当前被击中的ID (反馈)
+    uint8_t  CurrentHitScores; // 当前得分 (根据击打情况计算，供上位机显示)
+    float    TargetSpeed;   // 当前计算目标速度 (供上位机显示)
 } EnergySystemState_t;
 
 extern EnergySystemState_t g_SystemState;
@@ -155,11 +160,11 @@ typedef struct {
 } FanPacket_t;
 #pragma pack()
 
-void LightArmors() ;
-void ResetArmors() ;
-void lightSuccessFlash(int8_t num) ;
+void Ctrl_All_Armors(FanCmdType cmd, light_color_enum color, uint8_t stage) ;
+void lightSuccessFlash(int8_t num, light_color_enum color);
 void small_energy_logic();
 void big_energy_logic();
+void debug_simulate_hit_f() ;//调试函数，模拟一次一定正确且环数随机的击打事件
 
 #pragma pack(1)
 typedef struct {

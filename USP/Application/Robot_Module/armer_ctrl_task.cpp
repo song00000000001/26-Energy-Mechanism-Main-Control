@@ -21,40 +21,33 @@ void armer_ctrl_task(void *arg)
 }
 
 
-void LightArmors() {
-    for (int i = 1; i <= 5; i++) {
+void Ctrl_All_Armors(FanCmdType cmd, light_color_enum color, uint8_t stage) {
+    for (uint8_t i = 1; i <= 5; i++) {
         // 全部点亮
-        SendFanPacket(i,FAN_CMD_HIT,g_TargetCtrl.TargetColor, g_SystemState.BE_Group);
-    }
-}
-
-void ResetArmors() {
-    for (int i = 1; i <= 5; i++) {
-        // 全部熄灭
-        SendFanPacket(i,FAN_CMD_RESET,color_off, g_SystemState.BE_Group);
+        SendFanPacket(i,cmd,color, stage);
     }
 }
 
 // 成功后闪烁重置,num>0正闪亮灭,num<0反闪灭亮
-void lightSuccessFlash(int8_t num) {
+void lightSuccessFlash(int8_t num, light_color_enum color) {
     if(num < 0) {
         num = -num;
-        for (uint8_t flash = 0; flash < num; flash++) {
+        for (uint8_t i = 0; i < num; i++) {
             // 全部熄灭
-            ResetArmors();
+            Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0);
             vTaskDelay(500);
             // 全部点亮
-            LightArmors();
+            Ctrl_All_Armors(FAN_CMD_HIT, color, 5);
             vTaskDelay(500);
         }
     }
     else if(num > 0) {
-        for (uint8_t flash = 0; flash < num; flash++) {
+        for (uint8_t i = 0; i < num; i++) {
             // 全部点亮
-            LightArmors();
+            Ctrl_All_Armors(FAN_CMD_HIT, color, 5);
             vTaskDelay(500);
             // 全部熄灭
-            ResetArmors();
+            Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0);
             vTaskDelay(500);
         }
     }

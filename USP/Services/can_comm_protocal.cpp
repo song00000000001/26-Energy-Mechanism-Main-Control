@@ -61,8 +61,7 @@ USART_COB TxMsg = {};
 char TxBuf[UART1_RX_BUFFER_SIZE];
 
 void my_printf(uint8_t port_num, const char* format, ...)
-{
-    
+{  
     va_list args;
     va_start(args, format);
     int len = vsnprintf(TxBuf, UART1_RX_BUFFER_SIZE, format, args);
@@ -74,7 +73,7 @@ void my_printf(uint8_t port_num, const char* format, ...)
         xQueueSend(USART_TxPort, &TxMsg, 0);
     }
     va_end(args);
-    
+    vTaskDelay(5); // 稍微延时,不然串口打印会乱
 }
 
 void hit_feedback_to_uart(uint8_t hitID,uint8_t scores){
@@ -86,7 +85,8 @@ void hit_feedback_to_uart(uint8_t hitID,uint8_t scores){
 小能量机关增益持续期间内，所有英雄、步兵、空 中机器人在获得经验时，额外获得原经验100%的经验，一方在一次小能量机关增益期间内通过此方 式最多共获得 1200 点额外经验。
 */
 void small_enegy_settlement(uint8_t average_round){
-    my_printf(upper_uart_id, "Small Energy Settlement - Average Round: %d\r\n", average_round);
+    my_printf(upper_uart_id, "SE settlement,total Round: %d\r\n", average_round);
+    vTaskDelay(10);
 }
 
 /*
@@ -113,8 +113,9 @@ void small_enegy_settlement(uint8_t average_round){
 |  10   |    60     |
 */
 void big_enegy_settlement(uint8_t average_round, uint8_t actived_arms){
-    my_printf(upper_uart_id, "Big Energy Settlement - Average Round: %d, Actived Arms: %d\r\n", average_round, actived_arms);
-    if(average_round >= 1 && average_round <= 3){
+    my_printf(upper_uart_id, "BE Settlement,Average Round: %d, Actived Arms: %d\r\n", average_round, actived_arms);
+    vTaskDelay(50);
+	if(average_round >= 0 && average_round <= 3){
         my_printf(upper_uart_id, "Attack Gain: 150%%, Defense Gain: 25%%, Heat Cooling Gain: None\r\n");
     }
     else if(average_round > 3 && average_round <= 7){
@@ -129,8 +130,11 @@ void big_enegy_settlement(uint8_t average_round, uint8_t actived_arms){
     else if(average_round > 9 && average_round <= 10){
         my_printf(upper_uart_id, "Attack Gain: 300%%, Defense Gain: 50%%, Heat Cooling Gain: 5x\r\n");
     }
+    vTaskDelay(50);
     if(actived_arms >= 5 && actived_arms <= 10){
-        uint8_t duration = 25 + actived_arms * 5; // 根据激活灯臂数计算增益持续时间
+        uint8_t duration = 30 + (actived_arms-5) * 5; // 根据激活灯臂数计算增益持续时间
+        if(actived_arms >= 10) duration = 60; //十组特殊处理
         my_printf(upper_uart_id, "Gain Duration: %d seconds\r\n", duration);
     }
+    vTaskDelay(50);
 }
