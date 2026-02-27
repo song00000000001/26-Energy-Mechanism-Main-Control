@@ -60,7 +60,6 @@ void motor_ctrl_driver::motor_output(bool enable){
         mymotor.setMotorCurrentOut(0);
         return;
     }
-    adjust();
     mymotor.setMotorCurrentOut(mymotor_pid_spd.Out);
 }
 
