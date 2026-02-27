@@ -105,6 +105,11 @@ void System_Task_Init(void)
     CAN2_TxPort = xQueueCreate(6, sizeof(CAN_COB));
     CAN2_RxPort = xQueueCreate(6, sizeof(CAN_COB));
     USART_TxPort = xQueueCreate(6, sizeof(USART_COB));
+    if (USART_TxPort == NULL) {
+        // 如果进入说明队列创建失败
+        // 常见原因：RTOS 堆内存不足
+        while(1); 
+    }
     USART_RxPort = xQueueCreate(6, sizeof(USART_COB));
 #if USE_SRML_DR16
     DR16_QueueHandle = xQueueCreate(3, sizeof(USART_COB));

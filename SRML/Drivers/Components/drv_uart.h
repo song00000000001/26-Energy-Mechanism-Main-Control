@@ -58,6 +58,7 @@ extern "C"
     uint8_t port_num;
     uint16_t len;
     uint8_t *address;
+    uint8_t data[UART1_TX_BUFFER_SIZE]; // 现在的数组
   } USART_COB;
 
 /* Exported macros -----------------------------------------------------------*/

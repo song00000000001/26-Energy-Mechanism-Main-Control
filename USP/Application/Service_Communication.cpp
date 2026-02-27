@@ -258,25 +258,48 @@ void User_CAN2_RxCpltCallback(CAN_COB *CAN_RxCOB)
 */
 void Task_UsartTransmit(void *arg)
 {
-  /* Cache for Task */
-  USART_COB Usart_TxCOB;
-  /* Pre-Load for task */
-  /* Infinite loop */
-  for (;;)
-  {
-    /* Usart Receive Port*/
-    if (xQueueReceive(USART_TxPort, &Usart_TxCOB, portMAX_DELAY) == pdPASS)
+    /* Cache for Task */
+    static USART_COB Usart_TxCOB;
+    /* Pre-Load for task */
+    /* Infinite loop */
+    for (;;)
     {
-      /* User Code Begin Here -------------------------------*/
-      switch (Usart_TxCOB.port_num)
-      {
-      default:
-        break;
-      }
-      /* User Code End Here ---------------------------------*/
-      SRML_UART_Transmit_DMA(&Usart_TxCOB);
+        /* Usart Receive Port*/
+        if (xQueueReceive(USART_TxPort, &Usart_TxCOB, 10) == pdPASS)
+        {
+            /* User Code Begin Here -------------------------------*/
+            // 2. 选择对应的串口句柄
+            UART_HandleTypeDef *target_huart = NULL;
+            switch(Usart_TxCOB.port_num) {
+            case 1: 
+                target_huart = &huart1; 
+                break;
+                // case 2: target_huart = &huart2; break;
+            default: 
+                target_huart = NULL;
+                break;
+            }
+
+            if(target_huart != NULL)
+            {
+                HAL_UART_StateTypeDef state = HAL_UART_GetState(target_huart);
+                if (SRML_UART_Transmit_DMA(Usart_TxCOB.port_num, Usart_TxCOB.data, Usart_TxCOB.len) == HAL_OK)
+                {
+                    // 只有成功启动了 DMA，才需要等待它结束
+                    while(state != HAL_UART_STATE_READY && state != HAL_UART_STATE_BUSY_RX)
+                    {
+                        state = HAL_UART_GetState(target_huart);
+                        vTaskDelay(1);
+                    }
+                }
+                else
+                {
+                    // 发送启动失败（可能是 HAL_BUSY 或 ERROR）
+                    state = HAL_UART_GetState(target_huart);
+                }
+            }
+        }
     }
-  }
 }
 
 void Task_UsartReceive(void *arg)

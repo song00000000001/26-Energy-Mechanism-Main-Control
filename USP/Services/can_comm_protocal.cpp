@@ -41,39 +41,27 @@ void FanFeedbackProcess(CAN_COB &CAN_RxMsg)
         g_SystemState.CurrentHitScores = CAN_RxMsg.Data[0];
     }
 }
-/*
-void my_printf(const char *format, ...)
-{
-    char buf[BLE_TX_BUF_LEN];
-    va_list args;
-    va_start(args, format);
-
-    int len = vsnprintf(buf, BLE_TX_BUF_LEN, format, args);
-    if (len > 0 && len < BLE_TX_BUF_LEN)
-    {
-      ble_print((uint8_t *)buf,len);
-    }
-
-    va_end(args);
-}
-*/
-USART_COB TxMsg = {};
-char TxBuf[UART1_RX_BUFFER_SIZE];
 
 void my_printf(uint8_t port_num, const char* format, ...)
 {  
+    
+    USART_COB TxMsg;
+
     va_list args;
     va_start(args, format);
-    int len = vsnprintf(TxBuf, UART1_RX_BUFFER_SIZE, format, args);
-    if (len > 0 && len < UART1_RX_BUFFER_SIZE)
+    // 直接格式化到结构体的数组里
+    int len = vsnprintf((char*)TxMsg.data, UART1_TX_BUFFER_SIZE, format, args);
+    va_end(args);
+    if (len > 0 && len < UART1_TX_BUFFER_SIZE)
     {        
         TxMsg.port_num = port_num; // 调试串口是 USART1
         TxMsg.len = len;
-        TxMsg.address = (uint8_t *)TxBuf;
-        xQueueSend(USART_TxPort, &TxMsg, 0);
+		BaseType_t result = xQueueSend(USART_TxPort, &TxMsg, 0); // 0 表示不等待
+        if (result != pdPASS) {
+			result=0;
+        }
     }
     va_end(args);
-    vTaskDelay(5); // 稍微延时,不然串口打印会乱
 }
 
 void hit_feedback_to_uart(uint8_t hitID,uint8_t scores){
@@ -85,9 +73,9 @@ void hit_feedback_to_uart(uint8_t hitID,uint8_t scores){
 小能量机关增益持续期间内，所有英雄、步兵、空 中机器人在获得经验时，额外获得原经验100%的经验，一方在一次小能量机关增益期间内通过此方 式最多共获得 1200 点额外经验。
 */
 void small_enegy_settlement(uint8_t average_round){
-    vTaskDelay(50);
+    vTaskDelay(80);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
     my_printf(upper_uart_id, "SE settlement,total Round: %d\r\n", average_round);
-    vTaskDelay(10);
+    vTaskDelay(80);
 }
 
 /*
@@ -114,9 +102,8 @@ void small_enegy_settlement(uint8_t average_round){
 |  10   |    60     |
 */
 void big_enegy_settlement(uint8_t average_round, uint8_t actived_arms){
-    vTaskDelay(50);
+    vTaskDelay(80);
     my_printf(upper_uart_id, "BE Settlement,Average Round: %d, Actived Arms: %d\r\n", average_round, actived_arms);
-    vTaskDelay(50);
 	if(average_round >= 0 && average_round <= 3){
         my_printf(upper_uart_id, "Attack Gain: 150%%, Defense Gain: 25%%, Heat Cooling Gain: None\r\n");
     }
@@ -132,11 +119,10 @@ void big_enegy_settlement(uint8_t average_round, uint8_t actived_arms){
     else if(average_round > 9 && average_round <= 10){
         my_printf(upper_uart_id, "Attack Gain: 300%%, Defense Gain: 50%%, Heat Cooling Gain: 5x\r\n");
     }
-    vTaskDelay(50);
     if(actived_arms >= 5 && actived_arms <= 10){
         uint8_t duration = 30 + (actived_arms-5) * 5; // 根据激活灯臂数计算增益持续时间
         if(actived_arms >= 10) duration = 60; //十组特殊处理
         my_printf(upper_uart_id, "Gain Duration: %d seconds\r\n", duration);
     }
-    vTaskDelay(50);
+    vTaskDelay(80);
 }
