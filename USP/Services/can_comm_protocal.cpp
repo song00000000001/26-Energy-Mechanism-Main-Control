@@ -104,6 +104,7 @@ void small_enegy_settlement(uint8_t average_round){
 void big_enegy_settlement(uint8_t average_round, uint8_t actived_arms){
     vTaskDelay(80);
     my_printf(upper_uart_id, "BE Settlement,Average Round: %d, Actived Arms: %d\r\n", average_round, actived_arms);
+    vTaskDelay(20);
 	if(average_round >= 0 && average_round <= 3){
         my_printf(upper_uart_id, "Attack Gain: 150%%, Defense Gain: 25%%, Heat Cooling Gain: None\r\n");
     }
@@ -119,6 +120,7 @@ void big_enegy_settlement(uint8_t average_round, uint8_t actived_arms){
     else if(average_round > 9 && average_round <= 10){
         my_printf(upper_uart_id, "Attack Gain: 300%%, Defense Gain: 50%%, Heat Cooling Gain: 5x\r\n");
     }
+    vTaskDelay(20);
     if(actived_arms >= 5 && actived_arms <= 10){
         uint8_t duration = 30 + (actived_arms-5) * 5; // 根据激活灯臂数计算增益持续时间
         if(actived_arms >= 10) duration = 60; //十组特殊处理
