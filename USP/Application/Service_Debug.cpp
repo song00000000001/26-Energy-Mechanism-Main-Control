@@ -84,14 +84,39 @@ void Task_VofaMonitor(void *arg){
 	{
 		vTaskDelayUntil(&xLastWakeTime_t, 5);
 
-        VofaMonitor::setDatas(0,
-            (float)motor_ctrl.mymotor_pid_spd.Target,
-            (float)motor_ctrl.mymotor_pid_spd.Current,
-            (float)motor_ctrl.mymotor_pid_spd.Out,
-            (float)motor_ctrl.get_motor_angle()
-        );       
-			
-		VofaMonitor::send(6);
+        switch (Debugger.enable_debug_mode)
+        {
+        case debug_mpuvoda_monitor:
+            VofaMonitor::setDatas(0,
+                (float)mpu_receive.yaw,
+                (float)mpu_receive.pitch,
+                (float)mpu_receive.roll,
+                (float)mpu_receive.accel[0],
+                (float)mpu_receive.accel[1],
+                (float)mpu_receive.accel[2],
+                (float)mpu_receive.gyro[0],
+                (float)mpu_receive.gyro[1],
+                (float)mpu_receive.gyro[2],
+                (float)mpu_receive.sensors
+            );
+            break;
+        case debug_mtvofa_monitor:
+            VofaMonitor::setDatas(0,
+                (float)motor_ctrl.mymotor_pid_spd.Target,
+                (float)motor_ctrl.mymotor_pid_spd.Current,
+                (float)motor_ctrl.mymotor_pid_spd.Out,
+                (float)motor_ctrl.get_motor_angle()
+            );      
+            break;   
+        case debug_idle:
+        default:
+            break;
+        }
+         
+		if(Debugger.enable_debug_mode != debug_idle)
+		{
+			VofaMonitor::send(1);
+		}
 			
         #ifdef INCLUDE_uxTaskGetStackHighWaterMark
         Stack_Remain.debug_send_stack_remain = uxTaskGetStackHighWaterMark(NULL);

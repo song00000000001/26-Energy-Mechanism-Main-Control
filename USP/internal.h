@@ -146,7 +146,7 @@ void User_VirtualComRecCpltCallback(uint8_t *Recv_Data, uint16_t ReceiveLen);
 //自定义任务函数声明
 void task_state_machine(void *arg);
 void task_motor_ctrl(void *arg);
-
+void task_imu(void *arg);
 #ifdef __cplusplus
 }
 #endif

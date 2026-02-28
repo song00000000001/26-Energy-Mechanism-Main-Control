@@ -44,6 +44,10 @@ TaskHandle_t Vision_Task_Handle;
 TaskHandle_t log_Handle;
 TaskHandle_t protocol_status_monitor_Handle;
 TaskHandle_t armer_ctrl_Handle;
+
+#if USE_SRML_MPU6050
+TaskHandle_t tskIMU_Handle;
+#endif
 //TaskHandle_t Yaw_Task_Handle;
 /* Private function declarations ---------------------------------------------*/
 
@@ -67,6 +71,55 @@ void Service_Devices_Init(void)
 	xTaskCreate(task_state_machine, "App.task_state_machine", Large_Stack_Size, NULL, PriorityHigh, &task_state_machine_Handle);
     xTaskCreate(task_motor_ctrl, "App.task_motor_ctrl", Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityAboveNormal, &task_motor_ctrl_Handle);
     //xTaskCreate(armer_ctrl_task, "App.armer_ctrl_task", Small_Stack_Size, NULL, PriorityAboveNormal, &armer_ctrl_Handle);
+    #if USE_SRML_MPU6050
+    xTaskCreate(task_imu, "App.tskIMU",  Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityNormal, &tskIMU_Handle);
+    #endif
+}
+
+#include "ws2812_ctrl_driver.h"
+void R_light(light_color_enum color);
+/**
+ * @brief MPU6050读取数据
+ */
+void task_imu(void *arg)
+{
+    /* Pre-Load for task */
+    TickType_t xLastWakeTime_t;
+    xLastWakeTime_t = xTaskGetTickCount();
+    uint8_t ws2812_counter = 0; // WS2812 的控制频率
+    for (;;)
+    {
+        /* wait for next circle */
+        vTaskDelayUntil(&xLastWakeTime_t, 4);
+        /*  读取MPU6050数据 */
+        vTaskSuspendAll();      //挂起其他任务，防止被打断
+        taskDISABLE_INTERRUPTS();//关闭中断，若使用中断关闭，请确保SRML定时器的中断不受FreeRTOS管辖
+        dmp_read_data(&mpu_receive);
+        taskENABLE_INTERRUPTS();
+        xTaskResumeAll();
+
+        ws2812_counter++;
+        if(ws2812_counter >= 25) { // 每100ms更新一次灯光
+            R_light(g_TargetCtrl.TargetColor);
+            ws2812_counter = 0;
+        }
+    }
 }
 
 
+void R_light(light_color_enum color){
+    switch(color){
+        case color_red:
+        case color_hit_red:
+            ws2312_show(255, 0, 0); // 红色
+            break;
+        case color_blue:
+        case color_hit_blue:
+            ws2312_show(0, 0, 255); // 蓝色
+            break;
+        case color_off:
+        default:
+            ws2312_show(0, 0, 0); // 关灯
+            break;
+    }
+}

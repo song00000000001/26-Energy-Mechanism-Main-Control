@@ -46,18 +46,14 @@ void task_state_machine(void *arg)
         .BigEnergy_A = 0.9125f,        // 默认大符参数 (0.780 + 1.045)/2
         .BigEnergy_W = 1.942f          // 默认大符参数 (1.884 + 2.000)/2
     };
-    uint8_t ws2812_counter = 0; // WS2812 的控制频率
+    
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
         main_task_now = xTaskGetTickCount();
         
         debug_simulate_hit_f(); // 调试函数，模拟击打事件
-        ws2812_counter++;
-        if(ws2812_counter >= 100) { // 每200ms更新一次灯光
-            R_light(g_TargetCtrl.TargetColor);
-            ws2812_counter = 0;
-        }
+        
         if(g_TargetCtrl.target_mode == tar_stop) // 停止/待机
             g_SystemState.SysMode=idle;
         else if(g_TargetCtrl.target_mode == tar_start) // 激活
@@ -128,23 +124,6 @@ void task_state_machine(void *arg)
         #ifdef INCLUDE_uxTaskGetStackHighWaterMark
         //Stack_Remain.task_state_machine_stack_remain = uxTaskGetStackHighWaterMark(NULL);
         #endif
-    }
-}
-
-void R_light(light_color_enum color){
-    switch(color){
-        case color_red:
-        case color_hit_red:
-            ws2312_show(255, 0, 0); // 红色
-            break;
-        case color_blue:
-        case color_hit_blue:
-            ws2312_show(0, 0, 255); // 蓝色
-            break;
-        case color_off:
-        default:
-            ws2312_show(0, 0, 0); // 关灯
-            break;
     }
 }
 
