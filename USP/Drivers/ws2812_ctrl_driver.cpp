@@ -1,7 +1,7 @@
 #include "ws2812_ctrl_driver.h"
 
 //30 + Num * 3 * 8 + 30
-#define WS2312_LED_NUM 25   // R标灯的 WS2812 LED 数量
+#define WS2312_LED_NUM 50   // R标灯的 WS2812 LED 数量
 
 #define PWM_DATA_LEN (WS2312_LED_NUM * 24) // 每个WS2812需要24个码元
 #define WS2812_RESET_LEN 40 // 定义重置周期数（800KHz 下，1.25us/bit，40个0约 50us）
@@ -42,16 +42,42 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
     }
 }         
 
-// 灯臂全部填充指定颜色
+// 灯臂填充指定颜色
+/*
+5*10,R标灯的 WS2812 灯珠排列如下（共50颗）：
+9  10 29 30 49
+8  11 28 31 48
+7  12 27 32 47
+6  13 26 33 46 
+5  14 25 34 45
+4  15 24 35 44
+3  16 23 36 43
+2  17 22 37 42
+1  18 21 38 41
+0  19 20 39 40
+*  *  *  *   
+*        *     
+*        *    
+*        *
+*     *
+*  *
+*  *  
+*     *
+*        *   
+*           *
+*/
+#define ws2312_map_len 23
+uint8_t ws2312_map[ws2312_map_len] = {0,1,2,3,4,5,6,7,8,9,10,15,16,29,25,22,30,33,31,32,33,38,40};
 void ws2312_show(uint8_t r, uint8_t g, uint8_t b)
 {
     uint8_t temp_pixels[WS2312_LED_NUM * 3] = {0};
 
-    for (int i = 0; i < WS2312_LED_NUM; i++) 
+
+    for (int i = 0; i < ws2312_map_len; i++) 
     {
-        temp_pixels[i * 3]     = g; // WS2812 典型为 GRB 顺序
-        temp_pixels[i * 3 + 1] = r;
-        temp_pixels[i * 3 + 2] = b;
+        temp_pixels[ws2312_map[i] * 3]     = g; // WS2812 典型为 GRB 顺序
+        temp_pixels[ws2312_map[i] * 3 + 1] = r;
+        temp_pixels[ws2312_map[i] * 3 + 2] = b;
     }
     // 将 RGB 数据转换为 PWM 码元
     Buff_translate(temp_pixels, tim_pwm_dma_buff);
