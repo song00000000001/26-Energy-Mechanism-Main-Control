@@ -4,16 +4,19 @@
 
 void task_motor_ctrl(void *arg)
 {
-    CAN_COB Tx_Buff = {};
-
     TickType_t xLastWakeTime_t;
     xLastWakeTime_t = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(2);
 
-    // motor_ctrl.set_motor_mode(MODE_SPEED);
-    // motor_ctrl.mymotor_pid_spd.SetPIDParam(0.0,0,0,0,10);
+    #if dm_motor_ctrl_mode
+    Motor_CAN_COB Tx_Buff = {};
+    motor_ctrl.set_motor_mode(MODE_SPEED);
+    motor_ctrl.mymotor_pid_spd.SetPIDParam(0.0,0,0,0,10);
+    #else
+    CAN_COB Tx_Buff = {};
     motor_ctrl.mymotor.bindCanQueueHandle(CAN1_TxPort); // 绑定CAN1发送队列
-    
+    #endif
+
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime_t, xFrequency);
@@ -60,27 +63,26 @@ void task_motor_ctrl(void *arg)
                 g_SystemState.TargetSpeed = 0;
                 break;
         }  
-        // 速度调整
+        // 速度控制
+        #if dm_motor_ctrl_mode
         //target设置
-        //motor_ctrl.set_motor_target_speed(g_SystemState.TargetSpeed);
-        //current获取
-        // g_SystemState.RealSpeed = motor_ctrl.get_motor_speed();
-        // //pid计算
-        // motor_ctrl.adjust();
-        // if(g_SystemState.SysMode == idle)
-        // {
-        //     motor_ctrl.set_motor_mode(MODE_ERROR); // 失能
-        //     motor_ctrl.motor_output(false);           //不输出
-        // }
-        // else{
-        //     motor_ctrl.set_motor_mode(MODE_SPEED); // 速度环
-        //     motor_ctrl.motor_output(true);            //输出设置
-        // }
-
+        motor_ctrl.set_motor_target_speed(g_SystemState.TargetSpeed);
+        //pid计算
+        motor_ctrl.adjust();
+        if(g_SystemState.SysMode == idle||g_SystemState.SysMode == success){
+            //motor_ctrl.set_motor_mode(MODE_ERROR); // 失能
+            motor_ctrl.motor_output(false);           //不输出
+        }
+        else{
+            motor_ctrl.set_motor_mode(MODE_SPEED); // 速度环
+            motor_ctrl.motor_output(true);            //输出设置
+        }
         // can发送速度指令
-        // MotorMsgPack(Tx_Buff, motor_ctrl.mymotor);
-        // // 强制将 ID 改为 0x3FE,后续考虑优化成配置项
-        // Tx_Buff.Id200.ID = 0x3FE; 
+        MotorMsgPack(Tx_Buff, motor_ctrl.mymotor);
+        // 强制将 ID 改为 0x3FE,后续考虑优化成配置项
+        Tx_Buff.Id200.ID = 0x3FE; 
+        #else
+        //以下方式为达妙电机速度模式的直接控制方式，未使用 PID 调节.
         if(g_SystemState.SysMode == idle || g_SystemState.SysMode == success){
             g_SystemState.TargetSpeed = 0;
             motor_ctrl.mymotor.stopMotor(); // 失能电机
@@ -96,10 +98,11 @@ void task_motor_ctrl(void *arg)
         }
         g_SystemState.TargetSpeed = std_lib::constrain(g_SystemState.TargetSpeed, -motor_speed_max, motor_speed_max); // 限幅
         motor_ctrl.motor_pack_dm10010(Tx_Buff, g_SystemState.TargetSpeed);
+        #endif
 
         // 发送给电机
         xQueueSend(CAN1_TxPort, &Tx_Buff, 0);
-        xQueueSend(CAN2_TxPort, &Tx_Buff, 0);
+        //xQueueSend(CAN2_TxPort, &Tx_Buff, 0);
 
         #ifdef INCLUDE_uxTaskGetStackHighWaterMark
         StackWaterMark_Get(motor_ctrl);

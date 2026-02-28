@@ -84,15 +84,15 @@ void Task_VofaMonitor(void *arg){
 	{
 		vTaskDelayUntil(&xLastWakeTime_t, 5);
 
-
         VofaMonitor::setDatas(0,
-
             (float)motor_ctrl.mymotor_pid_spd.Target,
             (float)motor_ctrl.mymotor_pid_spd.Current,
             (float)motor_ctrl.mymotor_pid_spd.Out,
-            (float)motor_ctrl.get_motor_angle(),
-        );         
+            (float)motor_ctrl.get_motor_angle()
+        );       
+			
 		VofaMonitor::send(6);
+			
         #ifdef INCLUDE_uxTaskGetStackHighWaterMark
         Stack_Remain.debug_send_stack_remain = uxTaskGetStackHighWaterMark(NULL);
         #endif
