@@ -7,8 +7,8 @@
 #define WS2812_RESET_LEN 40 // 定义重置周期数（800KHz 下，1.25us/bit，40个0约 50us）
 #define dma_data_len (PWM_DATA_LEN + WS2812_RESET_LEN) // DMA数据总长度
 
-uint8_t WS2312_0bit =38;
-uint8_t WS2312_1bit =66;
+#define WS2312_0bit 38
+#define WS2312_1bit 66
 
 static uint32_t tim_pwm_dma_buff[dma_data_len] = {0};//PWM DMA数据缓存
 
