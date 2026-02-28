@@ -11,6 +11,7 @@
 #define WS2312_1bit 66
 
 static uint32_t tim_pwm_dma_buff[dma_data_len] = {0};//PWM DMA数据缓存
+uint8_t ws2812_lightness = 25; // 灯光亮度（0-255）
 
 void Buff_translate(uint8_t* color_buff,uint32_t* dma_row_ptr) //颜色数组转换为码元数组
 {   
@@ -92,10 +93,10 @@ void ws2312_show(uint8_t r, uint8_t g, uint8_t b)
 void R_light(light_color_enum color){
     switch(color){
         case color_red:
-            ws2312_show(255, 0, 0); // 红色
+            ws2312_show(ws2812_lightness, 0, 0); // 红色
             break;
         case color_blue:
-            ws2312_show(0, 0, 255); // 蓝色
+            ws2312_show(0, 0, ws2812_lightness); // 蓝色
             break;
         case color_off:
         default:
@@ -109,7 +110,7 @@ void R_light(light_color_enum color){
 #define TOTAL_LEDS    50
 
 // 定义 R 标的逻辑位图 (1:亮, 0:灭)
-// 基于你提供的 ASCII 图案整理，坐标系：y=0在底，y=9在顶
+// 坐标系：y=0在底，y=9在顶
 // x=0 在左，x=4 在右
 const uint8_t R_Bitmap[MATRIX_HEIGHT][MATRIX_WIDTH] = {
     // x: 0  1  2  3  4
@@ -124,6 +125,21 @@ const uint8_t R_Bitmap[MATRIX_HEIGHT][MATRIX_WIDTH] = {
     {1, 0, 0, 1, 0}, // y=8
     {1, 1, 1, 0, 0}  // y=9 (顶)
 };
+
+// const uint8_t R_Bitmap[MATRIX_HEIGHT][MATRIX_WIDTH] = {
+//     // x: 0  1  2  3  4
+//     {0, 0, 1, 0, 0}, // y=0 (底)
+//     {0, 0, 1, 0, 0}, // y=1
+//     {0, 0, 1, 0, 0}, // y=2
+//     {0, 0, 1, 0, 0}, // y=3
+//     {0, 0, 1, 0, 0}, // y=4
+//     {0, 0, 1, 0, 0}, // y=5
+//     {0, 0, 1, 0, 0}, // y=6
+//     {0, 0, 1, 0, 0}, // y=7
+//     {0, 0, 1, 0, 0}, // y=8
+//     {0, 0, 1, 0, 0}  // y=9 (顶)
+// };
+
 
 // 辅助函数：将 (x,y) 坐标转换为 WS2812 的物理索引 (0-49)
 // 考虑了贪吃蛇(S形)走线
@@ -203,10 +219,10 @@ void ws2312_show_gravity(float input_angle, uint8_t r, uint8_t g, uint8_t b)
 void R_light_Follow(float angle_deg, light_color_enum color) {
     switch(color){
         case color_red:
-            ws2312_show_gravity(angle_deg, 255, 0, 0);
+            ws2312_show_gravity(angle_deg, ws2812_lightness, 0, 0);
             break;
         case color_blue:
-            ws2312_show_gravity(angle_deg, 0, 0, 255);
+            ws2312_show_gravity(angle_deg, 0, 0, ws2812_lightness);
             break;
         case color_off:
         default:

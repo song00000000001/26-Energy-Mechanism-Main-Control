@@ -89,8 +89,11 @@ void task_imu(void *arg)
 
         ws2812_counter++;
         if(ws2812_counter >= 25) { // 每100ms更新一次灯光
-            //R_light(g_TargetCtrl.TargetColor);
-            R_light_Follow(mpu_receive.yaw, g_TargetCtrl.TargetColor);
+            #if 0
+                R_light_Follow(mpu_receive.yaw, g_TargetCtrl.TargetColor);
+            #else
+                R_light(g_TargetCtrl.TargetColor);
+            #endif
             ws2812_counter = 0;
         }
     }

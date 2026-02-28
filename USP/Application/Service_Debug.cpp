@@ -79,6 +79,7 @@ void Task_VofaMonitor(void *arg){
 	/* Pre-Load for task */
 	TickType_t xLastWakeTime_t;
 	xLastWakeTime_t = xTaskGetTickCount();
+    Debugger.enable_debug_mode = debug_mpuvoda_monitor;
 	/* Infinite loop */
 	while(1)
 	{
