@@ -13,7 +13,8 @@ extern "C" {
 
 /*
 pwm引脚映射表
-tim3_ch3 PC8
+tim2_ch3 PC8
+tim2挂在apb1上，时钟频率为84MHz，预分频器设置为0，计数器周期设置为105-1，则计数频率为84MHz/105=800khz，即每个计数周期为12.5us。
 */
 #define arm_tim1 &htim2
 #define arm_channel_1 TIM_CHANNEL_3

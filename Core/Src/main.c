@@ -38,7 +38,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-#include "ws2812_ctrl_driver.h"
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -112,8 +112,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   //如果SRML定时器的中断受到FreeRTOS管辖，System_Device_Init()要在FreeRTOS内核�??始运行后才能使用
   //如果在RTOS内核�??始之前运行，会与drv_time的USE_MODULE_DELAY冲突，因为如果TIM中断归RTOS管辖，因此RTOS内核�??启之前TIM中断不会�??�??
-  //SEGGER_SYSVIEW_Conf()要放在RTOS内核�??始之前才能正常使�??
-    //ws2312_show(255, 0, 0);
+  //SEGGER_SYSVIEW_Conf()要放在RTOS内核�??始之前才能正常使
   System_Device_Init();
   SEGGER_SYSVIEW_Conf();
   /* USER CODE END 2 */

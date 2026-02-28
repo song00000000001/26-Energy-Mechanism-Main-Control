@@ -33,7 +33,7 @@ void Buff_translate(uint8_t* color_buff,uint32_t* dma_row_ptr) //颜色数组转
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 {
     // 判定是哪个定时器触发的
-    if (htim->Instance == TIM2) {
+    if(htim==arm_tim1) {
         // 传输完成后立即停止 DMA
         // 停止顺序：先停通道，如果有必要可以手动把 CCR 清零
         HAL_TIM_PWM_Stop_DMA(htim, arm_channel_1);
@@ -57,8 +57,8 @@ void ws2312_show(uint8_t r, uint8_t g, uint8_t b)
     Buff_translate(temp_pixels, tim_pwm_dma_buff);
     // 4. 非阻塞启动 4 路 DMA 传输
     HAL_TIM_PWM_Start_DMA(arm_tim1, TIM_CHANNEL_3, (uint32_t *)tim_pwm_dma_buff, dma_data_len);//主灯臂outside
-    __HAL_TIM_SET_COMPARE(arm_tim1,TIM_CHANNEL_4,50);//测试用
-    HAL_TIM_PWM_Start(arm_tim1,TIM_CHANNEL_4);
+    // __HAL_TIM_SET_COMPARE(arm_tim1,TIM_CHANNEL_4,50);//测试用
+    // HAL_TIM_PWM_Start(arm_tim1,TIM_CHANNEL_4);
 }
 
 
