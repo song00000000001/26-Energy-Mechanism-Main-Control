@@ -32,6 +32,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "internal.h"
 #include "global_data.h"
+#include "ws2812_ctrl_driver.h"
 /* Private define ------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -48,16 +49,6 @@ TaskHandle_t armer_ctrl_Handle;
 #if USE_SRML_MPU6050
 TaskHandle_t tskIMU_Handle;
 #endif
-//TaskHandle_t Yaw_Task_Handle;
-/* Private function declarations ---------------------------------------------*/
-
-void armer_ctrl_task(void *arg);
-/* Function prototypes -------------------------------------------------------*/
-/**
- * @brief  Initialization of device management service
- * @param  None.
- * @return None.
- */
 
 /*todo
 song
@@ -76,8 +67,6 @@ void Service_Devices_Init(void)
     #endif
 }
 
-#include "ws2812_ctrl_driver.h"
-void R_light(light_color_enum color);
 /**
  * @brief MPU6050读取数据
  */
@@ -100,24 +89,10 @@ void task_imu(void *arg)
 
         ws2812_counter++;
         if(ws2812_counter >= 25) { // 每100ms更新一次灯光
-            R_light(g_TargetCtrl.TargetColor);
+            //R_light(g_TargetCtrl.TargetColor);
+            R_light_Follow(mpu_receive.yaw, g_TargetCtrl.TargetColor);
             ws2812_counter = 0;
         }
     }
 }
 
-
-void R_light(light_color_enum color){
-    switch(color){
-        case color_red:
-            ws2312_show(255, 0, 0); // 红色
-            break;
-        case color_blue:
-            ws2312_show(0, 0, 255); // 蓝色
-            break;
-        case color_off:
-        default:
-            ws2312_show(0, 0, 0); // 关灯
-            break;
-    }
-}
