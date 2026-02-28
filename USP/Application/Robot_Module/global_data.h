@@ -165,6 +165,7 @@ void lightSuccessFlash(int8_t num, light_color_enum color);
 void small_energy_logic();
 void big_energy_logic();
 void debug_simulate_hit_f() ;//调试函数，模拟一次一定正确且环数随机的击打事件
+void R_light(light_color_enum color);
 
 #pragma pack(1)
 typedef struct {

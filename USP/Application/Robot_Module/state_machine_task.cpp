@@ -4,7 +4,7 @@
 #include "remote_ctrl_driver.h"
 #include "robot_config.h"
 #include "ws2812_ctrl_driver.h"
-void R_light(light_color_enum color);
+
 void state_machine_reset();
 
 //状态机任务
@@ -39,13 +39,25 @@ void task_state_machine(void *arg)
     g_SystemState.CurrentHitID = 0;
     g_SystemState.SE_StateData.SE_Group = 0; // 小能量轮数
     g_SystemState.SE_StateData.SE_State = SE_GENERATE_TARGET; // 小能量状态机
-
+    g_TargetCtrl={
+        .target_mode = tar_small_energy_signle,        // 默认停止/待机
+        .TargetColor = color_red,      // 默认红色
+        .SmallEnergy_Speed = 1.0f,     // 默认倍率
+        .BigEnergy_A = 0.9125f,        // 默认大符参数 (0.780 + 1.045)/2
+        .BigEnergy_W = 1.942f          // 默认大符参数 (1.884 + 2.000)/2
+    };
+    uint8_t ws2812_counter = 0; // WS2812 的控制频率
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
         main_task_now = xTaskGetTickCount();
         
         debug_simulate_hit_f(); // 调试函数，模拟击打事件
+        ws2812_counter++;
+        if(ws2812_counter >= 100) { // 每200ms更新一次灯光
+            R_light(g_TargetCtrl.TargetColor);
+            ws2812_counter = 0;
+        }
         if(g_TargetCtrl.target_mode == tar_stop) // 停止/待机
             g_SystemState.SysMode=idle;
         else if(g_TargetCtrl.target_mode == tar_start) // 激活
@@ -65,8 +77,7 @@ void task_state_machine(void *arg)
         break;
         case wait_start:
         {
-            state_machine_reset();
-            R_light(g_TargetCtrl.TargetColor);
+            //state_machine_reset();
             g_SystemState.TargetSpeed = 0.1f; // 初始目标速度
 
             switch (g_TargetCtrl.target_mode)
@@ -146,7 +157,7 @@ void state_machine_reset(){
     g_SystemState.SE_StateData.SE_Group = 0; // 重置小能量轮数
     g_SystemState.SE_StateData.SE_State = SE_GENERATE_TARGET; // 重置小能量状态机
     Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0); // 熄灭所有装甲板
-    R_light(color_off);
+    //R_light(color_off);
 }
 
 void debug_simulate_hit_f() {

@@ -15,13 +15,14 @@ extern "C" {
 pwm引脚映射表
 tim3_ch3 PC8
 */
-#define arm_tim1 &htim3
+#define arm_tim1 &htim2
 #define arm_channel_1 TIM_CHANNEL_3
 
-void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim);	//DMA回调函数
+//void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim);	//DMA回调函数
+void ws2312_show(uint8_t r, uint8_t g, uint8_t b); // 灯臂全部填充指定颜色
 
 #ifdef __cplusplus
 }
 #endif
 
-void ws2312_show(uint8_t r, uint8_t g, uint8_t b); // 灯臂全部填充指定颜色
+
