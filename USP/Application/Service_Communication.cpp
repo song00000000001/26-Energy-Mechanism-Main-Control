@@ -14,8 +14,15 @@
   |USART2_Port       USART2              DBUS               FS_I6X          3
 CAN 1: tx/rx 电机通信，BAUD 1Mbps
 CAN 2: tx/rx分控通信，BAUD 1Mbps
-USART1: tx/rx视觉通信，BAUD 115200
-USART3: tx调试通信，BAUD 115200
+USART1: tx/rx 上位机(手机app)通信，BAUD 115200
+    具体协议设计如下：
+    上位机控制包：
+    | Header (1 byte) | Content (1 byte) |
+    Header: 0xA5表示控制模式切换，0x5A表示灯光控制，0xFF表示模拟击打事件（测试用）
+    Content: 当Header为0xA5时，Content表示目标模式（0-3），当Header为0x5A时，Content表示目标颜色（0-4），当Header为0xFF时，Content无意义，可以忽略。
+
+USART3: 引脚复用为pwm输出，控制R标灯光
+USART6: tx vofa BAUD 115200
 
 **/
 /* Includes ------------------------------------------------------------------*/

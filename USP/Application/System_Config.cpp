@@ -79,7 +79,7 @@ void System_Device_Init(void)
 #endif
 
 #if USE_SRML_MPU6050
-  System_Mpu_Init();
+  //System_Mpu_Init();
 #endif
 
 #if USE_SRML_BMI088

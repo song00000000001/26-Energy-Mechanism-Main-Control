@@ -80,12 +80,12 @@ void task_imu(void *arg)
     {
         /* wait for next circle */
         vTaskDelayUntil(&xLastWakeTime_t, 4);
-        /*  读取MPU6050数据 */
-        vTaskSuspendAll();      //挂起其他任务，防止被打断
-        taskDISABLE_INTERRUPTS();//关闭中断，若使用中断关闭，请确保SRML定时器的中断不受FreeRTOS管辖
-        dmp_read_data(&mpu_receive);
-        taskENABLE_INTERRUPTS();
-        xTaskResumeAll();
+        // /*  读取MPU6050数据 */
+        // vTaskSuspendAll();      //挂起其他任务，防止被打断
+        // taskDISABLE_INTERRUPTS();//关闭中断，若使用中断关闭，请确保SRML定时器的中断不受FreeRTOS管辖
+        // dmp_read_data(&mpu_receive);
+        // taskENABLE_INTERRUPTS();
+        // xTaskResumeAll();
 
         ws2812_counter++;
         if(ws2812_counter >= 25) { // 每100ms更新一次灯光

@@ -79,7 +79,7 @@ void Task_VofaMonitor(void *arg){
 	/* Pre-Load for task */
 	TickType_t xLastWakeTime_t;
 	xLastWakeTime_t = xTaskGetTickCount();
-    Debugger.enable_debug_mode = debug_mpuvoda_monitor;
+    Debugger.enable_debug_mode = debug_mtvofa_monitor;
 	/* Infinite loop */
 	while(1)
 	{
@@ -88,18 +88,18 @@ void Task_VofaMonitor(void *arg){
         switch (Debugger.enable_debug_mode)
         {
         case debug_mpuvoda_monitor:
-            VofaMonitor::setDatas(0,
-                (float)mpu_receive.yaw,
-                (float)mpu_receive.pitch,
-                (float)mpu_receive.roll,
-                (float)mpu_receive.accel[0],
-                (float)mpu_receive.accel[1],
-                (float)mpu_receive.accel[2],
-                (float)mpu_receive.gyro[0],
-                (float)mpu_receive.gyro[1],
-                (float)mpu_receive.gyro[2],
-                (float)mpu_receive.sensors
-            );
+            // VofaMonitor::setDatas(0,
+            //     (float)mpu_receive.yaw,
+            //     (float)mpu_receive.pitch,
+            //     (float)mpu_receive.roll,
+            //     (float)mpu_receive.accel[0],
+            //     (float)mpu_receive.accel[1],
+            //     (float)mpu_receive.accel[2],
+            //     (float)mpu_receive.gyro[0],
+            //     (float)mpu_receive.gyro[1],
+            //     (float)mpu_receive.gyro[2],
+            //     (float)mpu_receive.sensors
+            // );
             break;
         case debug_mtvofa_monitor:
             VofaMonitor::setDatas(0,
