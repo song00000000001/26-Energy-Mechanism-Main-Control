@@ -3,6 +3,39 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+/*todo
+song
+分控协议有变动,处理接收控制的函数如下:
+void can_receive_process(uint8_t *light_effect_id, uint8_t *color, uint8_t *active_groups){
+    if(comm_buffers.can_rx_complete)
+    {
+        comm_buffers.can_rx_complete=false;
+        if (comm_buffers.CAN_RxMsg.ID == (CAN_RECEIVE_ID_BASE+sub_ctrl_id) && comm_buffers.CAN_RxMsg.DLC == can_rx_dlc) {
+            *light_effect_id = comm_buffers.CAN_RxMsg.Data[0];
+            *color = comm_buffers.CAN_RxMsg.Data[1];
+            *active_groups = comm_buffers.CAN_RxMsg.Data[2];
+        }
+    }
+}
+分控控制简化为发射一个灯效id,一个颜色,一个大符组数的包即可.
+经过规则调查,灯效id简化为5种:
+//灯效枚举
+typedef enum {
+    LIGHT_EFFECT_OFF = 0,          // 全灭
+    LIGHT_EFFECT_AIMING,           // 待击打瞄准态
+    LIGHT_EFFECT_SMALL_HIT,        // 小符击中后
+    LIGHT_EFFECT_BIG_STAGE,        // 大符阶段/非待击打灯臂阶段态
+    LIGHT_EFFECT_SUCCESS,          // 激活成功
+} LightEffectId_t;
+颜色简化为:
+//颜色枚举
+typedef enum {
+    COLOR_OFF = 0,                // 无色/全灭
+    COLOR_RED,                    // 红色
+    COLOR_BLUE,                   // 蓝色
+} Color_t;
+*/
+
 // 发送装甲板控制包
 void SendFanPacket(uint8_t id,uint8_t cmd,light_color_enum color, uint8_t stage) {
     CAN_COB CAN_TxMsg = {};
