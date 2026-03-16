@@ -1,4 +1,5 @@
 #include "can_comm_protocal.h"
+#include "global_data.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -35,6 +36,14 @@ typedef enum {
     COLOR_BLUE,                   // 蓝色
 } Color_t;
 */
+//灯效枚举
+typedef enum {
+    LIGHT_EFFECT_OFF = 0,          // 全灭
+    LIGHT_EFFECT_AIMING,           // 待击打瞄准态
+    LIGHT_EFFECT_SMALL_HIT,        // 小符击中后
+    LIGHT_EFFECT_BIG_STAGE,        // 大符阶段/非待击打灯臂阶段态
+    LIGHT_EFFECT_SUCCESS,          // 激活成功
+} LightEffectId_t;
 
 // 发送装甲板控制包
 void SendFanPacket(uint8_t id,uint8_t cmd,light_color_enum color, uint8_t stage) {
@@ -43,23 +52,33 @@ void SendFanPacket(uint8_t id,uint8_t cmd,light_color_enum color, uint8_t stage)
     CAN_TxMsg.ID = CAN_SEND_ID_BASE + id; // 分控 ID 作为低字节
     CAN_TxMsg.DLC = 3;
     if(cmd==FAN_CMD_RESET){
-        CAN_TxMsg.Data[0] = static_cast<uint8_t>(color_off); // 熄灭
-        CAN_TxMsg.Data[1] = 0;     // 阶段无效
+        CAN_TxMsg.Data[0] = LIGHT_EFFECT_AIMING; // 灯效
+        CAN_TxMsg.Data[1] = static_cast<uint8_t>(color_red); // 熄灭
+        CAN_TxMsg.Data[2] = 5;     // 阶段无效
        
     }
     else if(cmd==FAN_CMD_SELECT){
-        CAN_TxMsg.Data[0] = static_cast<uint8_t>(color); // 颜色
-        CAN_TxMsg.Data[1] = stage;     // 阶段
+        CAN_TxMsg.Data[0] = LIGHT_EFFECT_AIMING; // 灯效
+        CAN_TxMsg.Data[1] = static_cast<uint8_t>(color_red); // 颜色
+        CAN_TxMsg.Data[2] = stage;     // 阶段
     }
     else if(cmd==FAN_CMD_HIT){
-        if(color==color_red)
-            CAN_TxMsg.Data[0] = static_cast<uint8_t>(color_hit_red); // 击打红色
-        else if(color==color_blue)
-            CAN_TxMsg.Data[0] = static_cast<uint8_t>(color_hit_blue); // 击打蓝色
-        CAN_TxMsg.Data[1] = stage;     // 阶段
+        if(g_SystemState.SysMode == small_energy) // 小符击打反馈特殊处理，直接发小符击中灯效，颜色和阶段同选定状态
+        {
+            CAN_TxMsg.Data[0] = LIGHT_EFFECT_SMALL_HIT; // 灯效
+            CAN_TxMsg.Data[1] = static_cast<uint8_t>(color); // 颜色
+            CAN_TxMsg.Data[2] = stage;     // 阶段
+        }
+        else // 大符连击阶段反馈同阶段灯效，颜色同选定状态
+        {
+            CAN_TxMsg.Data[0] = LIGHT_EFFECT_BIG_STAGE; // 灯效
+            CAN_TxMsg.Data[1] = static_cast<uint8_t>(color); // 颜色
+            CAN_TxMsg.Data[2] = stage;     // 阶段
+        }
+        CAN_TxMsg.Data[1] = static_cast<uint8_t>(color); // 击打红色
+        CAN_TxMsg.Data[2] = stage;     // 阶段
     }
-    CAN_TxMsg.Data[2] = g_SystemState.SysMode;     // 当前系统模式
-    xQueueSend(CAN1_TxPort, &CAN_TxMsg, 0);
+    //xQueueSend(CAN1_TxPort, &CAN_TxMsg, 0);
     xQueueSend(CAN2_TxPort, &CAN_TxMsg, 0);
 }
 
@@ -71,7 +90,7 @@ void FanFeedbackProcess(CAN_COB &CAN_RxMsg)
     if (sub_ctrl_id >= 1 && sub_ctrl_id <= 5 && CAN_RxMsg.DLC == 2) {
         //更新全局状态
         g_SystemState.CurrentHitID = sub_ctrl_id;
-        g_SystemState.CurrentHitScores = CAN_RxMsg.Data[0];
+        g_SystemState.CurrentHitScores = CAN_RxMsg.Data[0];//分控直接回传击打检测到的环数:0~9
     }
 }
 
