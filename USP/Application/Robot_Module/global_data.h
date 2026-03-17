@@ -77,19 +77,8 @@ typedef enum
 {
     color_off = 0,
     color_red,
-    color_blue,
-    color_hit_red,
-    color_hit_blue
+    color_blue
 }light_color_enum;
-
-typedef enum 
-{
-    main_arm_outside = 0,
-    main_arm_middle,
-    main_arm_inside,
-    sub_arm_left,
-    sub_arm_right
-}ligntarm_name_enum;
 
 typedef enum{
     tar_stop = 0,
@@ -99,12 +88,24 @@ typedef enum{
     tar_small_energy_continue,
     tar_big_energy_continue
 }EnergyTargetMode_t;
-
+/*
+//灯效枚举
+typedef enum {
+    LIGHT_EFFECT_OFF = 0,          // 全灭
+    LIGHT_EFFECT_AIMING,           // 待击打瞄准态
+    LIGHT_EFFECT_SMALL_HIT,        // 小符击中后
+    LIGHT_EFFECT_BIG_STAGE,        // 大符阶段/非待击打灯臂阶段态
+    LIGHT_EFFECT_SUCCESS,          // 激活成功
+} LightEffectId_t;
+ 将分控灯效枚举分别映射成命令类型
+*/
 // 命令类型定义
 enum FanCmdType {
-    FAN_CMD_RESET = 0x01,       // 复位/熄灭
-    FAN_CMD_SELECT = 0x02,// 正常点亮
-    FAN_CMD_HIT = 0x03,   // 击打闪烁+中心十字线亮起
+    FAN_CMD_RESET = 0x01,       // 全灭/重置
+    FAN_CMD_AIMING = 0x02,      // 待击打瞄准态
+    FAN_CMD_SMALL_HIT = 0x03,     // 小符击中后
+    FAN_CMD_BIG_STAGE = 0x04,     // 大符阶段/非待击打灯臂阶段态
+    FAN_CMD_SUCCESS = 0x05,       // 激活成功
 };
 
 typedef struct {

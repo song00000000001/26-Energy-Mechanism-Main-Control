@@ -36,14 +36,6 @@ typedef enum {
     COLOR_BLUE,                   // 蓝色
 } Color_t;
 */
-//灯效枚举
-typedef enum {
-    LIGHT_EFFECT_OFF = 0,          // 全灭
-    LIGHT_EFFECT_AIMING,           // 待击打瞄准态
-    LIGHT_EFFECT_SMALL_HIT,        // 小符击中后
-    LIGHT_EFFECT_BIG_STAGE,        // 大符阶段/非待击打灯臂阶段态
-    LIGHT_EFFECT_SUCCESS,          // 激活成功
-} LightEffectId_t;
 
 // 发送装甲板控制包
 void SendFanPacket(uint8_t id,uint8_t cmd,light_color_enum color, uint8_t stage) {
@@ -51,33 +43,9 @@ void SendFanPacket(uint8_t id,uint8_t cmd,light_color_enum color, uint8_t stage)
     CAN_TxMsg.IdType = Can_STDID;
     CAN_TxMsg.ID = CAN_SEND_ID_BASE + id; // 分控 ID 作为低字节
     CAN_TxMsg.DLC = 3;
-    if(cmd==FAN_CMD_RESET){
-        CAN_TxMsg.Data[0] = LIGHT_EFFECT_AIMING; // 灯效
-        CAN_TxMsg.Data[1] = static_cast<uint8_t>(color_red); // 熄灭
-        CAN_TxMsg.Data[2] = 5;     // 阶段无效
-       
-    }
-    else if(cmd==FAN_CMD_SELECT){
-        CAN_TxMsg.Data[0] = LIGHT_EFFECT_AIMING; // 灯效
-        CAN_TxMsg.Data[1] = static_cast<uint8_t>(color_red); // 颜色
-        CAN_TxMsg.Data[2] = stage;     // 阶段
-    }
-    else if(cmd==FAN_CMD_HIT){
-        if(g_SystemState.SysMode == small_energy) // 小符击打反馈特殊处理，直接发小符击中灯效，颜色和阶段同选定状态
-        {
-            CAN_TxMsg.Data[0] = LIGHT_EFFECT_SMALL_HIT; // 灯效
-            CAN_TxMsg.Data[1] = static_cast<uint8_t>(color); // 颜色
-            CAN_TxMsg.Data[2] = stage;     // 阶段
-        }
-        else // 大符连击阶段反馈同阶段灯效，颜色同选定状态
-        {
-            CAN_TxMsg.Data[0] = LIGHT_EFFECT_BIG_STAGE; // 灯效
-            CAN_TxMsg.Data[1] = static_cast<uint8_t>(color); // 颜色
-            CAN_TxMsg.Data[2] = stage;     // 阶段
-        }
-        CAN_TxMsg.Data[1] = static_cast<uint8_t>(color); // 击打红色
-        CAN_TxMsg.Data[2] = stage;     // 阶段
-    }
+    CAN_TxMsg.Data[0] = cmd; // 命令类型
+    CAN_TxMsg.Data[1] = static_cast<uint8_t>(color); // 颜色
+    CAN_TxMsg.Data[2] = stage;     // 阶段
     //xQueueSend(CAN1_TxPort, &CAN_TxMsg, 0);
     xQueueSend(CAN2_TxPort, &CAN_TxMsg, 0);
 }

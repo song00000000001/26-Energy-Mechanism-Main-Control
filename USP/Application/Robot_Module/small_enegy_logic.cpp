@@ -23,7 +23,7 @@ void updateSEArmorLight() {
     for (int i = 1; i <= 5; i++) {
         if (i == g_SystemState.SE_StateData.SE_TargetID) {
             // 是目标：亮起瞄准灯
-            SendFanPacket(i, FAN_CMD_SELECT, g_TargetCtrl.TargetColor, 0);
+            SendFanPacket(i, FAN_CMD_AIMING, g_TargetCtrl.TargetColor, 0);
         } 
         else {
             // 非目标：熄灭
@@ -86,7 +86,7 @@ void small_energy_logic() {
                     }
                     break;
                 }
-                SendFanPacket(hitID, FAN_CMD_HIT, g_TargetCtrl.TargetColor, 0);
+                SendFanPacket(hitID, FAN_CMD_SMALL_HIT, g_TargetCtrl.TargetColor, 0);
                 vTaskDelay(20);
 
             } 
