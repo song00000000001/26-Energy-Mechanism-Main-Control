@@ -58,7 +58,8 @@ void task_state_machine(void *arg)
             g_SystemState.SysMode=idle;
         else if(g_TargetCtrl.target_mode == tar_start) // 激活
             g_SystemState.SysMode=wait_start;
-        
+        else if(g_TargetCtrl.target_mode == tar_test_mode)
+            g_SystemState.SysMode = test_mode;
         // 模式判断
         switch (g_SystemState.SysMode)
         {
@@ -92,6 +93,9 @@ void task_state_machine(void *arg)
             case tar_big_energy_continue: // 连续大能量机关
                 g_SystemState.SysMode = big_energy; // 切换到大能量机关
                 break;
+            case tar_test_mode:
+                g_SystemState.SysMode = test_mode;
+                break;
             default:
                 break;
             }
@@ -110,9 +114,15 @@ void task_state_machine(void *arg)
         case success:
         {
             // 全部点亮
-            Ctrl_All_Armors(FAN_CMD_HIT, g_TargetCtrl.TargetColor, 5);
-            vTaskDelay(2000); 
+            Ctrl_All_Armors(FAN_CMD_SUCCESS, g_TargetCtrl.TargetColor, 5);
+            vTaskDelay(3000); 
             g_TargetCtrl.target_mode = tar_stop; // 结束，回到待机
+        }
+        break;
+        case test_mode:
+        {
+            // 测试模式下不跑大小符逻辑，不重置灯效
+            g_SystemState.TargetSpeed = 0;
         }
         break;
         default:

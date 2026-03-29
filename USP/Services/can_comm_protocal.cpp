@@ -55,11 +55,21 @@ void FanFeedbackProcess(CAN_COB &CAN_RxMsg)
 {
     // 1. 校验数据包
     uint8_t sub_ctrl_id = CAN_RxMsg.ID - CAN_RECEIVE_ID_BASE;
-    if (sub_ctrl_id >= 1 && sub_ctrl_id <= 5 && CAN_RxMsg.DLC == 2) {
-        //更新全局状态
-        g_SystemState.CurrentHitID = sub_ctrl_id;
-        g_SystemState.CurrentHitScores = CAN_RxMsg.Data[0];//分控直接回传击打检测到的环数:0~9
+    if(sub_ctrl_id < 1 || sub_ctrl_id > 5|| CAN_RxMsg.DLC != 2) 
+    {
+        return;
+    }   
+    // 测试模式：收到任何分控反馈，直接回传上位机
+    if (g_TargetCtrl.target_mode == tar_test_mode) {
+        hit_feedback_to_uart(sub_ctrl_id, CAN_RxMsg.Data[0]);
+        return;
     }
+
+    //更新全局状态
+    g_SystemState.CurrentHitID = sub_ctrl_id;
+    g_SystemState.CurrentHitScores = CAN_RxMsg.Data[0];//分控直接回传击打检测到的环数:0~9
+    
+
 }
 
 void my_printf(uint8_t port_num, const char* format, ...)

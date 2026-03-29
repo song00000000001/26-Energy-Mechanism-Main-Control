@@ -340,7 +340,15 @@ void Task_UsartReceive(void *arg)
         {
             Debugger.Debug_simulate_hit=true; // 模拟击打事件
         }
-         break;
+        if(upper_ctrl_packet.ctrl_header == 0xEE)
+        {
+            FanCmdType cmd = static_cast<FanCmdType>(upper_ctrl_packet.ctrl_content);
+            Ctrl_All_Armors(
+                cmd,
+                g_TargetCtrl.TargetColor,
+                g_SystemState.SE_StateData.SE_Group
+            );
+        }
         break;
       case 2:
         break;

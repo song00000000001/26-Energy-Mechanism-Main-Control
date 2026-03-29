@@ -54,7 +54,8 @@ typedef enum{
     wait_start,
     small_energy,
     big_energy,
-    success
+    success,
+    test_mode
 }EnergySystemMode_t;
 
 //big energy state enum
@@ -86,7 +87,8 @@ typedef enum{
     tar_small_energy_signle,
     tar_big_energy_single,
     tar_small_energy_continue,
-    tar_big_energy_continue
+    tar_big_energy_continue,
+    tar_test_mode
 }EnergyTargetMode_t;
 /*
 //灯效枚举
@@ -101,11 +103,11 @@ typedef enum {
 */
 // 命令类型定义
 enum FanCmdType {
-    FAN_CMD_RESET = 0x01,       // 全灭/重置
-    FAN_CMD_AIMING = 0x02,      // 待击打瞄准态
-    FAN_CMD_SMALL_HIT = 0x03,     // 小符击中后
-    FAN_CMD_BIG_STAGE = 0x04,     // 大符阶段/非待击打灯臂阶段态
-    FAN_CMD_SUCCESS = 0x05,       // 激活成功
+    FAN_CMD_RESET = 0,       // 全灭/重置
+    FAN_CMD_AIMING,      // 待击打瞄准态
+    FAN_CMD_SMALL_HIT,     // 小符击中后
+    FAN_CMD_BIG_STAGE,     // 大符阶段/非待击打灯臂阶段态
+    FAN_CMD_SUCCESS,       // 激活成功
 };
 
 typedef struct {
