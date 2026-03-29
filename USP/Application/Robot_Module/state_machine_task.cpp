@@ -12,7 +12,7 @@ void task_state_machine(void *arg)
 {
     // 任务频率控制
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(2);
+    const TickType_t xFrequency = pdMS_TO_TICKS(10);
     uint32_t main_task_now = xTaskGetTickCount();
 
     Motor_CAN_COB Tx_Buff = {};
@@ -123,6 +123,11 @@ void task_state_machine(void *arg)
         {
             // 测试模式下不跑大小符逻辑，不重置灯效
             g_SystemState.TargetSpeed = 0;
+            Ctrl_All_Armors(
+                (FanCmdType)Debugger.debug_arm_light_effect,
+                g_TargetCtrl.TargetColor,
+                g_SystemState.SE_StateData.SE_Group
+            );
         }
         break;
         default:

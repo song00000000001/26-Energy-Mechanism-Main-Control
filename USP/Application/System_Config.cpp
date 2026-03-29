@@ -103,8 +103,8 @@ void System_Task_Init(void)
   /* Queue Init */
     CAN1_TxPort = xQueueCreate(6, sizeof(CAN_COB));
     CAN1_RxPort = xQueueCreate(6, sizeof(CAN_COB));
-    CAN2_TxPort = xQueueCreate(6, sizeof(CAN_COB));
-    CAN2_RxPort = xQueueCreate(6, sizeof(CAN_COB));
+    CAN2_TxPort = xQueueCreate(16, sizeof(CAN_COB));
+    CAN2_RxPort = xQueueCreate(16, sizeof(CAN_COB));
     USART_TxPort = xQueueCreate(6, sizeof(USART_COB));
     if (USART_TxPort == NULL) {
         // 如果进入说明队列创建失败

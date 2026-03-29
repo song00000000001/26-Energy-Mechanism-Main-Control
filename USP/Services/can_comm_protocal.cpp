@@ -48,6 +48,7 @@ void SendFanPacket(uint8_t id,uint8_t cmd,light_color_enum color, uint8_t stage)
     CAN_TxMsg.Data[2] = stage;     // 阶段
     //xQueueSend(CAN1_TxPort, &CAN_TxMsg, 0);
     xQueueSend(CAN2_TxPort, &CAN_TxMsg, 0);
+	vTaskDelay(1);
 }
 
 //分控反馈数据处理函数
@@ -59,11 +60,6 @@ void FanFeedbackProcess(CAN_COB &CAN_RxMsg)
     {
         return;
     }   
-    // 测试模式：收到任何分控反馈，直接回传上位机
-    if (g_TargetCtrl.target_mode == tar_test_mode) {
-        hit_feedback_to_uart(sub_ctrl_id, CAN_RxMsg.Data[0]);
-        return;
-    }
 
     //更新全局状态
     g_SystemState.CurrentHitID = sub_ctrl_id;
@@ -95,7 +91,9 @@ void my_printf(uint8_t port_num, const char* format, ...)
 }
 
 void hit_feedback_to_uart(uint8_t hitID,uint8_t scores){
-    my_printf(upper_uart_id, "Hit ID: %d, Scores: %d\r\n", hitID, scores);
+    vTaskDelay(80);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
+    my_printf(upper_uart_id, "ID:%d,Sc:%d\r\n", hitID, scores);
+    vTaskDelay(80);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
 }
 
 /*

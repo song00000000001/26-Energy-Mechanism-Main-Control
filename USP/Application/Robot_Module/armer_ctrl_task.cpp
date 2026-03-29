@@ -22,7 +22,7 @@ void armer_ctrl_task(void *arg)
 
 
 void Ctrl_All_Armors(FanCmdType cmd, light_color_enum color, uint8_t stage) {
-    for (uint8_t i = 1; i <= 5; i++) {
+    for (uint8_t i = 0; i < 5; i++) {
         SendFanPacket(i,cmd,color, stage);
     }
 }

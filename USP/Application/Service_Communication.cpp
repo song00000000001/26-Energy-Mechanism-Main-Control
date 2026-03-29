@@ -343,11 +343,7 @@ void Task_UsartReceive(void *arg)
         if(upper_ctrl_packet.ctrl_header == 0xEE)
         {
             FanCmdType cmd = static_cast<FanCmdType>(upper_ctrl_packet.ctrl_content);
-            Ctrl_All_Armors(
-                cmd,
-                g_TargetCtrl.TargetColor,
-                g_SystemState.SE_StateData.SE_Group
-            );
+            Debugger.debug_arm_light_effect = cmd; // 调试用灯效选择
         }
         break;
       case 2:

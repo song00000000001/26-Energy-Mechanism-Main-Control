@@ -20,15 +20,15 @@ void generateSETarget() {
 }
 // 2. 更新装甲板灯光状态
 void updateSEArmorLight() {
-    for (int i = 1; i <= 5; i++) {
+    for (int i = 0; i < 5; i++) {
         if (i == g_SystemState.SE_StateData.SE_TargetID) {
             // 是目标：亮起瞄准灯
             SendFanPacket(i, FAN_CMD_AIMING, g_TargetCtrl.TargetColor, 0);
         } 
-        else {
-            // 非目标：熄灭
-            SendFanPacket(i, FAN_CMD_RESET, color_off, 0);
-        }
+        // else {
+        //     // 非目标：熄灭
+        //     SendFanPacket(i, FAN_CMD_RESET, color_off, 0);
+        // }
     }
 }
 
@@ -39,7 +39,9 @@ void SE_reset() {
     g_SystemState.CurrentHitScores = 0;
     g_SystemState.SE_StateData.SE_Scores = 0;
     Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0); // 熄灭所有装甲板
-    my_printf(upper_uart_id, "SE reset\n");
+    vTaskDelay(50); // 确保CAN消息发送出去
+    
+    //my_printf(upper_uart_id, "SE reset\n");
 }
 
 void small_energy_logic() {

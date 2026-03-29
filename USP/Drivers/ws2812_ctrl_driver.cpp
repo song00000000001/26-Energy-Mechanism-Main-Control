@@ -72,14 +72,21 @@ uint8_t ws2312_map[ws2312_map_len] = {0,1,2,3,4,5,6,7,8,9,10,15,16,29,25,22,33,3
 void ws2312_show(uint8_t r, uint8_t g, uint8_t b)
 {
     uint8_t temp_pixels[WS2312_LED_NUM * 3] = {0};
-
-
+#if 0
     for (int i = 0; i < ws2312_map_len; i++) 
     {
         temp_pixels[ws2312_map[i] * 3]     = g; // WS2812 典型为 GRB 顺序
         temp_pixels[ws2312_map[i] * 3 + 1] = r;
         temp_pixels[ws2312_map[i] * 3 + 2] = b;
     }
+#else
+    for (int i = 0; i < WS2312_LED_NUM; i++) 
+    {
+        temp_pixels[i * 3]     = g; // WS2812 典型为 GRB 顺序
+        temp_pixels[i * 3 + 1] = r;
+        temp_pixels[i * 3 + 2] = b;
+    }
+#endif
     // 将 RGB 数据转换为 PWM 码元
     Buff_translate(temp_pixels, tim_pwm_dma_buff);
     // 4. 非阻塞启动 4 路 DMA 传输

@@ -20,13 +20,14 @@ void RemoveTarget(uint8_t id) {
 // 更新所有装甲板灯光状态
 void updateBEArmorLight() {
     uint8_t stage = g_SystemState.BE_StateData.BE_Group; // 阶段1-5
-    for (int i = 1; i <= 5; i++) {
+    for (int i = 0; i < 5; i++) {
         if (i == g_SystemState.BE_StateData.BE_Targets[0] || i == g_SystemState.BE_StateData.BE_Targets[1]) {
             // 是目标：亮起瞄准灯 (NORMAL)
             SendFanPacket(i,FAN_CMD_AIMING,g_TargetCtrl.TargetColor, stage);
-        } else {
+        } 
+        else {
             // 非目标：大符阶段态 (BIG_STAGE)
-            SendFanPacket(i,FAN_CMD_BIG_STAGE,color_off, stage);
+            SendFanPacket(i,FAN_CMD_BIG_STAGE,g_TargetCtrl.TargetColor, stage);
         }
     }
 }
@@ -41,7 +42,8 @@ void BE_reset() {
     g_SystemState.BE_StateData.BE_ActivedArms = 0;
     g_SystemState.BE_StateData.BE_Scores = 0;
     Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0); // 熄灭所有装甲板
-    my_printf(upper_uart_id, "BE reset\n");
+    vTaskDelay(50); // 确保CAN消息发送出去
+    //my_printf(upper_uart_id, "BE reset\n");
 }
 
 void big_energy_logic() {
