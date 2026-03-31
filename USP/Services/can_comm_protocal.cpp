@@ -79,13 +79,13 @@ void my_printf(uint8_t port_num, const char* format, ...)
 
 void hit_feedback_to_uart(uint8_t targetID,uint8_t hitID,uint8_t scores){
     vTaskDelay(20);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
-    my_printf(upper_uart_id, "TID:%d,ID:%d,Sco:%d\r\n", targetID, hitID, scores);
+    my_printf(upper_uart_id, "Target/Hit: %d/ %d ;sco: %d\r\n", targetID, hitID, scores);
     vTaskDelay(20);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
 }
 
 void hit2_feedback_to_uart(uint8_t targetID,uint8_t targetID2,uint8_t hitID,uint8_t scores){
     vTaskDelay(20);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
-    my_printf(upper_uart_id, "TID:%d,TID2:%d,ID:%d,Sco:%d\r\n", targetID, targetID2, hitID, scores);
+    my_printf(upper_uart_id, "Target/Hit: %d, %d/ %d;sco: %d\r\n", targetID, targetID2, hitID, scores);
     vTaskDelay(20);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
 }
 
@@ -93,9 +93,10 @@ void hit2_feedback_to_uart(uint8_t targetID,uint8_t targetID2,uint8_t hitID,uint
 一方机器人成功激活小能量机关后，该方所有机器人、前 哨站、基地均获得25%的防御增益，持续45秒。
 小能量机关增益持续期间内，所有英雄、步兵、空 中机器人在获得经验时，额外获得原经验100%的经验，一方在一次小能量机关增益期间内通过此方 式最多共获得 1200 点额外经验。
 */
-void small_enegy_settlement(uint8_t average_round){
+void small_enegy_settlement(uint8_t total_round){
     vTaskDelay(20);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
-    my_printf(upper_uart_id, "SE settlement,total Round: %d\r\n", average_round);
+    uint8_t average_round= total_round / 5; // 计算平均环数
+    my_printf(upper_uart_id, "\r\n>>>Total: %d,Aerage: %d\r\n", total_round ,average_round);
     vTaskDelay(20);
 }
 
@@ -122,30 +123,31 @@ void small_enegy_settlement(uint8_t average_round){
 |   9   |    50     |
 |  10   |    60     |
 */
-void big_enegy_settlement(uint8_t average_round, uint8_t actived_arms){
+void big_enegy_settlement(uint8_t total_round, uint8_t actived_arms){
     vTaskDelay(20);
-    my_printf(upper_uart_id, "BE Settlement,Average Round: %d, Actived Arms: %d\r\n", average_round, actived_arms);
+    uint8_t average_round = total_round / actived_arms;
+    my_printf(upper_uart_id, "\r\n>>>Arms: %d,Total: %d,Average: %d\r\n", actived_arms, total_round, average_round);
     vTaskDelay(20);
 	if(average_round >= 0 && average_round <= 3){
-        my_printf(upper_uart_id, "Attack Gain: 150%%, Defense Gain: 25%%, Heat Cooling Gain: None\r\n");
+        my_printf(upper_uart_id, "===AttackGain: 150%%\r\n===DefenseGain: 25%%\r\n===HeatCoolingGain:None\r\n");
     }
     else if(average_round > 3 && average_round <= 7){
-        my_printf(upper_uart_id, "Attack Gain: 150%%, Defense Gain: 25%%, Heat Cooling Gain: 2x\r\n");
+        my_printf(upper_uart_id, "===AttackGain: 150%%\r\n===DefenseGain: 25%%\r\n===HeatCoolingGain: 2x\r\n");
     }
     else if(average_round > 7 && average_round <= 8){
-        my_printf(upper_uart_id, "Attack Gain: 200%%, Defense Gain: 25%%, Heat Cooling Gain: 2x\r\n");
+        my_printf(upper_uart_id, "===AttackGain: 200%%\r\n===DefenseGain: 25%%\r\n===HeatCoolingGain: 2x\r\n");
     }
     else if(average_round > 8 && average_round <= 9){
-        my_printf(upper_uart_id, "Attack Gain: 200%%, Defense Gain: 25%%, Heat Cooling Gain: 3x\r\n");
+        my_printf(upper_uart_id, "===AttackGain: 200%%\r\n===DefenseGain: 25%%\r\n===HeatCoolingGain: 3x\r\n");
     }
     else if(average_round > 9 && average_round <= 10){
-        my_printf(upper_uart_id, "Attack Gain: 300%%, Defense Gain: 50%%, Heat Cooling Gain: 5x\r\n");
+        my_printf(upper_uart_id, "===AttackGain: 300%%\r\n===DefenseGain: 50%%\r\n===HeatCoolingGain: 5x\r\n");
     }
     vTaskDelay(20);
     if(actived_arms >= 5 && actived_arms <= 10){
         uint8_t duration = 30 + (actived_arms-5) * 5; // 根据激活灯臂数计算增益持续时间
         if(actived_arms >= 10) duration = 60; //十组特殊处理
-        my_printf(upper_uart_id, "Gain Duration: %d seconds\r\n", duration);
+        my_printf(upper_uart_id, "===Gain Duration: %d seconds\r\n", duration);
     }
     vTaskDelay(20);
 }

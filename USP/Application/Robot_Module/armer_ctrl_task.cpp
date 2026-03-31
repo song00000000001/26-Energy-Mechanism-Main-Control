@@ -86,6 +86,7 @@ void task_Rlight_armer(void *arg)
     LightEffectId_t last_effect[5] = {LIGHT_EFFECT_OFF}; // 记录上一次发送的灯效状态，初始为全灭
     light_color_enum last_color = color_off;
     uint8_t last_stage = 0;
+    uint8_t rlight_counter=0;
     for (;;)
     {
         /* wait for next circle */
@@ -95,20 +96,23 @@ void task_Rlight_armer(void *arg)
         t_SysMode = g_SystemState.SysMode;
         t_color = g_TargetCtrl.TargetColor;
         t_stage = g_SystemState.BE_StateData.BE_Group; // 当前阶段/组数，0-5
-
-        //根据颜色变化更新R标灯效
-        if(t_color != last_color) {
-            last_color = t_color;
-            R_light(last_color);
-            effect_changed = true;
-        }
+        
+        // rlight_counter++;
+        // if(rlight_counter>=10){ // 每100ms
+        //     rlight_counter=0;
+        //     //R_light(last_color);
+        // }
+        
         
         //根据灯效变化和颜色以及阶段变化更新装甲板灯效
+        if(t_color != last_color) {
+            last_color = t_color;
+            effect_changed = true;
+        }
         if(memcmp(arm_light_effect, last_effect, sizeof(arm_light_effect)) != 0) {
             memcpy(last_effect, arm_light_effect, sizeof(arm_light_effect));
             effect_changed = true;
         }
-        
         if(t_stage != last_stage) {
             last_stage = t_stage;
             effect_changed = true;
@@ -128,7 +132,6 @@ void task_Rlight_armer(void *arg)
             effect_changed = false; // 重置标志位
         }
         
-
         #ifdef INCLUDE_uxTaskGetStackHighWaterMark
         //Stack_Remain.Armer_Ctrl_stack_remain = uxTaskGetStackHighWaterMark(NULL);
         #endif

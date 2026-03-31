@@ -32,6 +32,7 @@ USART6: tx vofa BAUD 115200
 #include "global_data.h"
 #include "robot_config.h"
 #include "can_comm_protocal.h"
+//#include "ws2812_ctrl_driver.h"
 /* Private define ------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
@@ -343,6 +344,7 @@ void Task_UsartReceive(void *arg)
         {
             // 解析上位机控制包
             g_TargetCtrl.TargetColor = static_cast<light_color_enum>(upper_ctrl_packet.ctrl_content);
+            //R_light(g_TargetCtrl.TargetColor);
         }
         if(upper_ctrl_packet.ctrl_header == 0xFF)
         {

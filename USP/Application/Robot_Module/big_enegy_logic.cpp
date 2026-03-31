@@ -54,7 +54,7 @@ void big_energy_logic() {
     case BE_GENERATE_TARGET: // GENERATE_TARGET
         if (g_SystemState.BE_StateData.BE_Group >= 5) {
             // 全部通关
-            big_enegy_settlement(g_SystemState.BE_StateData.BE_Scores/g_SystemState.BE_StateData.BE_ActivedArms, g_SystemState.BE_StateData.BE_ActivedArms); // 结算，平均环数=轮数，激活灯臂数=2
+            big_enegy_settlement(g_SystemState.BE_StateData.BE_Scores, g_SystemState.BE_StateData.BE_ActivedArms); // 结算，平均环数=轮数，激活灯臂数=2
             if(g_TargetCtrl.target_mode == tar_big_energy_continue){
                 BE_reset();
             }
