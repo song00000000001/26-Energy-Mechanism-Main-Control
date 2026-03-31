@@ -85,6 +85,13 @@ void task_state_machine(void *arg)
             break;
         }
 
+        //由于模式切换变成立即覆盖,可能存在小符运行到一半被打断出现异常,
+        //因此在每次模式切换时重置状态机,确保状态机从初始状态开始运行
+        static EnergySystemMode_t last_mode = idle;
+        if(g_SystemState.SysMode != last_mode) {
+            state_machine_reset();
+            last_mode = g_SystemState.SysMode;
+        }
         // 模式判断
         switch (g_SystemState.SysMode)
         {

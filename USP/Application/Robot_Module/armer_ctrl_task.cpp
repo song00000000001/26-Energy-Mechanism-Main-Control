@@ -24,7 +24,7 @@ static uint8_t getArmIndex(uint8_t arm_id) {
         return arm_id - 1; // 转换为0~4的索引
     }
     else{
-        while(1); // 错误处理，for debug,用于排查不应该出现的id
+        //while(1); // 错误处理，for debug,用于排查不应该出现的id
         return 0; // 无效id
     }
 }
@@ -72,7 +72,7 @@ void test_light_effect(uint8_t effect[5]) {
     }
 }
 
-uint16_t test_arm_send_delay=0;
+uint16_t test_arm_send_delay=1000;
 
 void task_Rlight_armer(void *arg)
 {
@@ -116,16 +116,15 @@ void task_Rlight_armer(void *arg)
 
         if(effect_changed) {
             for (uint8_t i = 0; i < 5; i++) {
+                //if(i==4){
+                    for(uint16_t j=0; j<test_arm_send_delay; j++) {
+                        __NOP(); // 小延时，确保消息发送出去，具体时长根据总线负载情况调整
+                    }
+                //}                				
+                //vTaskDelay(1); // 每发一个包延时1ms
                 SendFanPacket(i+1,last_effect[i],t_color, t_stage);
-				// for(uint8_t j=0; j<test_arm_send_delay; j++) {
-                //     __NOP(); // 小延时，确保消息发送出去，具体时长根据总线负载情况调整
-                // }
-                vTaskDelay(1); // 每发一个包延时1ms，避免总线拥堵
+
             }
-			// for(uint8_t i=0; i<100; i++) {
-            //     __NOP(); // 小延时，确保消息发送出去，具体时长根据总线负载情况调整
-            // }
-            // SendFanPacket(5,last_effect[4],t_color, t_stage);
             effect_changed = false; // 重置标志位
         }
         

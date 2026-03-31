@@ -20,22 +20,22 @@ void can_receive_process(uint8_t *light_effect_id, uint8_t *color, uint8_t *acti
 }
 分控控制简化为发射一个灯效id,一个颜色,一个大符组数的包即可.
 */
-
+CAN_COB CAN_TxMsg[5] = {};
 // 发送装甲板控制包
 void SendFanPacket(uint8_t id,uint8_t cmd,light_color_enum color, uint8_t stage) {
     if(id < 1 || id > 5) {
-        while(1); // id范围检查，for debug,用于排查不应该出现的id
+        //while(1); // id范围检查，for debug,用于排查不应该出现的id
         return; // id范围检查，确保在1~5
     }
-    CAN_COB CAN_TxMsg = {};
-    CAN_TxMsg.IdType = Can_STDID;
-    CAN_TxMsg.ID = CAN_SEND_ID_BASE + id; // 分控 ID 作为低字节
-    CAN_TxMsg.DLC = 3;
-    CAN_TxMsg.Data[0] = cmd; // 命令类型
-    CAN_TxMsg.Data[1] = static_cast<uint8_t>(color); // 颜色
-    CAN_TxMsg.Data[2] = stage;     // 阶段
+   
+    CAN_TxMsg[id - 1].IdType = Can_STDID;
+    CAN_TxMsg[id - 1].ID = CAN_SEND_ID_BASE + id; // 分控 ID 作为低字节
+    CAN_TxMsg[id - 1].DLC = 3;
+    CAN_TxMsg[id - 1].Data[0] = cmd; // 命令类型
+    CAN_TxMsg[id - 1].Data[1] = static_cast<uint8_t>(color); // 颜色
+    CAN_TxMsg[id - 1].Data[2] = stage;     // 阶段
     //xQueueSend(CAN1_TxPort, &CAN_TxMsg, 0);
-    xQueueSend(CAN2_TxPort, &CAN_TxMsg, 0);
+    xQueueSend(CAN2_TxPort, &CAN_TxMsg[id - 1], 0);
 }
 
 //分控反馈数据处理函数
