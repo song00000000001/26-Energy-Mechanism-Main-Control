@@ -18,19 +18,6 @@ void generateSETarget() {
         g_SystemState.SE_StateData.SE_TargetID_GROUP[i] = ids[i];
     }
 }
-// 2. 更新装甲板灯光状态
-void updateSEArmorLight() {
-    for (int i = 0; i < 5; i++) {
-        if (i == g_SystemState.SE_StateData.SE_TargetID) {
-            // 是目标：亮起瞄准灯
-            //SendFanPacket(i, FAN_CMD_AIMING, g_TargetCtrl.TargetColor, 0);
-        } 
-        // else {
-        //     // 非目标：熄灭
-        //     SendFanPacket(i, FAN_CMD_RESET, color_off, 0);
-        // }
-    }
-}
 
 void SE_reset() {
     g_SystemState.SE_StateData.SE_Group = 0; // 重置轮数
@@ -38,7 +25,7 @@ void SE_reset() {
     g_SystemState.CurrentHitID = 0;
     g_SystemState.CurrentHitScores = 0;
     g_SystemState.SE_StateData.SE_Scores = 0;
-    //Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0); // 熄灭所有装甲板
+    all_off_effect(); // 熄灭所有装甲板
     vTaskDelay(50); // 确保CAN消息发送出去
     
     //my_printf(upper_uart_id, "SE reset\n");
@@ -65,41 +52,44 @@ void small_energy_logic() {
         }
         
         g_SystemState.SE_StateData.SE_TargetID=g_SystemState.SE_StateData.SE_TargetID_GROUP[g_SystemState.SE_StateData.SE_Group];
+        se_select_effect(g_SystemState.SE_StateData.SE_TargetID); // 选中效果
+
         // 击打判定
         if (g_SystemState.CurrentHitID != 0) {
+            //获取id
             uint8_t hitID = g_SystemState.CurrentHitID;
-            g_SystemState.SE_StateData.SE_Scores += g_SystemState.CurrentHitScores;
-            hit_feedback_to_uart(hitID, g_SystemState.CurrentHitScores);
+            uint8_t hitScores = g_SystemState.CurrentHitScores;
+            //清空id和得分，准备下一次击打判定
             g_SystemState.CurrentHitID = 0;
             g_SystemState.CurrentHitScores = 0;
+            //累计得分
+            g_SystemState.SE_StateData.SE_Scores += hitScores;
+            //发送反馈
+            hit_feedback_to_uart(g_SystemState.SE_StateData.SE_TargetID,hitID, hitScores);
+            // 判断是否击中正确的目标
             if (hitID == g_SystemState.SE_StateData.SE_TargetID) {
                 // 击中目标，进入下一轮
+                se_hit_effect(hitID); // 击中效果
                 g_SystemState.SE_StateData.SE_Group++; // 轮数加一
                 if(g_SystemState.SE_StateData.SE_Group > 4) {
                     small_enegy_settlement(g_SystemState.SE_StateData.SE_Scores); // 结算，传入得分
                     g_SystemState.SE_StateData.SE_Scores = 0;
                     // 全部通关
                     if(g_TargetCtrl.target_mode == tar_small_energy_continue){
-                        g_SystemState.SE_StateData.SE_State = SE_GENERATE_TARGET;
+                        SE_reset(); // 重置状态准备下一次
                     }
                     else{
-                        lightSuccessFlash(-4, g_TargetCtrl.TargetColor); // 闪烁提示成功
                         g_SystemState.SysMode = success; // 结束
                     }
                     break;
                 }
-                //SendFanPacket(hitID, FAN_CMD_SMALL_HIT, g_TargetCtrl.TargetColor, 0);
-                vTaskDelay(20);
-
+                g_SystemState.SE_StateData.SE_StateTimer = now;
             } 
             else {
                 // 打错，重置
                 SE_reset();
                 break;
             }
-   
-            updateSEArmorLight();
-            g_SystemState.SE_StateData.SE_StateTimer = now;
         }
         break;
 

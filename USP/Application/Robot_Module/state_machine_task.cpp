@@ -7,7 +7,7 @@
 
 void state_machine_reset();
 
-
+uint8_t debug_test_light_effect[5] = {0}; // 调试用灯效选择
 
 //状态机任务
 void task_state_machine(void *arg)
@@ -56,12 +56,30 @@ void task_state_machine(void *arg)
         
         debug_simulate_hit_f(); // 调试函数，模拟击打事件
         
-        if(g_TargetCtrl.target_mode == tar_stop) // 停止/待机
+        //模式切换
+        switch (g_TargetCtrl.target_mode)
+        {
+        case tar_stop: // 停止/待机
             g_SystemState.SysMode=idle;
-        else if(g_TargetCtrl.target_mode == tar_start) // 激活
+            break;
+        case tar_start: // 激活
             g_SystemState.SysMode=wait_start;
-        else if(g_TargetCtrl.target_mode == tar_test_mode)
+            break;
+        case tar_small_energy_signle: // 小能量机关
+        case tar_small_energy_continue: // 连续小能量机关
+            g_SystemState.SysMode = small_energy; // 切换到小能量机关
+            break;
+        case tar_big_energy_single: // 大能量机关
+        case tar_big_energy_continue: // 连续大能量机关
+            g_SystemState.SysMode = big_energy; // 切换到大能量机关
+            break;
+        case tar_test_mode:
             g_SystemState.SysMode = test_mode;
+            break;
+        default:
+            break;
+        }
+
         // 模式判断
         switch (g_SystemState.SysMode)
         {
@@ -79,28 +97,7 @@ void task_state_machine(void *arg)
             //state_machine_reset();
             g_SystemState.TargetSpeed = 0.1f; // 初始目标速度
 
-            switch (g_TargetCtrl.target_mode)
-            {
-            case tar_stop: // 停止/待机
-                g_SystemState.SysMode=idle;
-                break;
-            case tar_start: // 激活
-                g_SystemState.SysMode=wait_start;
-                break;
-            case tar_small_energy_signle: // 小能量机关
-            case tar_small_energy_continue: // 连续小能量机关
-                g_SystemState.SysMode = small_energy; // 切换到小能量机关
-                break;
-            case tar_big_energy_single: // 大能量机关
-            case tar_big_energy_continue: // 连续大能量机关
-                g_SystemState.SysMode = big_energy; // 切换到大能量机关
-                break;
-            case tar_test_mode:
-                g_SystemState.SysMode = test_mode;
-                break;
-            default:
-                break;
-            }
+            
         }
         break;
         case small_energy:
@@ -115,25 +112,50 @@ void task_state_machine(void *arg)
         break;
         case success:
         {
-            // 全部点亮
-            //Ctrl_All_Armors(LIGHT_EFFECT_SUCCESS, g_TargetCtrl.TargetColor, 5);
-            //vTaskDelay(1000); 
-            g_TargetCtrl.target_mode = tar_stop; // 结束，回到待机
+            //优化成非阻塞版本，避免在闪烁过程中任务被占用无法响应其他事件
+            //用简易的状态机实现闪烁逻辑
+            static int8_t flash_count = 4; // 记录当前闪烁次数
+            static TickType_t last_flash_time = 0;
+            TickType_t now = xTaskGetTickCount();
+            static int8_t flash_state = 0; 
+
+            // 切换状态
+            if(flash_count == 0) {
+                // 闪烁完成，重置状态
+                flash_state = 0;
+                flash_count = 4;//为下一次使用重置闪烁次数
+                g_TargetCtrl.target_mode = tar_stop; // 结束，回到待机
+            }
+            else if(now - last_flash_time > 500) { // 每500ms切换一次状态
+                flash_state=--flash_state; // 状态在-1和1之间切换
+                flash_count--;
+                last_flash_time = now;
+            }
+
+            switch (flash_state)
+            {
+            case -1: // 全灭
+                all_off_effect();
+                break;
+            case 1: // 全亮
+                all_on_effect();
+                break;
+            case 0: // 闪烁完成，重置状态
+            default:
+                break;
+            }
+
         }
         break;
         case test_mode:
         {
-            // 测试模式下不跑大小符逻辑，不重置灯效
-            g_SystemState.TargetSpeed = 0;
-            // Ctrl_All_Armors(
-            //     (LightEffectId_t)Debugger.debug_arm_light_effect,
-            //     g_TargetCtrl.TargetColor,
-            //     g_SystemState.SE_StateData.SE_Group
-            // );
+            // 测试模式，保留。
+            //g_SystemState.TargetSpeed = 0;
+            test_light_effect(debug_test_light_effect);
         }
         break;
         default:
-            state_machine_reset();
+            //state_machine_reset();
         break;
         }
                 
@@ -152,8 +174,9 @@ void state_machine_reset(){
     g_SystemState.CurrentHitID = 0;
     g_SystemState.SE_StateData.SE_Group = 0; // 重置小能量轮数
     g_SystemState.SE_StateData.SE_State = SE_GENERATE_TARGET; // 重置小能量状态机
-    //Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0); // 熄灭所有装甲板
-    //R_light(color_off);
+    all_off_effect(); // 熄灭所有装甲板
+    R_light(color_off); // 熄灭R标灯
+    g_TargetCtrl.TargetColor = color_off; // 重置目标颜色
 }
 
 void debug_simulate_hit_f() {

@@ -32,7 +32,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "internal.h"
 #include "global_data.h"
-#include "ws2812_ctrl_driver.h"
 /* Private define ------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -51,8 +50,6 @@ TaskHandle_t tskR_light_Handle;
 TaskHandle_t tskIMU_Handle;
 #endif
   
-void task_R_light(void *arg);
-  
 /*todo
 song
 据分析，主任务优先级需要加大，防止控制周期抖动，但是主任务负担太重了，我比较担心会卡死。所以优先级还是保持吧。
@@ -68,7 +65,7 @@ void Service_Devices_Init(void)
     #if USE_SRML_MPU6050
     xTaskCreate(task_imu, "App.tskIMU",  Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityNormal, &tskIMU_Handle);
     #endif
-    xTaskCreate(task_R_light, "App.tskR_light",  Small_Stack_Size, NULL, PriorityNormal, &tskR_light_Handle);
+    xTaskCreate(task_Rlight_armer, "App.tsk_Rlight_armer",  Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityNormal, &tskR_light_Handle);
 }
 
 /**
@@ -100,18 +97,5 @@ void task_imu(void *arg)
             #endif
             ws2812_counter = 0;
         }
-    }
-}
-
-void task_R_light(void *arg)
-{
-    /* Pre-Load for task */
-    TickType_t xLastWakeTime_t;
-    xLastWakeTime_t = xTaskGetTickCount();
-    for (;;)
-    {
-        /* wait for next circle */
-        vTaskDelayUntil(&xLastWakeTime_t, 100);
-        R_light(g_TargetCtrl.TargetColor);
     }
 }

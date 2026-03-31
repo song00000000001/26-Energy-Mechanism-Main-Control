@@ -19,26 +19,14 @@ void can_receive_process(uint8_t *light_effect_id, uint8_t *color, uint8_t *acti
     }
 }
 分控控制简化为发射一个灯效id,一个颜色,一个大符组数的包即可.
-经过规则调查,灯效id简化为5种:
-//灯效枚举
-typedef enum {
-    LIGHT_EFFECT_OFF = 0,          // 全灭
-    LIGHT_EFFECT_AIMING,           // 待击打瞄准态
-    LIGHT_EFFECT_SMALL_HIT,        // 小符击中后
-    LIGHT_EFFECT_BIG_STAGE,        // 大符阶段/非待击打灯臂阶段态
-    LIGHT_EFFECT_SUCCESS,          // 激活成功
-} LightEffectId_t;
-颜色简化为:
-//颜色枚举
-typedef enum {
-    COLOR_OFF = 0,                // 无色/全灭
-    COLOR_RED,                    // 红色
-    COLOR_BLUE,                   // 蓝色
-} Color_t;
 */
 
 // 发送装甲板控制包
 void SendFanPacket(uint8_t id,uint8_t cmd,light_color_enum color, uint8_t stage) {
+    if(id < 1 || id > 5) {
+        while(1); // id范围检查，for debug,用于排查不应该出现的id
+        return; // id范围检查，确保在1~5
+    }
     CAN_COB CAN_TxMsg = {};
     CAN_TxMsg.IdType = Can_STDID;
     CAN_TxMsg.ID = CAN_SEND_ID_BASE + id; // 分控 ID 作为低字节
@@ -48,7 +36,6 @@ void SendFanPacket(uint8_t id,uint8_t cmd,light_color_enum color, uint8_t stage)
     CAN_TxMsg.Data[2] = stage;     // 阶段
     //xQueueSend(CAN1_TxPort, &CAN_TxMsg, 0);
     xQueueSend(CAN2_TxPort, &CAN_TxMsg, 0);
-	vTaskDelay(1);
 }
 
 //分控反馈数据处理函数
@@ -90,10 +77,10 @@ void my_printf(uint8_t port_num, const char* format, ...)
     va_end(args);
 }
 
-void hit_feedback_to_uart(uint8_t hitID,uint8_t scores){
-    vTaskDelay(80);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
-    my_printf(upper_uart_id, "ID:%d,Sc:%d\r\n", hitID, scores);
-    vTaskDelay(80);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
+void hit_feedback_to_uart(uint8_t targetID,uint8_t hitID,uint8_t scores){
+    vTaskDelay(20);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
+    my_printf(upper_uart_id, "TID:%d,ID:%d,Sco:%d\r\n", targetID, hitID, scores);
+    vTaskDelay(20);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
 }
 
 /*
@@ -101,9 +88,9 @@ void hit_feedback_to_uart(uint8_t hitID,uint8_t scores){
 小能量机关增益持续期间内，所有英雄、步兵、空 中机器人在获得经验时，额外获得原经验100%的经验，一方在一次小能量机关增益期间内通过此方 式最多共获得 1200 点额外经验。
 */
 void small_enegy_settlement(uint8_t average_round){
-    vTaskDelay(80);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
+    vTaskDelay(20);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
     my_printf(upper_uart_id, "SE settlement,total Round: %d\r\n", average_round);
-    vTaskDelay(80);
+    vTaskDelay(20);
 }
 
 /*
@@ -130,7 +117,7 @@ void small_enegy_settlement(uint8_t average_round){
 |  10   |    60     |
 */
 void big_enegy_settlement(uint8_t average_round, uint8_t actived_arms){
-    vTaskDelay(80);
+    vTaskDelay(20);
     my_printf(upper_uart_id, "BE Settlement,Average Round: %d, Actived Arms: %d\r\n", average_round, actived_arms);
     vTaskDelay(20);
 	if(average_round >= 0 && average_round <= 3){
@@ -154,5 +141,5 @@ void big_enegy_settlement(uint8_t average_round, uint8_t actived_arms){
         if(actived_arms >= 10) duration = 60; //十组特殊处理
         my_printf(upper_uart_id, "Gain Duration: %d seconds\r\n", duration);
     }
-    vTaskDelay(80);
+    vTaskDelay(20);
 }

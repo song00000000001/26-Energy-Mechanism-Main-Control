@@ -147,6 +147,8 @@ void User_VirtualComRecCpltCallback(uint8_t *Recv_Data, uint16_t ReceiveLen);
 void task_state_machine(void *arg);
 void task_motor_ctrl(void *arg);
 void task_imu(void *arg);
+void task_Rlight_armer(void *arg);
+
 #ifdef __cplusplus
 }
 #endif

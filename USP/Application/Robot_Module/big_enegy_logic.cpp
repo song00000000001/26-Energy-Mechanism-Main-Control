@@ -61,7 +61,6 @@ void big_energy_logic() {
                 BE_reset();
             }
             else{
-                lightSuccessFlash(-4, g_TargetCtrl.TargetColor); // 闪烁提示成功
                 g_SystemState.SysMode = success; // 结束
             }
         } 
