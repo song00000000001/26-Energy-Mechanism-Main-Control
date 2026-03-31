@@ -91,25 +91,16 @@ typedef enum{
     tar_big_energy_continue,
     tar_test_mode
 }EnergyTargetMode_t;
-/*
-//灯效枚举
+
 typedef enum {
     LIGHT_EFFECT_OFF = 0,          // 全灭
     LIGHT_EFFECT_AIMING,           // 待击打瞄准态
     LIGHT_EFFECT_SMALL_HIT,        // 小符击中后
     LIGHT_EFFECT_BIG_STAGE,        // 大符阶段/非待击打灯臂阶段态
     LIGHT_EFFECT_SUCCESS,          // 激活成功
+    LIGHT_EFFECT_TEST_SINGLE,   // 5: 单发覆盖测试
+    LIGHT_EFFECT_TEST_ACCUM,    // 6: 累积点亮测试
 } LightEffectId_t;
- 将分控灯效枚举分别映射成命令类型
-*/
-// 命令类型定义
-enum FanCmdType {
-    FAN_CMD_RESET = 0,       // 全灭/重置
-    FAN_CMD_AIMING,      // 待击打瞄准态
-    FAN_CMD_SMALL_HIT,     // 小符击中后
-    FAN_CMD_BIG_STAGE,     // 大符阶段/非待击打灯臂阶段态
-    FAN_CMD_SUCCESS,       // 激活成功
-};
 
 typedef struct {
     EnergyTargetMode_t target_mode;    // 0:停止/待机, 1:激活, 2. 小能量机关, 3:大能量机关 ,4: 连续小能量机关,5: 连续大能量机关
@@ -165,7 +156,7 @@ typedef struct {
 } FanPacket_t;
 #pragma pack()
 
-void Ctrl_All_Armors(FanCmdType cmd, light_color_enum color, uint8_t stage) ;
+void Ctrl_All_Armors(uint8_t cmd, light_color_enum color, uint8_t stage) ;
 void lightSuccessFlash(int8_t num, light_color_enum color);
 void small_energy_logic();
 void big_energy_logic();

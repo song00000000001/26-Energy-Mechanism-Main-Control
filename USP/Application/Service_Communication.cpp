@@ -340,11 +340,6 @@ void Task_UsartReceive(void *arg)
         {
             Debugger.Debug_simulate_hit=true; // 模拟击打事件
         }
-        if(upper_ctrl_packet.ctrl_header == 0xEE)
-        {
-            FanCmdType cmd = static_cast<FanCmdType>(upper_ctrl_packet.ctrl_content);
-            Debugger.debug_arm_light_effect = cmd; // 调试用灯效选择
-        }
         break;
       case 2:
         break;

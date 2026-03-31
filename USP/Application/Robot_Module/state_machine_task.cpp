@@ -7,6 +7,8 @@
 
 void state_machine_reset();
 
+
+
 //状态机任务
 void task_state_machine(void *arg)
 {
@@ -114,8 +116,8 @@ void task_state_machine(void *arg)
         case success:
         {
             // 全部点亮
-            Ctrl_All_Armors(FAN_CMD_SUCCESS, g_TargetCtrl.TargetColor, 5);
-            vTaskDelay(3000); 
+            //Ctrl_All_Armors(LIGHT_EFFECT_SUCCESS, g_TargetCtrl.TargetColor, 5);
+            //vTaskDelay(1000); 
             g_TargetCtrl.target_mode = tar_stop; // 结束，回到待机
         }
         break;
@@ -123,11 +125,11 @@ void task_state_machine(void *arg)
         {
             // 测试模式下不跑大小符逻辑，不重置灯效
             g_SystemState.TargetSpeed = 0;
-            Ctrl_All_Armors(
-                (FanCmdType)Debugger.debug_arm_light_effect,
-                g_TargetCtrl.TargetColor,
-                g_SystemState.SE_StateData.SE_Group
-            );
+            // Ctrl_All_Armors(
+            //     (LightEffectId_t)Debugger.debug_arm_light_effect,
+            //     g_TargetCtrl.TargetColor,
+            //     g_SystemState.SE_StateData.SE_Group
+            // );
         }
         break;
         default:
@@ -150,7 +152,7 @@ void state_machine_reset(){
     g_SystemState.CurrentHitID = 0;
     g_SystemState.SE_StateData.SE_Group = 0; // 重置小能量轮数
     g_SystemState.SE_StateData.SE_State = SE_GENERATE_TARGET; // 重置小能量状态机
-    Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0); // 熄灭所有装甲板
+    //Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0); // 熄灭所有装甲板
     //R_light(color_off);
 }
 

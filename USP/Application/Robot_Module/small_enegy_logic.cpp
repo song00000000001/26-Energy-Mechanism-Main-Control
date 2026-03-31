@@ -23,7 +23,7 @@ void updateSEArmorLight() {
     for (int i = 0; i < 5; i++) {
         if (i == g_SystemState.SE_StateData.SE_TargetID) {
             // 是目标：亮起瞄准灯
-            SendFanPacket(i, FAN_CMD_AIMING, g_TargetCtrl.TargetColor, 0);
+            //SendFanPacket(i, FAN_CMD_AIMING, g_TargetCtrl.TargetColor, 0);
         } 
         // else {
         //     // 非目标：熄灭
@@ -38,7 +38,7 @@ void SE_reset() {
     g_SystemState.CurrentHitID = 0;
     g_SystemState.CurrentHitScores = 0;
     g_SystemState.SE_StateData.SE_Scores = 0;
-    Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0); // 熄灭所有装甲板
+    //Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0); // 熄灭所有装甲板
     vTaskDelay(50); // 确保CAN消息发送出去
     
     //my_printf(upper_uart_id, "SE reset\n");
@@ -88,7 +88,7 @@ void small_energy_logic() {
                     }
                     break;
                 }
-                SendFanPacket(hitID, FAN_CMD_SMALL_HIT, g_TargetCtrl.TargetColor, 0);
+                //SendFanPacket(hitID, FAN_CMD_SMALL_HIT, g_TargetCtrl.TargetColor, 0);
                 vTaskDelay(20);
 
             } 
