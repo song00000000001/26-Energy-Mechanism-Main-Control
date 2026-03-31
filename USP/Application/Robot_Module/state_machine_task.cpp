@@ -76,6 +76,8 @@ void task_state_machine(void *arg)
         case tar_test_mode:
             g_SystemState.SysMode = test_mode;
             break;
+        case tar_success:
+            g_SystemState.SysMode = success;
         default:
             break;
         }
@@ -114,20 +116,22 @@ void task_state_machine(void *arg)
         {
             //优化成非阻塞版本，避免在闪烁过程中任务被占用无法响应其他事件
             //用简易的状态机实现闪烁逻辑
-            static int8_t flash_count = 4; // 记录当前闪烁次数
+            static int8_t flash_count = 7; // 记录当前闪烁次数
             static TickType_t last_flash_time = 0;
             TickType_t now = xTaskGetTickCount();
-            static int8_t flash_state = 0; 
+            static int8_t flash_state = 1; 
 
             // 切换状态
             if(flash_count == 0) {
                 // 闪烁完成，重置状态
-                flash_state = 0;
-                flash_count = 4;//为下一次使用重置闪烁次数
+                flash_count = 7;//为下一次使用重置闪烁次数
                 g_TargetCtrl.target_mode = tar_stop; // 结束，回到待机
+				all_on_effect();
+				vTaskDelay(2000);
+				break;
             }
-            else if(now - last_flash_time > 500) { // 每500ms切换一次状态
-                flash_state=--flash_state; // 状态在-1和1之间切换
+            else if(now - last_flash_time > 200) { // 每500ms切换一次状态
+                flash_state=-flash_state; // 状态在-1和1之间切换
                 flash_count--;
                 last_flash_time = now;
             }
@@ -140,7 +144,6 @@ void task_state_machine(void *arg)
             case 1: // 全亮
                 all_on_effect();
                 break;
-            case 0: // 闪烁完成，重置状态
             default:
                 break;
             }
@@ -175,8 +178,8 @@ void state_machine_reset(){
     g_SystemState.SE_StateData.SE_Group = 0; // 重置小能量轮数
     g_SystemState.SE_StateData.SE_State = SE_GENERATE_TARGET; // 重置小能量状态机
     all_off_effect(); // 熄灭所有装甲板
-    R_light(color_off); // 熄灭R标灯
-    g_TargetCtrl.TargetColor = color_off; // 重置目标颜色
+    //R_light(color_off); // 熄灭R标灯
+    //g_TargetCtrl.TargetColor = color_off; // 重置目标颜色
 }
 
 void debug_simulate_hit_f() {

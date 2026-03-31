@@ -49,6 +49,7 @@ void small_energy_logic() {
         // 超时失败
         if (now - g_SystemState.SE_StateData.SE_StateTimer > 2500) {
             SE_reset(); // 重置小能量机关状态
+			break;
         }
         
         g_SystemState.SE_StateData.SE_TargetID=g_SystemState.SE_StateData.SE_TargetID_GROUP[g_SystemState.SE_StateData.SE_Group];
@@ -79,7 +80,7 @@ void small_energy_logic() {
                         SE_reset(); // 重置状态准备下一次
                     }
                     else{
-                        g_SystemState.SysMode = success; // 结束
+                        g_TargetCtrl.target_mode = tar_success; // 结束
                     }
                     break;
                 }

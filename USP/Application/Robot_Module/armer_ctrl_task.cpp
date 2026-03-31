@@ -72,6 +72,8 @@ void test_light_effect(uint8_t effect[5]) {
     }
 }
 
+uint16_t test_arm_send_delay=0;
+
 void task_Rlight_armer(void *arg)
 {
     /* Pre-Load for task */
@@ -113,10 +115,17 @@ void task_Rlight_armer(void *arg)
         }
 
         if(effect_changed) {
-            for (uint8_t i = 0; i < 5; i++) {
-                SendFanPacket(i,last_effect[i],t_color, t_stage);
+            for (uint8_t i = 0; i < 4; i++) {
+                SendFanPacket(i+1,last_effect[i],t_color, t_stage);
+				// for(uint8_t j=0; j<test_arm_send_delay; j++) {
+                //     __NOP(); // 小延时，确保消息发送出去，具体时长根据总线负载情况调整
+                // }
                 vTaskDelay(1); // 每发一个包延时1ms，避免总线拥堵
             }
+			// for(uint8_t i=0; i<100; i++) {
+            //     __NOP(); // 小延时，确保消息发送出去，具体时长根据总线负载情况调整
+            // }
+            // SendFanPacket(5,last_effect[4],t_color, t_stage);
             effect_changed = false; // 重置标志位
         }
         

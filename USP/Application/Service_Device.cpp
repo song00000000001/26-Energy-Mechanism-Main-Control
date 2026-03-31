@@ -44,7 +44,7 @@ TaskHandle_t Vision_Task_Handle;
 TaskHandle_t log_Handle;
 TaskHandle_t protocol_status_monitor_Handle;
 TaskHandle_t armer_ctrl_Handle;
-TaskHandle_t tskR_light_Handle;
+TaskHandle_t Rlight_armer_Handle;
 
 #if USE_SRML_MPU6050
 TaskHandle_t tskIMU_Handle;
@@ -65,7 +65,7 @@ void Service_Devices_Init(void)
     #if USE_SRML_MPU6050
     xTaskCreate(task_imu, "App.tskIMU",  Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityNormal, &tskIMU_Handle);
     #endif
-    xTaskCreate(task_Rlight_armer, "App.tsk_Rlight_armer",  Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityNormal, &tskR_light_Handle);
+    xTaskCreate(task_Rlight_armer, "App.tsk_Rlight_armer",  Small_Stack_Size+Tiny_Stack_Size, NULL, PriorityNormal, &Rlight_armer_Handle);
 }
 
 /**

@@ -89,7 +89,8 @@ typedef enum{
     tar_big_energy_single,
     tar_small_energy_continue,
     tar_big_energy_continue,
-    tar_test_mode
+    tar_test_mode,
+    tar_success
 }EnergyTargetMode_t;
 
 

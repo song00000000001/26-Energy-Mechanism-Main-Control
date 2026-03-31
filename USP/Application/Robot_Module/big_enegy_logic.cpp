@@ -59,7 +59,7 @@ void big_energy_logic() {
                 BE_reset();
             }
             else{
-                g_SystemState.SysMode = success; // 结束
+                g_TargetCtrl.target_mode = tar_success; // 结束
             }
         } 
         else {
