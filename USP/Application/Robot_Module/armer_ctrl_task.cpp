@@ -118,7 +118,7 @@ void task_Rlight_armer(void *arg)
             for (uint8_t i = 0; i < 5; i++) {
                 //if(i==4){
                     for(uint16_t j=0; j<test_arm_send_delay; j++) {
-                        __NOP(); // 小延时，确保消息发送出去，具体时长根据总线负载情况调整
+                       __NOP(); // 小延时，确保消息发送出去，具体时长根据总线负载情况调整
                     }
                 //}                				
                 //vTaskDelay(1); // 每发一个包延时1ms

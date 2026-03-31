@@ -173,13 +173,21 @@ void Task_CAN2Transmit(void *arg)
 
   for (;;)
   {
-    /* CAN1 Send Port */
+    /* CAN2 Send Port */
     if (xQueueReceive(CAN2_TxPort, &CAN_TxMsg, portMAX_DELAY) == pdPASS)
     {
       free_can_mailbox = HAL_CAN_GetTxMailboxesFreeLevel(&hcan2);
       /* Avoid the unused warning*/
       UNUSED(&free_can_mailbox);
-      CANx_SendData(2, &CAN_TxMsg);
+      while(free_can_mailbox == 0) {
+		  free_can_mailbox = HAL_CAN_GetTxMailboxesFreeLevel(&hcan2);
+          // 这里可以增加一些错误处理，比如记录日志或者统计丢包次数
+          // 目前简单地丢弃这条消息，避免阻塞任务
+      }
+      while(CANx_SendData(2, &CAN_TxMsg)!=CAN_SUCCESS) {
+          // 发送失败，可能是总线繁忙，可以选择重试或者丢弃
+          // 这里简单地重试，直到成功发送
+      }
     }
   }
 }
