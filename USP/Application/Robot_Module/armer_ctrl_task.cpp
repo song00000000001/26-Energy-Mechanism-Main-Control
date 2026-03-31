@@ -115,7 +115,7 @@ void task_Rlight_armer(void *arg)
         }
 
         if(effect_changed) {
-            for (uint8_t i = 0; i < 4; i++) {
+            for (uint8_t i = 0; i < 5; i++) {
                 SendFanPacket(i+1,last_effect[i],t_color, t_stage);
 				// for(uint8_t j=0; j<test_arm_send_delay; j++) {
                 //     __NOP(); // 小延时，确保消息发送出去，具体时长根据总线负载情况调整
