@@ -56,6 +56,7 @@ typedef enum{
     small_energy,
     big_energy,
     success,
+    successed,
     test_mode
 }EnergySystemMode_t;
 
@@ -90,7 +91,8 @@ typedef enum{
     tar_small_energy_continue,
     tar_big_energy_continue,
     tar_test_mode,
-    tar_success
+    tar_success,
+    tar_successed
 }EnergyTargetMode_t;
 
 

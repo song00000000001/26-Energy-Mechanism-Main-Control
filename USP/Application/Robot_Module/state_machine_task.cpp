@@ -78,6 +78,9 @@ void task_state_machine(void *arg)
             break;
         case tar_success:
             g_SystemState.SysMode = success;
+            break;
+        case tar_successed:
+            g_SystemState.SysMode = successed;
         default:
             break;
         }
@@ -98,8 +101,6 @@ void task_state_machine(void *arg)
         {
             //state_machine_reset();
             g_SystemState.TargetSpeed = 0.1f; // 初始目标速度
-
-            
         }
         break;
         case small_energy:
@@ -125,9 +126,7 @@ void task_state_machine(void *arg)
             if(flash_count == 0) {
                 // 闪烁完成，重置状态
                 flash_count = 7;//为下一次使用重置闪烁次数
-                g_TargetCtrl.target_mode = tar_stop; // 结束，回到待机
-				all_on_effect();
-				vTaskDelay(2000);
+                g_TargetCtrl.target_mode = tar_successed;
 				break;
             }
             else if(now - last_flash_time > 200) { // 每500ms切换一次状态
@@ -150,6 +149,13 @@ void task_state_machine(void *arg)
 
         }
         break;
+        case successed:
+        {
+            // 永久全亮，保持在成功状态
+            all_on_effect();
+
+        }
+		break;
         case test_mode:
         {
             // 测试模式，保留。
