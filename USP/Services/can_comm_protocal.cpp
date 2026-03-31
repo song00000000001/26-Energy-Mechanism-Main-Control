@@ -83,6 +83,12 @@ void hit_feedback_to_uart(uint8_t targetID,uint8_t hitID,uint8_t scores){
     vTaskDelay(20);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
 }
 
+void hit2_feedback_to_uart(uint8_t targetID,uint8_t targetID2,uint8_t hitID,uint8_t scores){
+    vTaskDelay(20);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
+    my_printf(upper_uart_id, "TID:%d,TID2:%d,ID:%d,Sco:%d\r\n", targetID, targetID2, hitID, scores);
+    vTaskDelay(20);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
+}
+
 /*
 一方机器人成功激活小能量机关后，该方所有机器人、前 哨站、基地均获得25%的防御增益，持续45秒。
 小能量机关增益持续期间内，所有英雄、步兵、空 中机器人在获得经验时，额外获得原经验100%的经验，一方在一次小能量机关增益期间内通过此方 式最多共获得 1200 点额外经验。

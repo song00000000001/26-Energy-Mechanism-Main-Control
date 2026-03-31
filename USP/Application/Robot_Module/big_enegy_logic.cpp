@@ -17,17 +17,15 @@ void RemoveTarget(uint8_t id) {
     if (g_SystemState.BE_StateData.BE_Targets[1] == id) g_SystemState.BE_StateData.BE_Targets[1] = 0;
 }
 
-// 更新所有装甲板灯光状态
-void updateBEArmorLight() {
-    uint8_t stage = g_SystemState.BE_StateData.BE_Group; // 阶段1-5
-    for (int i = 0; i < 5; i++) {
-        if (i == g_SystemState.BE_StateData.BE_Targets[0] || i == g_SystemState.BE_StateData.BE_Targets[1]) {
-            // 是目标：亮起瞄准灯 (NORMAL)
-            //SendFanPacket(i,FAN_CMD_AIMING,g_TargetCtrl.TargetColor, stage);
-        } 
-        else {
-            // 非目标：大符阶段态 (BIG_STAGE)
-            //SendFanPacket(i,FAN_CMD_BIG_STAGE,g_TargetCtrl.TargetColor, stage);
+void updateBEArmorLight(){
+    uint8_t target1 = g_SystemState.BE_StateData.BE_Targets[0];
+    uint8_t target2 = g_SystemState.BE_StateData.BE_Targets[1];
+    for(int i=1;i<=5;i++){
+        if(i == target1 || i == target2){
+            be_select_effect(i); // 选中效果
+        }
+        else{
+            be_stage_effect(i); // 瞄准效果
         }
     }
 }
@@ -41,7 +39,7 @@ void BE_reset() {
     g_SystemState.CurrentHitScores = 0;
     g_SystemState.BE_StateData.BE_ActivedArms = 0;
     g_SystemState.BE_StateData.BE_Scores = 0;
-    //Ctrl_All_Armors(FAN_CMD_RESET, color_off, 0); // 熄灭所有装甲板
+    all_off_effect(); // 熄灭所有装甲板
     vTaskDelay(50); // 确保CAN消息发送出去
     //my_printf(upper_uart_id, "BE reset\n");
 }
@@ -83,7 +81,7 @@ void big_energy_logic() {
             uint8_t hitID = g_SystemState.CurrentHitID;
             g_SystemState.BE_StateData.BE_Scores+= g_SystemState.CurrentHitScores;
             g_SystemState.BE_StateData.BE_ActivedArms++; // 激活灯臂数加一
-            hit_feedback_to_uart(hitID, g_SystemState.CurrentHitScores);
+            hit2_feedback_to_uart(g_SystemState.BE_StateData.BE_Targets[0], g_SystemState.BE_StateData.BE_Targets[1], hitID, g_SystemState.CurrentHitScores);
             g_SystemState.CurrentHitID = 0; 
             g_SystemState.CurrentHitScores = 0;
             if (g_SystemState.BE_StateData.BE_Targets[0] == hitID || g_SystemState.BE_StateData.BE_Targets[1] == hitID) {
@@ -91,7 +89,7 @@ void big_energy_logic() {
                 // 打中的亮大符阶段态，另一个保持瞄准态
                 //SendFanPacket(hitID, FAN_CMD_BIG_STAGE, g_TargetCtrl.TargetColor, g_SystemState.BE_StateData.BE_Group);
                 RemoveTarget(hitID); // 剩下的是要打的
-                
+                updateBEArmorLight();
                 // 进入 Stage 2，重置计时器
                 g_SystemState.BE_StateData.BE_StateTimer = now;
                 g_SystemState.BE_StateData.BE_State = BE_WAIT_HIT_2; 
@@ -115,13 +113,13 @@ void big_energy_logic() {
             uint8_t hitID = g_SystemState.CurrentHitID;
             g_SystemState.BE_StateData.BE_Scores+= g_SystemState.CurrentHitScores;
             g_SystemState.BE_StateData.BE_ActivedArms++; // 激活灯臂数加一
-            hit_feedback_to_uart(hitID, g_SystemState.CurrentHitScores); 
+            hit2_feedback_to_uart(g_SystemState.BE_StateData.BE_Targets[0], g_SystemState.BE_StateData.BE_Targets[1], hitID, g_SystemState.CurrentHitScores);
 			g_SystemState.CurrentHitScores = 0;
 			g_SystemState.CurrentHitID = 0;
             if (g_SystemState.BE_StateData.BE_Targets[0] == hitID || g_SystemState.BE_StateData.BE_Targets[1] == hitID) {
                 // 击中剩下那个 -> 双杀成功
-                //SendFanPacket(hitID, FAN_CMD_BIG_STAGE, g_TargetCtrl.TargetColor, g_SystemState.BE_StateData.BE_Group);
-                vTaskDelay(20);
+                RemoveTarget(hitID); // 剩下的是要打的
+                updateBEArmorLight();
                 g_SystemState.BE_StateData.BE_Group++;
                 g_SystemState.BE_StateData.BE_State = BE_GENERATE_TARGET;
             } 
