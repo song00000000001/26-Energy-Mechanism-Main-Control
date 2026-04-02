@@ -27,12 +27,11 @@ void task_motor_ctrl(void *arg)
         // 状态机处理
         switch(g_SystemState.SysMode)
         {
+            // 正常是恒定转速1/(3*pi) rad/s, 约
             case wait_start: // 等待开始
-                g_SystemState.TargetSpeed = 10*motor_reduction_ratio ; // 恒定速度: 10 rpm * 减速比
-                break;
+            case success: // 通关成功
+            case successed: // 已经通关
             case small_energy: // 小能量机关
-                // 恒定速度: 10 rpm * 减速比... (原公式保留)
-                // 假设 receivedata3.speed 原本是归一化系数或转速, 这里直接用 debug 参数
                 g_SystemState.TargetSpeed = 10 *motor_reduction_ratio* g_TargetCtrl.SmallEnergy_Speed;
                 break;
                 
@@ -54,13 +53,12 @@ void task_motor_ctrl(void *arg)
                 }
                 break;
 
-            case success: // 通关成功
-                g_SystemState.TargetSpeed = 0;
-                break;
-
             case idle: // 停止/待机                
             default:
                 g_SystemState.TargetSpeed = 0;
+                break;
+            case test_mode: // 测试模式
+                //无,直接在debug改
                 break;
         }  
         // 速度控制
