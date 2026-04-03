@@ -9,11 +9,8 @@ void task_motor_ctrl(void *arg)
     xLastWakeTime_t = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(2);
 
-    CAN_COB Tx_Buff = {};
-        abstractMotor<Motor_DM_classdef> mymotor(0x202); // 创建一个抽象电机实例，绑定ID为0x202的达妙电机类对象
-    vTaskDelay(100); // 稍微延时一下，确保电机相关的CAN发送队列已经创建并且系统稳定后再初始化电机，避免在系统刚启动时就发送CAN消息可能导致的问题
-    mymotor.init(CAN1_TxPort); // 绑定CAN1发送队列并使能电机
-	vTaskDelay(100);	
+    abstractMotor<Motor_DM_classdef> mymotor(0x202); // 创建一个抽象电机实例，绑定ID为0x202的达妙电机类对象
+    vTaskDelay(10); // 稍微延时一下，确保电机相关的CAN发送队列已经创建并且系统稳定后再初始化电机，避免在系统刚启动时就发送CAN消息可能导致的问题
 	mymotor.init(CAN1_TxPort);
     mymotor.speed_unit_convert = 29.0f / 43.0f; //电机侧/实际侧=29/43，函数会除以这个值，即实际发送=设置目标/(29/43)
     
@@ -40,7 +37,9 @@ void task_motor_ctrl(void *arg)
                     float param_a = g_TargetCtrl.BigEnergy_A;
                     float param_w = g_TargetCtrl.BigEnergy_W;
                     
-                    // 参数限幅 (保持原有逻辑)
+                    // 参数限幅
+                    //a=0.78~1.045, w=1.884~2.000
+                    //spd=(a*sin(w*t)+2.09-a),约0.0873~0.125 rad/s, 5.24~7.46 rad/60s, 0.87~1.25转/60s
                     if(param_a > 1.045f) param_a = 1.045f;
                     else if(param_a < 0.780f) param_a = 0.780f;
                     
@@ -48,9 +47,7 @@ void task_motor_ctrl(void *arg)
                     else if(param_w < 1.884f) param_w = 1.884f;
 
                     // 计算大符速度
-                    //g_SystemState.TargetSpeed = (param_a * sin(param_w * time_clock/1000.0f) + 2.090f - param_a) * motor_reduction_ratio_t * 4 * 60 / 6.28f;
-
-                    g_SystemState.TargetSpeed = 1/(3.0f * PI) ;//在单位确定之前，先使用恒定转速，方便测试和调试。后续可以根据实际情况调整为上述计算方式。
+                    g_SystemState.TargetSpeed = (param_a * sin(param_w * time_clock/1000.0f) + 2.090f - param_a);
                 }
                 break;
 
@@ -62,21 +59,8 @@ void task_motor_ctrl(void *arg)
                 //无,直接在debug改
                 break;
         }  
-        // 速度控制
         
-        //以下方式为达妙电机速度模式的直接控制方式，未使用 PID 调节.
-        // if(g_SystemState.SysMode == idle){
-        //     g_SystemState.TargetSpeed = 0;
-        // }
-        // else{
-        //     if(mymotor.){ // 电机未使能，强制使能
-        //         motor_ctrl.mymotor.startMotor(); // 使能电机
-        //     }
-        //     else if(motor_ctrl.dm_motor_recdata.state!=1){ // 电机状态异常，强制使能
-        //         motor_ctrl.mymotor.ClearError(); // 清除错误
-        //         motor_ctrl.mymotor.startMotor(); // 使能电机
-        //     }
-        // }
+        // 速度控制
         g_SystemState.TargetSpeed = std_lib::constrain(g_SystemState.TargetSpeed, -motor_speed_max, motor_speed_max); // 限幅
         // 发送给电机
         /**
