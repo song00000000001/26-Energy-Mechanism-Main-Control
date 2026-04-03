@@ -44,8 +44,8 @@ private:
     QueueHandle_t Tx_Handle;
 
 public:
-    const uint8_t ID;
-    Motor_DM_classdef(uint8_t _id) : ID(_id) { TxPack.ID = ID; }
+    const uint32_t ID;
+    Motor_DM_classdef(uint32_t _id) : ID(_id) { TxPack.ID = ID; }
     inline void bindCanQueueHandle(QueueHandle_t _sendQueue) { Tx_Handle = _sendQueue; }
 
     void startMotor(); /* 发送使能帧给电机 */
@@ -54,9 +54,10 @@ public:
 
     /* 设置电机力矩，内置can发包 */
     void control(float position, float velocity, float kp, float kd, float torque);
+    void speed_mode_set_speed(float speed);
     inline void setTorque(float torque) { control(0, 0, 0, 0, torque); }                                          // 力矩控制
     inline void setPosition(float _position, float _kp, float _kd) { control(_position, 0, _kp, _kd, 0); }        // 内置位置控制
-    inline void setSpeed(float _velocity, float _kd, float torque = 0) { control(0, _velocity, 0, _kd, torque); } // 内置速度控制
+    inline void setSpeed(float _velocity) { speed_mode_set_speed(_velocity); } // 内置速度控制
 
     bool update(uint32_t _unuse_id, uint8_t data[8]);
     inline const RecData_Structdef_ &getRecData() { return Rec_Data; }

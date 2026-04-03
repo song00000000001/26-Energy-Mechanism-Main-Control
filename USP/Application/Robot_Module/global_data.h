@@ -1,7 +1,6 @@
 #pragma once
 
 #include "internal.h"
-#include "motor_ctrl_driver.h"
 #include "remote_ctrl_driver.h"
 
 #ifdef __cplusplus
@@ -46,8 +45,6 @@ extern stack_remain_t Stack_Remain;
     }while(0)
 
 #endif
-
-//extern motor_ctrl_driver motor_ctrl;//电机控制驱动实例
 
 //system state enum
 typedef enum{
@@ -135,6 +132,8 @@ typedef struct {
     uint8_t  CurrentHitID;  // 当前被击中的ID (反馈)
     uint8_t  CurrentHitScores; // 当前得分 (根据击打情况计算，供上位机显示)
     float    TargetSpeed;   // 当前计算目标速度 (供上位机显示)
+    float    dm_motor_kd; // 达妙电机速度模式的kd参数，供上位机显示和调整
+    float    dm_motor_torque; // 达妙电机当前力矩，供上位机显示
 } EnergySystemState_t;
 
 extern EnergySystemState_t g_SystemState;

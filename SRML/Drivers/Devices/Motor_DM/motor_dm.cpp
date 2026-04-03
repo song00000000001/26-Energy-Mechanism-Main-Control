@@ -141,3 +141,27 @@ void Motor_DM_classdef::update_angle(uint8_t can_rx_data[])
     Rec_Data.angle = total_encoder;
 }
 #endif
+
+/**
+ * @brief  达妙电机烧录mit固件,并且设置为速度模式
+ * @param  电机目标速度,分别在0,1,2,3位,类型是float,单位rad/s
+ * @note   速度值按小端序排列在D[0]~D[3]中
+ */
+/* 电机控制帧，速度模式协议 */
+void Motor_DM_classdef::speed_mode_set_speed(float speed)
+{
+    /* 限制输入的参数在定义的范围内 */
+    LIMIT_MIN_MAX(speed, V_MIN, V_MAX);
+
+    CAN_COB tx_pack = TxPack;
+    tx_pack.DLC = 4;
+
+    /* 将 float 转换为 4 字节（小端序）*/
+    uint8_t *speed_bytes = (uint8_t *)&speed;
+    tx_pack.Data[0] = speed_bytes[0];  // float 的第 0-7 位
+    tx_pack.Data[1] = speed_bytes[1];  // float 的第 8-15 位
+    tx_pack.Data[2] = speed_bytes[2];  // float 的第 16-23 位
+    tx_pack.Data[3] = speed_bytes[3];  // float 的第 24-31 位
+
+    xQueueSend(Tx_Handle, &tx_pack, 0);
+}

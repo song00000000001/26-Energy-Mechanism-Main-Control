@@ -3,30 +3,27 @@
 #include "robot_config.h"
 
 
-volatile float motor_reduction_ratio_t = 52.0f; // 输出轴减速比，方便标定单位
-
 void task_motor_ctrl(void *arg)
 {
     TickType_t xLastWakeTime_t;
     xLastWakeTime_t = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(100);
+    const TickType_t xFrequency = pdMS_TO_TICKS(2);
 
-    #if dm_motor_ctrl_mode
-    Motor_CAN_COB Tx_Buff = {};
-    //motor_ctrl.set_motor_mode(MODE_SPEED);
-    //motor_ctrl.mymotor_pid_spd.SetPIDParam(0.0,0,0,0,10);
-    #else
     CAN_COB Tx_Buff = {};
-    motor_ctrl.mymotor.bindCanQueueHandle(CAN1_TxPort); // 绑定CAN1发送队列
-    #endif
-
+        abstractMotor<Motor_DM_classdef> mymotor(0x202); // 创建一个抽象电机实例，绑定ID为0x202的达妙电机类对象
+    vTaskDelay(100); // 稍微延时一下，确保电机相关的CAN发送队列已经创建并且系统稳定后再初始化电机，避免在系统刚启动时就发送CAN消息可能导致的问题
+    mymotor.init(CAN1_TxPort); // 绑定CAN1发送队列并使能电机
+	vTaskDelay(100);	
+	mymotor.init(CAN1_TxPort);
+    mymotor.speed_unit_convert = 1;//29.0f / 43.0f; //电机侧/实际侧=29/43，函数会除以这个值，即实际发送=设置目标/(29/43)
+    
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime_t, xFrequency);
 
         // 实时更新时间戳
         uint32_t time_clock = xTaskGetTickCount();
-        //motor_ctrl.set_motor_reduction_ratio(motor_reduction_ratio_t); // 可调节减速比，方便标定单位
+  
         // 状态机处理
         switch(g_SystemState.SysMode)
         {
@@ -66,45 +63,28 @@ void task_motor_ctrl(void *arg)
                 break;
         }  
         // 速度控制
-        #if dm_motor_ctrl_mode
-        //target设置
-        //motor_ctrl.set_motor_target_speed(g_SystemState.TargetSpeed);
-        //pid计算
-        //motor_ctrl.adjust();
-        if(g_SystemState.SysMode == idle){//||g_SystemState.SysMode == success){
-            //motor_ctrl.set_motor_mode(MODE_ERROR); // 失能
-            //motor_ctrl.motor_output(false);           //不输出
-        }
-        else{
-            //motor_ctrl.set_motor_mode(MODE_SPEED); // 速度环
-            //motor_ctrl.motor_output(true);            //输出设置
-        }
-        // can发送速度指令
-        //MotorMsgPack(Tx_Buff, motor_ctrl.mymotor);
-        // 强制将 ID 改为 0x3FE,后续考虑优化成配置项
-        Tx_Buff.Id200.ID = 0x3FE; 
-        #else
+        
         //以下方式为达妙电机速度模式的直接控制方式，未使用 PID 调节.
-        if(g_SystemState.SysMode == idle || g_SystemState.SysMode == success){
-            g_SystemState.TargetSpeed = 0;
-            motor_ctrl.mymotor.stopMotor(); // 失能电机
-        }
-        else{
-            if(motor_ctrl.dm_motor_recdata.state==0){ // 电机未使能，强制使能
-                motor_ctrl.mymotor.startMotor(); // 使能电机
-            }
-            else if(motor_ctrl.dm_motor_recdata.state!=1){ // 电机状态异常，强制使能
-                motor_ctrl.mymotor.ClearError(); // 清除错误
-                motor_ctrl.mymotor.startMotor(); // 使能电机
-            }
-        }
+        // if(g_SystemState.SysMode == idle){
+        //     g_SystemState.TargetSpeed = 0;
+        // }
+        // else{
+        //     if(mymotor.){ // 电机未使能，强制使能
+        //         motor_ctrl.mymotor.startMotor(); // 使能电机
+        //     }
+        //     else if(motor_ctrl.dm_motor_recdata.state!=1){ // 电机状态异常，强制使能
+        //         motor_ctrl.mymotor.ClearError(); // 清除错误
+        //         motor_ctrl.mymotor.startMotor(); // 使能电机
+        //     }
+        // }
         g_SystemState.TargetSpeed = std_lib::constrain(g_SystemState.TargetSpeed, -motor_speed_max, motor_speed_max); // 限幅
-        motor_ctrl.motor_pack_dm10010(Tx_Buff, g_SystemState.TargetSpeed);
-        #endif
-
         // 发送给电机
-        xQueueSend(CAN1_TxPort, &Tx_Buff, 0);
-        //xQueueSend(CAN2_TxPort, &Tx_Buff, 0);
+        /**
+         * 达妙电机的速度模式控制接口，直接设置目标速度和kd参数，电机会根据内部算法计算出合适的控制量（电流/扭矩）来实现目标速度。
+         * 内部实现会调用motor_dm的control函数，传入位置=0（不使用位置控制），速度=目标速度，kp=0（不使用位置控制），kd=用户设置的参数，torque=0（不使用力矩控制）。
+         * control函数会根据这些参数计算出最终的控制量，并通过之前绑定的CAN发送给电机。
+         */
+        mymotor.setMotorSpeed(g_SystemState.TargetSpeed);
 
         #ifdef INCLUDE_uxTaskGetStackHighWaterMark
         StackWaterMark_Get(motor_ctrl);

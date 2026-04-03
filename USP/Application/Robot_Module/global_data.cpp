@@ -8,8 +8,6 @@ Debug_Data_t Debugger;//调试数据结构体实例化
 stack_remain_t Stack_Remain={255};
 #endif
 
-//motor_ctrl_driver motor_ctrl(mymotor_id);//电机控制驱动实例
-
 UpperCtrlPacket_t upper_ctrl_packet;// 上位机控制包实例
 
 //全局变量定义

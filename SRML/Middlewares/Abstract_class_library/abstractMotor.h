@@ -455,9 +455,9 @@ protected:
     {
         motor.setPosition(angle, kp, kd);
     }
-    void setRawMotorSpeed(float speed, float kd, float torque)
+    void setRawMotorSpeed(float speed)
     {
-        motor.setSpeed(speed, kd, torque);
+        motor.setSpeed(speed);
     }
 
 public:
@@ -466,7 +466,10 @@ public:
     void init(QueueHandle_t _CAN_TxPort)
     {
         motor.bindCanQueueHandle(_CAN_TxPort);
+        motor.ClearError(); // 达妙电机在上电后可能会有错误标志位，需要先清除一下才能正常使用
+        vTaskDelay(100);// 稍微延时一下，确保电机上电后稳定后再发送清除错误标志位的指令，避免在系统刚启动时就发送CAN消息可能导致的问题
         motor.startMotor();
+        
     }
 
     bool update(uint32_t canRecID, uint8_t data[8]) override __used_attribute__
@@ -474,9 +477,9 @@ public:
         return motor.update(canRecID, data);
     }
 
-    void setMotorSpeed(float speed, float kd, float torque)
+    void setMotorSpeed(float speed)
     {
-        setRawMotorSpeed(speed / speed_unit_convert / Polarity, kd, torque / out_unit_convert / Polarity);
+        setRawMotorSpeed(speed / speed_unit_convert / Polarity);
     }
     void setMotorAngle(float angle, float kp, float kd)
     {

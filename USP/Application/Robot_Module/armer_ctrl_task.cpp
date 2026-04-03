@@ -87,6 +87,8 @@ void task_Rlight_armer(void *arg)
     light_color_enum last_color = color_off;
     uint8_t last_stage = 0;
     uint8_t rlight_counter=0;
+
+    vTaskDelay(100); // 稍微延时一下，确保系统稳定后再开始发送灯效，避免在系统刚启动时就发送CAN消息可能导致的问题
     for (;;)
     {
         /* wait for next circle */
