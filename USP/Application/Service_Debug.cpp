@@ -104,15 +104,6 @@ void Task_VofaMonitor(void *arg){
         case debug_mtvofa_monitor:
             VofaMonitor::setDatas(0,
                 (float)g_SystemState.TargetSpeed
-                // (float)motor_ctrl.mymotor_pid_spd.Target,
-                // (float)motor_ctrl.mymotor_pid_spd.Current,
-                // (float)motor_ctrl.mymotor_pid_spd.Out,  
-				//(float)motor_ctrl.get_motor_angle(),//转一圈5.759
-				// (float)motor_ctrl.dm_motor_recdata.angle,//转一圈3118396
-				// (float)motor_ctrl.dm_motor_recdata.d_angle,
-                //(float)motor_ctrl.dm_motor_recdata.velocity,
-                //(float)motor_ctrl.dm_motor_recdata.torque
-				//(float)(motor_ctrl.get_motor_speed() * 60.0f / (2.0f * PI))
             );      
             break;   
         case debug_idle:

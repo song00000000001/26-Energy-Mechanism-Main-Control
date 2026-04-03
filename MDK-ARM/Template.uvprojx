@@ -490,26 +490,6 @@
           <GroupName>USP/drivers</GroupName>
           <Files>
             <File>
-              <FileName>motor_ctrl_driver.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\USP\Drivers\motor_ctrl_driver.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>motor_ctrl_driver.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\USP\Drivers\motor_ctrl_driver.h</FilePath>
-            </File>
-            <File>
-              <FileName>remote_ctrl_driver.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\USP\Drivers\remote_ctrl_driver.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>remote_ctrl_driver.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\USP\Drivers\remote_ctrl_driver.h</FilePath>
-            </File>
-            <File>
               <FileName>ws2812_ctrl_driver.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\USP\Drivers\ws2812_ctrl_driver.cpp</FilePath>

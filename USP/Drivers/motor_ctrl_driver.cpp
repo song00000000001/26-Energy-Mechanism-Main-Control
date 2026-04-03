@@ -10,12 +10,12 @@ motor_ctrl_driver::motor_ctrl_driver(uint8_t id):
     mymotor(id)
 {
     // 电机参数初始化 (极性、减速比)
-    mymotor.Polarity = 1;
-    // 输出轴单位统一为 SI：rad / rad/s
-    mymotor.angle_unit_convert = 1;//(2.0f * PI) / (65535.0f * deliver_ratio);
-    mymotor.speed_unit_convert = 1;//mymotor.angle_unit_convert * 500.0f; // 2ms 刷新周期
+    // mymotor.Polarity = 1;
+    // // 输出轴单位统一为 SI：rad / rad/s
+    // mymotor.angle_unit_convert = 1;//(2.0f * PI) / (65535.0f * deliver_ratio);
+    // mymotor.speed_unit_convert = 1;//mymotor.angle_unit_convert * 500.0f; // 2ms 刷新周期
 
-    mymotor_mode = MODE_SPEED; 
+    // mymotor_mode = MODE_SPEED; 
 }
 
 void motor_ctrl_driver::set_motor_reduction_ratio(float reduction_ratio)

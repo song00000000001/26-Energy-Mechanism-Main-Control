@@ -8,10 +8,7 @@ extern "C" {
 #endif
 
 #define upper_uart_id 1 // 上位机通信串口 USART1
-#define mymotor_id 2
-#define dm_motor_ctrl_mode 1 // 1: 使用抽象电机类，0: 直接使用 Motor_DM_classdef
-#define motor_speed_max 2.0f // 电机最大速度，单位 rad/s，后续可以根据实际情况调整.小符最大1/3*pi=1.047,大符最大1.045
-#define motor_reduction_ratio 1.0f // 电机减速比
+
 
 // 帧头定义
 #define FAN_PACKET_HEADER 0xA5
