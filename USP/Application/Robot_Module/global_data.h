@@ -47,7 +47,7 @@ extern stack_remain_t Stack_Remain;
 
 #endif
 
-extern motor_ctrl_driver motor_ctrl;//电机控制驱动实例
+//extern motor_ctrl_driver motor_ctrl;//电机控制驱动实例
 
 //system state enum
 typedef enum{

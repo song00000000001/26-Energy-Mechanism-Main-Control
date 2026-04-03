@@ -13,8 +13,8 @@ void task_motor_ctrl(void *arg)
 
     #if dm_motor_ctrl_mode
     Motor_CAN_COB Tx_Buff = {};
-    motor_ctrl.set_motor_mode(MODE_SPEED);
-    motor_ctrl.mymotor_pid_spd.SetPIDParam(0.0,0,0,0,10);
+    //motor_ctrl.set_motor_mode(MODE_SPEED);
+    //motor_ctrl.mymotor_pid_spd.SetPIDParam(0.0,0,0,0,10);
     #else
     CAN_COB Tx_Buff = {};
     motor_ctrl.mymotor.bindCanQueueHandle(CAN1_TxPort); // 绑定CAN1发送队列
@@ -70,17 +70,17 @@ void task_motor_ctrl(void *arg)
         //target设置
         //motor_ctrl.set_motor_target_speed(g_SystemState.TargetSpeed);
         //pid计算
-        motor_ctrl.adjust();
+        //motor_ctrl.adjust();
         if(g_SystemState.SysMode == idle){//||g_SystemState.SysMode == success){
             //motor_ctrl.set_motor_mode(MODE_ERROR); // 失能
-            motor_ctrl.motor_output(false);           //不输出
+            //motor_ctrl.motor_output(false);           //不输出
         }
         else{
-            motor_ctrl.set_motor_mode(MODE_SPEED); // 速度环
-            motor_ctrl.motor_output(true);            //输出设置
+            //motor_ctrl.set_motor_mode(MODE_SPEED); // 速度环
+            //motor_ctrl.motor_output(true);            //输出设置
         }
         // can发送速度指令
-        MotorMsgPack(Tx_Buff, motor_ctrl.mymotor);
+        //MotorMsgPack(Tx_Buff, motor_ctrl.mymotor);
         // 强制将 ID 改为 0x3FE,后续考虑优化成配置项
         Tx_Buff.Id200.ID = 0x3FE; 
         #else
