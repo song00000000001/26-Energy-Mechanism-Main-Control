@@ -103,7 +103,9 @@ void Task_VofaMonitor(void *arg){
             break;
         case debug_mtvofa_monitor:
             VofaMonitor::setDatas(0,
-                (float)g_SystemState.TargetSpeed
+                (float)g_SystemState.TargetSpeed,//目标速度
+                (float)(mymotor.getMotorSpeed()-1380)/83.3f,//实际速度
+                (float)mymotor.getMotorTorque()//实际力矩
             );      
             break;   
         case debug_idle:

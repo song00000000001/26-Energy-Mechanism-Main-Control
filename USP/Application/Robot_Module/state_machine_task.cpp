@@ -44,7 +44,6 @@ void task_state_machine(void *arg)
     g_TargetCtrl={
         .target_mode = tar_test_mode,        // 默认停止/待机
         .TargetColor = color_red,      // 默认红色
-        .SmallEnergy_Speed = 1.0f,     // 默认倍率
         .BigEnergy_A = 0.9125f,        // 默认大符参数 (0.780 + 1.045)/2
         .BigEnergy_W = 1.942f          // 默认大符参数 (1.884 + 2.000)/2
     };

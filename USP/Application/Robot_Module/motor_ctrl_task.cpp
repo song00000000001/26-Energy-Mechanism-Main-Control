@@ -14,7 +14,6 @@
 
 #define rand_float_0_1 ((float)rand() / (float)RAND_MAX)
 
-#define mymotor_id 0x202 // 电机ID
 #define motor_speed_max 3.0f // 电机最大速度，单位 rad/s
 #define motor_reduction_ratio 29.0f / 43.0f //链条传动减速比。电机侧/实际侧=29/43，函数会除以这个值，即实际发送=设置目标/(29/43)
 
@@ -22,13 +21,20 @@ void task_motor_ctrl(void *arg)
 {
     TickType_t xLastWakeTime_t;
     xLastWakeTime_t = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(2);
+    const TickType_t xFrequency = pdMS_TO_TICKS(1);
 
     static EnergySystemMode_t last_mode = idle;
     static float locked_big_energy_a = (be_motor_speed_a_min + be_motor_speed_a_max) * 0.5f;
     static float locked_big_energy_w = (be_motor_speed_w_min + be_motor_speed_w_max) * 0.5f;
+    Debugger.debug_dm_motor_speed_k=1.0f; // 初始速度参数缩放因子
+    /**
+     * 测试
+     * target_speed=0时,get_speed=1380
+     * target_speed=1.047时,get_speed=1466
+     * get_speed与target_speed近似线性关系，且斜率约为(1466-1380)/1.047=83.3
+     * 
+     */
 
-    abstractMotor<Motor_DM_classdef> mymotor(mymotor_id); // 创建一个抽象电机实例，绑定ID为mymotor_id的达妙电机类对象
     vTaskDelay(1000); // 稍微延时一下，确保电机相关的CAN发送队列已经创建并且系统稳定后再初始化电机，避免在系统刚启动时就发送CAN消息可能导致的问题
 	mymotor.init(CAN1_TxPort);
     mymotor.speed_unit_convert = motor_reduction_ratio; // 设置速度单位转换，考虑减速比的影响，实际发送给电机的速度=设置的目标速度/减速比

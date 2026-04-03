@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 #define upper_uart_id 1 // 上位机通信串口 USART1
-
+#define mymotor_id 0x202 // 电机ID
 
 // 帧头定义
 #define FAN_PACKET_HEADER 0xA5

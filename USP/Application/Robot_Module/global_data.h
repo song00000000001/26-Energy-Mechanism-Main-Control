@@ -19,6 +19,7 @@ typedef struct {
     Debug_Mode_e enable_debug_mode; // 在watch窗口改为true以进入调试模式(配合遥控器)
     bool Debug_simulate_hit;// 模拟击打（进入调试模式后，在watch窗口改为true以模拟一次击打事件，配合遥控器）
     uint8_t debug_arm_light_effect; // 调试用灯效选择（进入调试模式后，在watch窗口修改以切换不同灯效，配合遥控器）
+    float debug_dm_motor_speed_k;//速度参数缩放因子,获取的速度有点奇怪,单位未知
 } Debug_Data_t;
 extern Debug_Data_t Debugger;  
 
@@ -96,7 +97,6 @@ typedef enum{
 typedef struct {
     EnergyTargetMode_t target_mode;    // 0:停止/待机, 1:激活, 2. 小能量机关, 3:大能量机关 ,4: 连续小能量机关,5: 连续大能量机关
     light_color_enum  TargetColor;   // 0:Red, 1:Blue
-    float    SmallEnergy_Speed; // 小符固定速度
     float    BigEnergy_A;   // 大符正弦 A
     float    BigEnergy_W;   // 大符正弦 Omega
 }target_ctrl_t;
@@ -157,6 +157,7 @@ typedef struct {
 #pragma pack()
 extern UpperCtrlPacket_t upper_ctrl_packet;
 
+extern abstractMotor<Motor_DM_classdef> mymotor; // 声明全局电机实例
 
 void small_energy_logic();
 void big_energy_logic();
