@@ -42,7 +42,7 @@ void task_state_machine(void *arg)
     g_SystemState.SE_StateData.SE_Group = 0; // 小能量轮数
     g_SystemState.SE_StateData.SE_State = SE_GENERATE_TARGET; // 小能量状态机
     g_TargetCtrl={
-        .target_mode = tar_small_energy_signle,        // 默认停止/待机
+        .target_mode = tar_test_mode,        // 默认停止/待机
         .TargetColor = color_red,      // 默认红色
         .SmallEnergy_Speed = 1.0f,     // 默认倍率
         .BigEnergy_A = 0.9125f,        // 默认大符参数 (0.780 + 1.045)/2
@@ -167,7 +167,7 @@ void task_state_machine(void *arg)
         {
             // 测试模式，保留。
             //g_SystemState.TargetSpeed = 0;
-            test_light_effect(debug_test_light_effect);
+            //test_light_effect(debug_test_light_effect);
         }
         break;
         default:

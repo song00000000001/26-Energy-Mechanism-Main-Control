@@ -20,7 +20,7 @@ struct dm_motor_recdata_t
     int32_t angle = 0;   // 角度编码值
     int16_t d_angle = 0;  // 角度增量
     uint8_t state = 0; // 电机状态  
-    float velocity=0;    // 当前速度
+    int16_t velocity=0;    // 当前速度
     int16_t torque = 0;  // 当前力矩
     uint8_t T_mos = 0;   // 表示驱动上 MOS 的平均温度
     uint8_t T_motor = 0; // 表示电机内部线圈的平均温度
@@ -39,7 +39,7 @@ public:
     #endif
     uint16_t encoder,last_encoder,encoder_offset;
     bool encoder_is_init;
-    const int32_t encoder_max = 65536; /* 码盘值最大值 */
+    const int32_t encoder_max = 8192; /* 码盘值最大值 */
     int32_t round_cnt,last_angle;
     
     #if dm_motor_ctrl_mode
@@ -80,4 +80,6 @@ public:
     // 获取电机当前信息
     float get_motor_angle();
     float get_motor_speed();
+    //设置减速比
+    void set_motor_reduction_ratio(float reduction_ratio);
 };

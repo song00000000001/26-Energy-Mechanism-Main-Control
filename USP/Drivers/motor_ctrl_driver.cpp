@@ -2,18 +2,27 @@
 #include "robot_config.h"
 #include "global_data.h"
 
+// 调参符号，用于完成单位标定
+volatile float deliver_ratio = 52.0f;
+volatile float motor_speed_filter=1.0f; // 
 // 构造函数
 motor_ctrl_driver::motor_ctrl_driver(uint8_t id):
     mymotor(id)
 {
     // 电机参数初始化 (极性、减速比)
     mymotor.Polarity = 1;
-    float deliver_ratio = (2 * PI * 18.62f) / (360 * 51);
-    mymotor.angle_unit_convert = deliver_ratio;
-    mymotor.angle_unit_convert = 1; // 角度单位转换
-    mymotor.speed_unit_convert = 1;
+    // 输出轴单位统一为 SI：rad / rad/s
+    mymotor.angle_unit_convert = 1;//(2.0f * PI) / (65535.0f * deliver_ratio);
+    mymotor.speed_unit_convert = 1;//mymotor.angle_unit_convert * 500.0f; // 2ms 刷新周期
 
     mymotor_mode = MODE_SPEED; 
+}
+
+void motor_ctrl_driver::set_motor_reduction_ratio(float reduction_ratio)
+{
+    deliver_ratio = reduction_ratio;
+    //mymotor.angle_unit_convert = (2.0f * PI) / (65535.0f * deliver_ratio);
+    //mymotor.speed_unit_convert = mymotor.angle_unit_convert * 500.0f; // 2ms 刷新周期
 }
 
 #if dm_motor_ctrl_mode
@@ -67,19 +76,19 @@ void motor_ctrl_driver::motor_output(bool enable){
 // ================= 状态查询 =================
 
 float motor_ctrl_driver::get_motor_angle(){
-    float angle = (float)(dm_motor_recdata.angle/65535.0f*360.0f/52.0f); // 换算成角度
+    float angle = (float)(dm_motor_recdata.angle * (2.0f * PI) / (65535.0f * deliver_ratio)); // 输出轴角度(rad)
     return angle;
 }
 
+static float last_speed = 0;
+
 float motor_ctrl_driver::get_motor_speed(){
-    float speed = (float)(dm_motor_recdata.d_angle/65535.0f*360.0f/52.0f*500.0f); // 减速后，angle转一圈增量为65535*52,数据更新周期是2ms，换算成角度每秒
-    //由于速度在13以上存在规律抖动(幅度13.5)，暂时使用简单的死区滤波，后续可以考虑更复杂的滤波算法
-    //速度在0左右时,抖动在-13.5到13.5之间震荡,
-    static float last_speed = 0;
-    if (abs(speed - last_speed) < 14.0f)
-        speed = last_speed;
-    last_speed = speed;
-    return speed;
+    // if(abs(mymotor_pid_spd.Out)<2)
+    //     return 0;
+    //float speed = (float)(dm_motor_recdata.d_angle * (2.0f * PI) / (65535.0f * deliver_ratio) * 500.0f); // 输出轴角速度(rad/s)
+    //float speed = dm_motor_recdata.velocity; 
+    float speed=dm_motor_recdata.d_angle;
+    return speed; 
 }
 
 // 设置电机目标
@@ -123,12 +132,12 @@ bool motor_ctrl_driver::update(uint32_t _unuse_id, uint8_t data[8])
     //if ((ID) != (data[0] & 0x0F))
         //return false;
     
-    dm_motor_recdata.state = (data[0]) >> 4;
-    encoder = (uint16_t)(data[1] << 8) | data[2];
-	dm_motor_recdata.velocity =(data[3] << 4) | (data[4] >> 4); // (-45.0,45.0)
+    //dm_motor_recdata.state = (data[0]) >> 4;
+    encoder = (uint16_t)(data[0] << 8) | data[1];
+	dm_motor_recdata.velocity =(data[2] << 4) | (data[3] >> 4); // (-45.0,45.0)
     dm_motor_recdata.torque = ((data[4] & 0xF) << 8) | data[5];   // (-10.0,10.0)
     dm_motor_recdata.T_mos = (float)(data[6]);
-    dm_motor_recdata.T_motor = (float)(data[7]);
+    dm_motor_recdata.state = data[7]; // 电机状态
 
     if (encoder_is_init)
     {

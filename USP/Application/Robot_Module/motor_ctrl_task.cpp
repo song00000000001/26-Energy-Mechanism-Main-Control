@@ -2,11 +2,14 @@
 #include "global_data.h"
 #include "robot_config.h"
 
+
+volatile float motor_reduction_ratio_t = 52.0f; // 输出轴减速比，方便标定单位
+
 void task_motor_ctrl(void *arg)
 {
     TickType_t xLastWakeTime_t;
     xLastWakeTime_t = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(2);
+    const TickType_t xFrequency = pdMS_TO_TICKS(100);
 
     #if dm_motor_ctrl_mode
     Motor_CAN_COB Tx_Buff = {};
@@ -23,7 +26,7 @@ void task_motor_ctrl(void *arg)
 
         // 实时更新时间戳
         uint32_t time_clock = xTaskGetTickCount();
-
+        //motor_ctrl.set_motor_reduction_ratio(motor_reduction_ratio_t); // 可调节减速比，方便标定单位
         // 状态机处理
         switch(g_SystemState.SysMode)
         {
@@ -32,7 +35,7 @@ void task_motor_ctrl(void *arg)
             case success: // 通关成功
             case successed: // 已经通关
             case small_energy: // 小能量机关
-                g_SystemState.TargetSpeed = 10 *motor_reduction_ratio* g_TargetCtrl.SmallEnergy_Speed;
+                g_SystemState.TargetSpeed = 1/(3.0f * PI) ; // 约 0.1061 rad/s, 6.28 rad/60s, 1转/60s
                 break;
                 
             case big_energy: // 大能量机关
@@ -48,8 +51,9 @@ void task_motor_ctrl(void *arg)
                     else if(param_w < 1.884f) param_w = 1.884f;
 
                     // 计算大符速度
-                    g_SystemState.TargetSpeed = (param_a * sin(param_w * time_clock/1000.0f) + 2.090f - param_a) * motor_reduction_ratio * 4 * 60 / 6.28f;
-                    
+                    //g_SystemState.TargetSpeed = (param_a * sin(param_w * time_clock/1000.0f) + 2.090f - param_a) * motor_reduction_ratio_t * 4 * 60 / 6.28f;
+
+                    g_SystemState.TargetSpeed = 1/(3.0f * PI) ;//在单位确定之前，先使用恒定转速，方便测试和调试。后续可以根据实际情况调整为上述计算方式。
                 }
                 break;
 
@@ -64,10 +68,10 @@ void task_motor_ctrl(void *arg)
         // 速度控制
         #if dm_motor_ctrl_mode
         //target设置
-        motor_ctrl.set_motor_target_speed(g_SystemState.TargetSpeed);
+        //motor_ctrl.set_motor_target_speed(g_SystemState.TargetSpeed);
         //pid计算
         motor_ctrl.adjust();
-        if(g_SystemState.SysMode == idle||g_SystemState.SysMode == success){
+        if(g_SystemState.SysMode == idle){//||g_SystemState.SysMode == success){
             //motor_ctrl.set_motor_mode(MODE_ERROR); // 失能
             motor_ctrl.motor_output(false);           //不输出
         }
