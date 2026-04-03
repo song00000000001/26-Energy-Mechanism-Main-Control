@@ -15,7 +15,7 @@ void task_motor_ctrl(void *arg)
     mymotor.init(CAN1_TxPort); // 绑定CAN1发送队列并使能电机
 	vTaskDelay(100);	
 	mymotor.init(CAN1_TxPort);
-    mymotor.speed_unit_convert = 1;//29.0f / 43.0f; //电机侧/实际侧=29/43，函数会除以这个值，即实际发送=设置目标/(29/43)
+    mymotor.speed_unit_convert = 29.0f / 43.0f; //电机侧/实际侧=29/43，函数会除以这个值，即实际发送=设置目标/(29/43)
     
     for (;;)
     {
