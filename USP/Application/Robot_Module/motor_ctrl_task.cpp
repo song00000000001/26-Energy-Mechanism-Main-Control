@@ -12,6 +12,8 @@
 #define be_motor_speed_a_min 0.780f
 #define be_motor_speed_ba  2.090f
 
+#define rand_float_0_1 ((float)rand() / (float)RAND_MAX)
+
 #define mymotor_id 0x202 // 电机ID
 #define motor_speed_max 3.0f // 电机最大速度，单位 rad/s
 #define motor_reduction_ratio 29.0f / 43.0f //链条传动减速比。电机侧/实际侧=29/43，函数会除以这个值，即实际发送=设置目标/(29/43)
@@ -21,6 +23,10 @@ void task_motor_ctrl(void *arg)
     TickType_t xLastWakeTime_t;
     xLastWakeTime_t = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(2);
+
+    static EnergySystemMode_t last_mode = idle;
+    static float locked_big_energy_a = (be_motor_speed_a_min + be_motor_speed_a_max) * 0.5f;
+    static float locked_big_energy_w = (be_motor_speed_w_min + be_motor_speed_w_max) * 0.5f;
 
     abstractMotor<Motor_DM_classdef> mymotor(mymotor_id); // 创建一个抽象电机实例，绑定ID为mymotor_id的达妙电机类对象
     vTaskDelay(1000); // 稍微延时一下，确保电机相关的CAN发送队列已经创建并且系统稳定后再初始化电机，避免在系统刚启动时就发送CAN消息可能导致的问题
@@ -33,6 +39,19 @@ void task_motor_ctrl(void *arg)
 
         // 实时更新时间戳
         uint32_t time_clock = xTaskGetTickCount();
+
+        // 每次进入大符模式时，重新随机参数并在本轮大符期间锁定不变
+        if (g_SystemState.SysMode != last_mode) {
+            if (g_SystemState.SysMode == big_energy) {
+                locked_big_energy_a = be_motor_speed_a_min + rand_float_0_1 * (be_motor_speed_a_max - be_motor_speed_a_min);
+                locked_big_energy_w = be_motor_speed_w_min + rand_float_0_1 * (be_motor_speed_w_max - be_motor_speed_w_min);
+
+                // 同步到全局参数，便于调试/上位机查看
+                g_TargetCtrl.BigEnergy_A = locked_big_energy_a;
+                g_TargetCtrl.BigEnergy_W = locked_big_energy_w;
+            }
+            last_mode = g_SystemState.SysMode;
+        }
   
         // 状态机处理
         switch(g_SystemState.SysMode)
@@ -47,10 +66,8 @@ void task_motor_ctrl(void *arg)
                 
             case big_energy: // 大能量机关
                 {
-                    g_TargetCtrl.BigEnergy_A = std_lib::constrain(g_TargetCtrl.BigEnergy_A, be_motor_speed_a_min, be_motor_speed_a_max);
-                    g_TargetCtrl.BigEnergy_W = std_lib::constrain(g_TargetCtrl.BigEnergy_W, be_motor_speed_w_min, be_motor_speed_w_max);
-                    float param_a = g_TargetCtrl.BigEnergy_A;
-                    float param_w = g_TargetCtrl.BigEnergy_W;
+                    float param_a = locked_big_energy_a;
+                    float param_w = locked_big_energy_w;
 
                     // 计算大符速度
                     g_SystemState.TargetSpeed = (param_a * sin(param_w * time_clock/1000.0f) + be_motor_speed_ba - param_a);
