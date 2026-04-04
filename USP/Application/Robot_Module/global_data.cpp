@@ -14,4 +14,4 @@ UpperCtrlPacket_t upper_ctrl_packet;// 上位机控制包实例
 // 系统状态实例
 EnergySystemState_t g_SystemState ;
 target_ctrl_t g_TargetCtrl;
-abstractMotor<Motor_DM_classdef> mymotor(mymotor_id); // 创建一个抽象电机实例，绑定ID为mymotor_id的达妙电机类对象
+Motor_DM_classdef mymotor(mymotor_id); // 创建一个抽象电机实例，绑定ID为mymotor_id的达妙电机类对象

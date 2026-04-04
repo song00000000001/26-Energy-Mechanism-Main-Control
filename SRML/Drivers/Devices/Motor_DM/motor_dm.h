@@ -45,6 +45,7 @@ private:
 
 public:
     const uint32_t ID;
+    float speed_unit_convert=1.0f; // 速度单位转换，考虑减速比的影响，实际发送给电机的速度=设置的目标速度/减速比 
     Motor_DM_classdef(uint32_t _id) : ID(_id) { TxPack.ID = ID; }
     inline void bindCanQueueHandle(QueueHandle_t _sendQueue) { Tx_Handle = _sendQueue; }
 
@@ -61,6 +62,9 @@ public:
 
     bool update(uint32_t _unuse_id, uint8_t data[8]);
     inline const RecData_Structdef_ &getRecData() { return Rec_Data; }
+    int32_t getState() { return state; }
+    float getMotorSpeed() { return Rec_Data.velocity; }
+    float getMotorTorque() { return Rec_Data.torque; }
     /* 设置编码器offset */
     void setEncoderOffset(uint16_t offset);
     float Out = 0; // 用于存储计算出的控制量（电流/扭矩）

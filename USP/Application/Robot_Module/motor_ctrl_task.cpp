@@ -34,11 +34,13 @@ void task_motor_ctrl(void *arg)
      * get_speed与target_speed近似线性关系，且斜率约为(1466-1380)/1.047=83.3
      * 
      */
-
-    vTaskDelay(1000); // 稍微延时一下，确保电机相关的CAN发送队列已经创建并且系统稳定后再初始化电机，避免在系统刚启动时就发送CAN消息可能导致的问题
-	mymotor.init(CAN1_TxPort);
+	mymotor.bindCanQueueHandle(CAN1_TxPort);
     mymotor.speed_unit_convert = motor_reduction_ratio; // 设置速度单位转换，考虑减速比的影响，实际发送给电机的速度=设置的目标速度/减速比
-    
+    vTaskDelay(1000); // 稍微延时一下，确保电机相关的CAN发送队列已经创建并且系统稳定后再初始化电机，避免在系统刚启动时就发送CAN消息可能导致的问题
+    mymotor.ClearError(); // 清除错误标志位，必要时可以调用两次以确保状态清除
+    vTaskDelay(50);
+	mymotor.startMotor(); // 发送使能帧给电机
+
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime_t, xFrequency);
@@ -89,6 +91,22 @@ void task_motor_ctrl(void *arg)
                 break;
         }  
 
+        if(g_SystemState.SysMode == test_mode)
+            continue; // 待机状态不控制电机 
+        /**
+         * 获取状态，自动清除错误并重新使能
+         */
+        if(mymotor.getState() != 1)
+        {
+            mymotor.ClearError();
+			vTaskDelay(10);
+			mymotor.ClearError();
+			vTaskDelay(10);
+			mymotor.ClearError();
+			vTaskDelay(10);
+            mymotor.startMotor();
+            vTaskDelay(10); // 稍微延时一下，确保电机状态稳定后再进行下一步操作
+        }
         // 速度控制
         g_SystemState.TargetSpeed = std_lib::constrain(g_SystemState.TargetSpeed, -motor_speed_max, motor_speed_max); // 限幅
         // 发送给电机
@@ -97,8 +115,9 @@ void task_motor_ctrl(void *arg)
          * 内部实现会调用motor_dm的control函数，传入位置=0（不使用位置控制），速度=目标速度，kp=0（不使用位置控制），kd=用户设置的参数，torque=0（不使用力矩控制）。
          * control函数会根据这些参数计算出最终的控制量，并通过之前绑定的CAN发送给电机。
          */
-        mymotor.setMotorSpeed(g_SystemState.TargetSpeed);
+        mymotor.speed_mode_set_speed(g_SystemState.TargetSpeed);
 
+        
         #ifdef INCLUDE_uxTaskGetStackHighWaterMark
         StackWaterMark_Get(motor_ctrl);
         #endif

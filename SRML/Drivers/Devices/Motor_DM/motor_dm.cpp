@@ -151,6 +151,7 @@ void Motor_DM_classdef::update_angle(uint8_t can_rx_data[])
 void Motor_DM_classdef::speed_mode_set_speed(float speed)
 {
     /* 限制输入的参数在定义的范围内 */
+    speed = speed/speed_unit_convert; // 考虑减速比的影响，实际发送给电机的速度=设置的目标速度/减速比
     LIMIT_MIN_MAX(speed, V_MIN, V_MAX);
 
     CAN_COB tx_pack = TxPack;

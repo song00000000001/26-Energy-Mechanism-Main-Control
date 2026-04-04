@@ -157,7 +157,7 @@ typedef struct {
 #pragma pack()
 extern UpperCtrlPacket_t upper_ctrl_packet;
 
-extern abstractMotor<Motor_DM_classdef> mymotor; // 声明全局电机实例
+extern Motor_DM_classdef mymotor; // 声明全局电机实例
 
 void small_energy_logic();
 void big_energy_logic();
