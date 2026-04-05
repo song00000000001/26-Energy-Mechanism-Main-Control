@@ -99,11 +99,11 @@ void task_Rlight_armer(void *arg)
         t_color = g_TargetCtrl.TargetColor;
         t_stage = g_SystemState.BE_StateData.BE_Group; // 当前阶段/组数，0-5
         
-        // rlight_counter++;
-        // if(rlight_counter>=10){ // 每100ms
-        //     rlight_counter=0;
-        //     //R_light(last_color);
-        // }
+        rlight_counter++;
+        if(rlight_counter>=50){ // 每500ms
+            rlight_counter=0;
+            R_light(last_color);
+        }
         
         
         //根据灯效变化和颜色以及阶段变化更新装甲板灯效
