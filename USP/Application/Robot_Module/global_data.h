@@ -94,11 +94,27 @@ typedef enum{
 }EnergyTargetMode_t;
 
 
+/**
+ * 新增上位机控制包，由于当前上位机只有按钮控件，打算用bool型的变量用于切换状态。
+ * 目前的按键保留：
+ * 停止(a5 00)，小符(a5 02)，大符(a5 03)，连续小符(a5 04)，连续大符(a5 05)
+ * 颜色切换:a0 00
+ * 电机使能切换:a0 01
+ * 大小符取消超时重置切换:a0 02
+ * 模拟击打：ff 01
+ */
+typedef struct{
+    bool upperctrl_color_toggle; // 上位机控制颜色切换
+    bool upperctrl_motor_enable; // 上位机控制电机使能切换
+    bool upperctrl_timeout_reset_enable; // 上位机控制超时重置切换
+} UpperCtrlBool_t;
+
 typedef struct {
     EnergyTargetMode_t target_mode;    // 0:停止/待机, 1:激活, 2. 小能量机关, 3:大能量机关 ,4: 连续小能量机关,5: 连续大能量机关
     light_color_enum  TargetColor;   // 0:Red, 1:Blue
     float    BigEnergy_A;   // 大符正弦 A
     float    BigEnergy_W;   // 大符正弦 Omega
+    UpperCtrlBool_t UpperCtrlBool; // 上位机控制的布尔变量
 }target_ctrl_t;
 extern target_ctrl_t g_TargetCtrl;
 
@@ -171,7 +187,7 @@ void be_select_effect(uint8_t arm_id);
 void be_stage_effect(uint8_t arm_id);
 void be_hit_effect(uint8_t arm_id);
 void test_light_effect(uint8_t effect[5]);
-
+bool is_check_timeout_enable(void);
 #ifdef __cplusplus
 }
 #endif

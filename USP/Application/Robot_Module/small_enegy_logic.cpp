@@ -47,7 +47,7 @@ void small_energy_logic() {
         
     case SE_WAIT_HIT: // 等待击打 (2.5s)
         // 超时失败
-        if (now - g_SystemState.SE_StateData.SE_StateTimer > 2500) {
+        if (now - g_SystemState.SE_StateData.SE_StateTimer > 2500&&is_check_timeout_enable()) {
             SE_reset(); // 重置小能量机关状态
 			break;
         }

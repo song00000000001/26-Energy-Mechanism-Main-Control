@@ -335,17 +335,44 @@ void Task_UsartReceive(void *arg)
       switch (Usart_RxCOB.port_num)
       {
       case 1:
+        if(Usart_RxCOB.len != sizeof(UpperCtrlPacket_t)||Usart_RxCOB.address == NULL)
+        {
+            // 长度不匹配或地址为空，可能是错误的包，直接丢弃
+            break;
+        }
         memcpy(&upper_ctrl_packet, Usart_RxCOB.address, sizeof(UpperCtrlPacket_t));
+        /**
+         * 新增上位机控制包，由于当前上位机只有按钮控件，打算用bool型的变量用于切换状态。
+         * 目前的按键保留：
+         * 停止(a5 00)，准备(a5 01)，小符(a5 02)，大符(a5 03)，连续小符(a5 04)，连续大符(a5 05)
+         * 颜色切换:a0 00
+         * 电机使能切换:a0 01
+         * 大小符取消超时重置切换:a0 02
+         * 模拟击打：ff xx（xx可以是任意值，表示模拟一次击打事件，供测试用）
+         目前协议设计得比较简陋,后续可以根据需要增加更多字段
+         */
         if(upper_ctrl_packet.ctrl_header == 0xA5)
         {
-            // 解析上位机控制包
             g_TargetCtrl.target_mode = static_cast<EnergyTargetMode_t>(upper_ctrl_packet.ctrl_content);
         }
-        if(upper_ctrl_packet.ctrl_header == 0x5A)
+        if(upper_ctrl_packet.ctrl_header == 0xA0)
         {
-            // 解析上位机控制包
-            g_TargetCtrl.TargetColor = static_cast<light_color_enum>(upper_ctrl_packet.ctrl_content);
-            //R_light(g_TargetCtrl.TargetColor);
+            if(upper_ctrl_packet.ctrl_content == 0x00)
+            {
+                // 颜色切换
+                g_TargetCtrl.UpperCtrlBool.upperctrl_color_toggle = !g_TargetCtrl.UpperCtrlBool.upperctrl_color_toggle; // 切换颜色切换状态
+                g_TargetCtrl.TargetColor = (g_TargetCtrl.UpperCtrlBool.upperctrl_color_toggle) ? color_blue : color_red;
+            }
+            else if(upper_ctrl_packet.ctrl_content == 0x01)
+            {
+                // 电机使能切换
+                g_TargetCtrl.UpperCtrlBool.upperctrl_motor_enable = !g_TargetCtrl.UpperCtrlBool.upperctrl_motor_enable;
+            }
+            else if(upper_ctrl_packet.ctrl_content == 0x02)
+            {
+                // 超时重置切换
+                g_TargetCtrl.UpperCtrlBool.upperctrl_timeout_reset_enable = !g_TargetCtrl.UpperCtrlBool.upperctrl_timeout_reset_enable;
+            }
         }
         if(upper_ctrl_packet.ctrl_header == 0xFF)
         {

@@ -47,7 +47,7 @@ void task_state_machine(void *arg)
         .BigEnergy_A = 0.9125f,        // 默认大符参数 (0.780 + 1.045)/2
         .BigEnergy_W = 1.942f          // 默认大符参数 (1.884 + 2.000)/2
     };
-    
+    g_TargetCtrl.UpperCtrlBool.upperctrl_timeout_reset_enable = true; // 默认启用超时重置
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
@@ -210,4 +210,9 @@ void debug_simulate_hit_f() {
         }
         g_SystemState.CurrentHitScores = rand() % 10 + 1; // 模拟得分为1-10之间的随机数
     }
+}
+
+//增加统一的跳过超时逻辑的函数，便于大小符状态机调用，避免重复代码
+bool is_check_timeout_enable(void) {
+    return (g_TargetCtrl.UpperCtrlBool.upperctrl_timeout_reset_enable); 
 }

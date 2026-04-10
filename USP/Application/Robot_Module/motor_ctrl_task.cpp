@@ -40,7 +40,7 @@ void task_motor_ctrl(void *arg)
     mymotor.ClearError(); // 清除错误标志位，必要时可以调用两次以确保状态清除
     vTaskDelay(50);
 	mymotor.startMotor(); // 发送使能帧给电机
-
+    g_TargetCtrl.UpperCtrlBool.upperctrl_motor_enable = true; // 默认电机使能
     for (;;)
     {
         vTaskDelayUntil(&xLastWakeTime_t, xFrequency);
@@ -91,7 +91,7 @@ void task_motor_ctrl(void *arg)
                 break;
         }  
 
-        if(g_SystemState.SysMode == test_mode)
+        if(g_SystemState.SysMode == test_mode||!g_TargetCtrl.UpperCtrlBool.upperctrl_motor_enable)
             continue; // 待机状态不控制电机 
         /**
          * 获取状态，自动清除错误并重新使能

@@ -72,8 +72,10 @@ void big_energy_logic() {
         
     case BE_WAIT_HIT_1: // WAIT_HIT_1 (第一阶段判定：2.5s)
         // 超时失败
-        if (now - g_SystemState.BE_StateData.BE_StateTimer > 2500) {
+        if (now - g_SystemState.BE_StateData.BE_StateTimer > 2500&&is_check_timeout_enable()) 
+        {
             BE_reset();
+            break;
         }
         
         // 击打判定
@@ -97,13 +99,14 @@ void big_energy_logic() {
             else {
                 // 打错
                 BE_reset();
+                break;
             }
         }
         break;
 
     case BE_WAIT_HIT_2: // WAIT_HIT_2 (第二阶段连击：1s)
         // 超时结束 -> 成功（单杀）
-        if (now - g_SystemState.BE_StateData.BE_StateTimer > 1000) {
+        if (now - g_SystemState.BE_StateData.BE_StateTimer > 1000&&is_check_timeout_enable()) {
             g_SystemState.BE_StateData.BE_Group++; // 晋级
             g_SystemState.BE_StateData.BE_State = BE_GENERATE_TARGET; 
         }
@@ -126,6 +129,7 @@ void big_energy_logic() {
             else {
                 // 连击阶段打错，也判负
                 BE_reset();
+                break;
             }
         }
         break;
