@@ -11,7 +11,7 @@
 #define WS2312_1bit 66
 
 static uint32_t tim_pwm_dma_buff[dma_data_len] = {0};//PWM DMA数据缓存
-uint8_t ws2812_lightness = 255; // 灯光亮度（0-255）
+uint8_t ws2812_lightness = 80; // 灯光亮度（0-255）
 
 void Buff_translate(uint8_t* color_buff,uint32_t* dma_row_ptr) //颜色数组转换为码元数组
 {   
