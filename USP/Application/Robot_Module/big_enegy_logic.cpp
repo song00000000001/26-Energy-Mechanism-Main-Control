@@ -53,6 +53,7 @@ void big_energy_logic() {
     if(lock_state_last && !is_lock_state()){
         big_enegy_settlement(g_SystemState.BE_StateData.BE_Scores, g_SystemState.BE_StateData.BE_ActivedArms); // 结算，平均环数=轮数，激活灯臂数=2
         g_TargetCtrl.target_mode = tar_success; // 结束
+        lock_state_last = is_lock_state(); // 更新上一次的锁定状态
         return; // 直接返回，避免后续状态机逻辑干扰结算结果
     }
     lock_state_last = is_lock_state(); // 更新上一次的锁定状态
