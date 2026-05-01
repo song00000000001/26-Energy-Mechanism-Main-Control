@@ -107,6 +107,7 @@ typedef struct{
     bool upperctrl_color_toggle; // 上位机控制颜色切换
     bool upperctrl_motor_enable; // 上位机控制电机使能切换
     bool upperctrl_timeout_reset_enable; // 上位机控制超时重置切换
+    bool upperctrl_lock_state_enable; // 上位机控制锁定状态切换
 } UpperCtrlBool_t;
 
 typedef struct {
@@ -188,6 +189,7 @@ void be_stage_effect(uint8_t arm_id);
 void be_hit_effect(uint8_t arm_id);
 void test_light_effect(uint8_t effect[5]);
 bool is_check_timeout_enable(void);
+bool is_lock_state(void);
 #ifdef __cplusplus
 }
 #endif

@@ -373,6 +373,11 @@ void Task_UsartReceive(void *arg)
                 // 超时重置切换
                 g_TargetCtrl.UpperCtrlBool.upperctrl_timeout_reset_enable = !g_TargetCtrl.UpperCtrlBool.upperctrl_timeout_reset_enable;
             }
+            else if(upper_ctrl_packet.ctrl_content == 0x03)
+            {
+                // 锁定状态切换
+                g_TargetCtrl.UpperCtrlBool.upperctrl_lock_state_enable = !g_TargetCtrl.UpperCtrlBool.upperctrl_lock_state_enable;
+            }
         }
         if(upper_ctrl_packet.ctrl_header == 0xFF)
         {
