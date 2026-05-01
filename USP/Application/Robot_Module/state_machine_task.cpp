@@ -216,3 +216,7 @@ void debug_simulate_hit_f() {
 bool is_check_timeout_enable(void) {
     return (g_TargetCtrl.UpperCtrlBool.upperctrl_timeout_reset_enable); 
 }
+
+bool is_lock_state(void) {
+    return (g_TargetCtrl.UpperCtrlBool.upperctrl_lock_state_enable);
+}

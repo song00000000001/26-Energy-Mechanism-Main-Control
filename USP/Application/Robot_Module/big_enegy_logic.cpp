@@ -48,6 +48,15 @@ void big_energy_logic() {
 
     uint32_t now = xTaskGetTickCount();
 
+    static bool lock_state_last = false; // 上一次的锁定状态
+    //如果从锁定到非锁定，直接切为成功结算
+    if(lock_state_last && !is_lock_state()){
+        big_enegy_settlement(g_SystemState.BE_StateData.BE_Scores, g_SystemState.BE_StateData.BE_ActivedArms); // 结算，平均环数=轮数，激活灯臂数=2
+        g_TargetCtrl.target_mode = tar_success; // 结束
+        return; // 直接返回，避免后续状态机逻辑干扰结算结果
+    }
+    lock_state_last = is_lock_state(); // 更新上一次的锁定状态
+
     // 状态机处理
     switch (g_SystemState.BE_StateData.BE_State)
     {
@@ -86,7 +95,12 @@ void big_energy_logic() {
             hit2_feedback_to_uart(g_SystemState.BE_StateData.BE_Targets[0], g_SystemState.BE_StateData.BE_Targets[1], hitID, g_SystemState.CurrentHitScores);
             g_SystemState.CurrentHitID = 0; 
             g_SystemState.CurrentHitScores = 0;
+
             if (g_SystemState.BE_StateData.BE_Targets[0] == hitID || g_SystemState.BE_StateData.BE_Targets[1] == hitID) {
+                if(is_lock_state()){
+                    //如果锁定状态，则保持灯效和状态不变，只反馈信息，用于视觉测试命中率，打错保留重置惩罚。
+                    break;
+                }
                 // 击中其中一个，进入连击窗口
                 // 打中的亮大符阶段态，另一个保持瞄准态
                 //SendFanPacket(hitID, FAN_CMD_BIG_STAGE, g_TargetCtrl.TargetColor, g_SystemState.BE_StateData.BE_Group);
@@ -120,10 +134,14 @@ void big_energy_logic() {
 			g_SystemState.CurrentHitScores = 0;
 			g_SystemState.CurrentHitID = 0;
             if (g_SystemState.BE_StateData.BE_Targets[0] == hitID || g_SystemState.BE_StateData.BE_Targets[1] == hitID) {
+                g_SystemState.BE_StateData.BE_Group++;
+                if(is_lock_state()){
+                    //如果锁定状态，则保持灯效和状态不变，只反馈信息，用于视觉测试命中率，打错保留重置惩罚。
+                    break;
+                }
                 // 击中剩下那个 -> 双杀成功
                 RemoveTarget(hitID); // 剩下的是要打的
                 updateBEArmorLight();
-                g_SystemState.BE_StateData.BE_Group++;
                 g_SystemState.BE_StateData.BE_State = BE_GENERATE_TARGET;
             } 
             else {

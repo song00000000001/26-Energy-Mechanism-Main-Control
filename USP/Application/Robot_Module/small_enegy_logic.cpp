@@ -34,7 +34,7 @@ void SE_reset() {
 void small_energy_logic() {
 
     uint32_t now = xTaskGetTickCount();
-
+   
     // 状态机处理
     switch (g_SystemState.SE_StateData.SE_State)
     {
@@ -69,11 +69,15 @@ void small_energy_logic() {
             hit_feedback_to_uart(g_SystemState.SE_StateData.SE_TargetID,hitID, hitScores);
             // 判断是否击中正确的目标
             if (hitID == g_SystemState.SE_StateData.SE_TargetID) {
+                g_SystemState.SE_StateData.SE_Group++; // 轮数加一
+                if(is_lock_state()){
+                    //如果锁定状态，则保持灯效和状态不变，只反馈信息，用于视觉测试命中率，打错保留重置惩罚。
+                    break;
+                }
                 // 击中目标，进入下一轮
                 se_hit_effect(hitID); // 击中效果
-                g_SystemState.SE_StateData.SE_Group++; // 轮数加一
                 if(g_SystemState.SE_StateData.SE_Group > 4) {
-                    small_enegy_settlement(g_SystemState.SE_StateData.SE_Scores); // 结算，传入得分
+                    small_enegy_settlement(g_SystemState.SE_StateData.SE_Scores, g_SystemState.SE_StateData.SE_Group); // 结算，传入得分和激活装甲板数
                     g_SystemState.SE_StateData.SE_Scores = 0;
                     // 全部通关
                     if(g_TargetCtrl.target_mode == tar_small_energy_continue){

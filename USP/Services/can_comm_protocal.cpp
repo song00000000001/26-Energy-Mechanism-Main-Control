@@ -93,10 +93,10 @@ void hit2_feedback_to_uart(uint8_t targetID,uint8_t targetID2,uint8_t hitID,uint
 一方机器人成功激活小能量机关后，该方所有机器人、前 哨站、基地均获得25%的防御增益，持续45秒。
 小能量机关增益持续期间内，所有英雄、步兵、空 中机器人在获得经验时，额外获得原经验100%的经验，一方在一次小能量机关增益期间内通过此方 式最多共获得 1200 点额外经验。
 */
-void small_enegy_settlement(uint8_t total_round){
+void small_enegy_settlement(uint8_t total_round, uint8_t actived_arms){
     vTaskDelay(20);//蓝牙app默认把80ms消息打包，这里也延时80ms方便看。
-    uint8_t average_round= total_round / 5; // 计算平均环数
-    my_printf(upper_uart_id, "\r\n>>>Total: %d,Aerage: %d\r\n", total_round ,average_round);
+    uint8_t average_round= total_round / actived_arms; // 计算平均环数
+    my_printf(upper_uart_id, "\r\n>>>Hits: %d, Scores: %d, Average: %d\r\n", actived_arms, total_round, average_round);
     vTaskDelay(20);
 }
 
@@ -150,4 +150,57 @@ void big_enegy_settlement(uint8_t total_round, uint8_t actived_arms){
         my_printf(upper_uart_id, "===Gain Duration: %d seconds\r\n", duration);
     }
     vTaskDelay(20);
+}
+
+void my_upper_ctrl_process(uint8_t *data, uint8_t len){
+    if(len != sizeof(UpperCtrlPacket_t)||data == NULL)
+    {
+        // 长度不匹配或地址为空，可能是错误的包，直接丢弃
+        return;
+    }
+    memcpy(&upper_ctrl_packet, data, sizeof(UpperCtrlPacket_t));
+    
+    /**
+     * 新增上位机控制包，由于当前上位机只有按钮控件，打算用bool型的变量用于切换状态。
+     * 目前的按键保留：
+     * 停止(a5 00)，准备(a5 01)，小符(a5 02)，大符(a5 03)，连续小符(a5 04)，连续大符(a5 05)
+     * 颜色切换:a0 00
+     * 电机使能切换:a0 01
+     * 大小符取消超时重置切换:a0 02
+     * 锁定状态切换:a0 03（开启后击打事件不改变状态和灯效，仅反馈信息，便于视觉测试命中率，打错保留重置惩罚。）
+     * 模拟击打：ff xx（xx可以是任意值，表示模拟一次击打事件，供测试用）
+        */
+    if(upper_ctrl_packet.ctrl_header == 0xA5)
+    {
+        g_TargetCtrl.target_mode = static_cast<EnergyTargetMode_t>(upper_ctrl_packet.ctrl_content);
+    }
+    if(upper_ctrl_packet.ctrl_header == 0xA0)
+    {
+        if(upper_ctrl_packet.ctrl_content == 0x00)
+        {
+            // 颜色切换
+            g_TargetCtrl.UpperCtrlBool.upperctrl_color_toggle = !g_TargetCtrl.UpperCtrlBool.upperctrl_color_toggle; // 切换颜色切换状态
+            g_TargetCtrl.TargetColor = (g_TargetCtrl.UpperCtrlBool.upperctrl_color_toggle) ? color_blue : color_red;
+        }
+        else if(upper_ctrl_packet.ctrl_content == 0x01)
+        {
+            // 电机使能切换
+            g_TargetCtrl.UpperCtrlBool.upperctrl_motor_enable = !g_TargetCtrl.UpperCtrlBool.upperctrl_motor_enable;
+        }
+        else if(upper_ctrl_packet.ctrl_content == 0x02)
+        {
+            // 超时重置切换
+            g_TargetCtrl.UpperCtrlBool.upperctrl_timeout_reset_enable = !g_TargetCtrl.UpperCtrlBool.upperctrl_timeout_reset_enable;
+        }
+        else if(upper_ctrl_packet.ctrl_content == 0x03)
+        {
+            // 锁定状态切换
+            g_TargetCtrl.UpperCtrlBool.upperctrl_lock_state_enable = !g_TargetCtrl.UpperCtrlBool.upperctrl_lock_state_enable;
+        }
+    }
+    if(upper_ctrl_packet.ctrl_header == 0xFF)
+    {
+        Debugger.Debug_simulate_hit=true; // 模拟击打事件
+    }
+
 }
