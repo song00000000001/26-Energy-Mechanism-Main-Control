@@ -51,9 +51,10 @@ void big_energy_logic() {
     static bool lock_state_last = false; // 上一次的锁定状态
     //如果从锁定到非锁定，直接切为成功结算
     if(lock_state_last && !is_lock_state()){
-        big_enegy_settlement(g_SystemState.BE_StateData.BE_Scores, g_SystemState.BE_StateData.BE_ActivedArms); // 结算，平均环数=轮数，激活灯臂数=2
+        big_enegy_settlement(g_SystemState.BE_StateData.BE_Scores, g_SystemState.BE_StateData.BE_ActivedArms,true); // 结算，平均环数=轮数，激活灯臂数=2
         g_TargetCtrl.target_mode = tar_success; // 结束
         lock_state_last = is_lock_state(); // 更新上一次的锁定状态
+        BE_reset(); // 重置状态准备下一次
         return; // 直接返回，避免后续状态机逻辑干扰结算结果
     }
     lock_state_last = is_lock_state(); // 更新上一次的锁定状态
@@ -64,7 +65,7 @@ void big_energy_logic() {
     case BE_GENERATE_TARGET: // GENERATE_TARGET
         if (g_SystemState.BE_StateData.BE_Group >= 5) {
             // 全部通关
-            big_enegy_settlement(g_SystemState.BE_StateData.BE_Scores, g_SystemState.BE_StateData.BE_ActivedArms); // 结算，平均环数=轮数，激活灯臂数=2
+            big_enegy_settlement(g_SystemState.BE_StateData.BE_Scores, g_SystemState.BE_StateData.BE_ActivedArms,false); // 结算，平均环数=轮数，激活灯臂数=2
             if(g_TargetCtrl.target_mode == tar_big_energy_continue){
                 BE_reset();
             }

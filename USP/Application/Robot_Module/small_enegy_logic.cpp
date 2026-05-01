@@ -34,7 +34,23 @@ void SE_reset() {
 void small_energy_logic() {
 
     uint32_t now = xTaskGetTickCount();
-   
+    
+    //如果从非锁定到锁定，记住group数，保持当前状态，等待解锁后继续当前状态
+    static bool lock_state_last = false; // 上一次的锁定状态
+    static uint8_t lock_state_group = 0; // 锁定时的轮数
+    if(!lock_state_last && is_lock_state()){
+        lock_state_group = g_SystemState.SE_StateData.SE_Group;
+    }
+    else if(lock_state_last && !is_lock_state()){
+        //如果从锁定到非锁定，直接切为成功结算
+        small_enegy_settlement(g_SystemState.SE_StateData.SE_Scores, g_SystemState.SE_StateData.SE_Group); // 结算，传入得分和激活装甲板数
+        g_TargetCtrl.target_mode = tar_success; // 结束
+        lock_state_last = is_lock_state(); // 更新上一次的锁定状态
+        SE_reset(); // 重置状态准备下一次
+        return; // 直接返回，避免后续状态机逻辑干扰结算结果
+    }
+    lock_state_last = is_lock_state(); // 更新上一次的锁定状态
+
     // 状态机处理
     switch (g_SystemState.SE_StateData.SE_State)
     {
@@ -51,8 +67,12 @@ void small_energy_logic() {
             SE_reset(); // 重置小能量机关状态
 			break;
         }
-        
-        g_SystemState.SE_StateData.SE_TargetID=g_SystemState.SE_StateData.SE_TargetID_GROUP[g_SystemState.SE_StateData.SE_Group];
+        if(is_lock_state()){
+            g_SystemState.SE_StateData.SE_TargetID=g_SystemState.SE_StateData.SE_TargetID_GROUP[lock_state_group]; // 锁定状态保持目标不变
+        }
+        else{
+            g_SystemState.SE_StateData.SE_TargetID=g_SystemState.SE_StateData.SE_TargetID_GROUP[g_SystemState.SE_StateData.SE_Group];
+        }
         se_select_effect(g_SystemState.SE_StateData.SE_TargetID); // 选中效果
 
         // 击打判定

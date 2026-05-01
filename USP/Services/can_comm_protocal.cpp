@@ -123,11 +123,14 @@ void small_enegy_settlement(uint8_t total_round, uint8_t actived_arms){
 |   9   |    50     |
 |  10   |    60     |
 */
-void big_enegy_settlement(uint8_t total_round, uint8_t actived_arms){
+void big_enegy_settlement(uint8_t total_round, uint8_t actived_arms,bool is_lock){
     vTaskDelay(20);
     uint8_t average_round = total_round / actived_arms;
     my_printf(upper_uart_id, "\r\n>>>Arms: %d,Total: %d,Average: %d\r\n", actived_arms, total_round, average_round);
     vTaskDelay(20);
+    if(is_lock){
+        return;
+    }
 	if(average_round >= 0 && average_round <= 3){
         my_printf(upper_uart_id, "===AttackGain: 150%%\r\n===DefenseGain: 25%%\r\n===HeatCoolingGain:None\r\n");
     }

@@ -377,6 +377,7 @@ void Task_UsartReceive(void *arg)
             {
                 // 锁定状态切换
                 g_TargetCtrl.UpperCtrlBool.upperctrl_lock_state_enable = !g_TargetCtrl.UpperCtrlBool.upperctrl_lock_state_enable;
+                g_TargetCtrl.UpperCtrlBool.upperctrl_timeout_reset_enable = g_TargetCtrl.UpperCtrlBool.upperctrl_lock_state_enable;
             }
         }
         if(upper_ctrl_packet.ctrl_header == 0xFF)
